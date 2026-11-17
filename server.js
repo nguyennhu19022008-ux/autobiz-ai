@@ -255,6 +255,32 @@ app.post('/api/generate-content', async (req, res) => {
   }
 });
 
+// 4a. Omni-Channel 4-in-1 Generator (Used by Chrome Extension v2.0 & Studio)
+app.post('/api/ai/omni-generate', async (req, res) => {
+  try {
+    const { rawText, customPrice, category, affiliateUrl, campaign } = req.body;
+    if (!rawText) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp nội dung hoặc tên sản phẩm.' });
+    }
+    const settings = await getSettings();
+    const targetChannels = ['facebook', 'tiktok', 'zalo', 'shopee'];
+    const results = await Promise.all(
+      targetChannels.map((ch) =>
+        generatePostWithGemini(rawText, settings, customPrice, null, {
+          category: category || 'auto',
+          channel: ch,
+          affiliateUrl: affiliateUrl || '',
+          campaign: campaign || 'ext_collector_2026'
+        }).then((r) => [ch, r.content || ''])
+      )
+    );
+    const channels = Object.fromEntries(results);
+    res.json({ success: true, channels });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // 4b. AutoBiz AI: Get Supported Multi-Categories & Generate Smart Affiliate UTM Link
 app.get('/api/autobiz/categories', (req, res) => {
   res.json({ success: true, categories: Object.values(PRODUCT_CATEGORIES) });
