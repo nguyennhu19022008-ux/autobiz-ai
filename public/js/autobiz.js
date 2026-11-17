@@ -568,9 +568,10 @@
 
     let html = '';
     results.forEach((r) => {
-      const isSuccess = r.status === 'success' || r.status === 'simulated';
-      const tagClass = isSuccess ? 'tag-posted' : 'tag-failed';
-      const statusLabel = r.status === 'success' ? 'Thành công' : (r.status === 'simulated' ? 'Mô phỏng' : 'Lỗi');
+      const isSuccess = r.status === 'success' || r.status === 'published';
+      const isStaged = r.status === 'simulated' || r.status === 'staged' || r.status === 'packaged';
+      const tagClass = isSuccess ? 'tag-posted' : (isStaged ? 'tag-pending' : 'tag-failed');
+      const statusLabel = isSuccess ? 'Thành công' : (isStaged ? 'Đóng gói sẵn' : 'Lỗi');
 
       html += `
         <div class="dispatch-result-item">
