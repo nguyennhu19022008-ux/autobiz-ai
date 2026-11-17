@@ -14,7 +14,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const prodCommInput = document.getElementById('prodCommInput');
   const prodChannelInput = document.getElementById('prodChannelInput');
   const prodUrlInput = document.getElementById('prodUrlInput');
+  const capturedImagesGroup = document.getElementById('capturedImagesGroup');
+  const capturedImagesLabel = document.getElementById('capturedImagesLabel');
+  const capturedImagesBox = document.getElementById('capturedImagesBox');
   const rawTextInput = document.getElementById('rawTextInput');
+  let capturedImages = [];
+
+  function renderCapturedImages() {
+    if (!capturedImagesGroup || !capturedImagesBox || !capturedImagesLabel) return;
+    capturedImagesBox.innerHTML = '';
+    if (!capturedImages.length) {
+      capturedImagesGroup.style.display = 'none';
+      return;
+    }
+    capturedImagesGroup.style.display = 'block';
+    capturedImagesLabel.textContent = `Ảnh sản phẩm đã lấy (${capturedImages.length}):`;
+    capturedImages.forEach((url, idx) => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative; width:50px; height:50px; border:1px solid #E5E7EB; border-radius:4px; overflow:hidden; background:#FFFFFF;';
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.textContent = '×';
+      rm.title = 'Xóa ảnh này';
+      rm.style.cssText = 'position:absolute; top:1px; right:1px; width:16px; height:16px; border:none; border-radius:2px; background:rgba(17,24,39,0.8); color:#FFF; font-size:11px; line-height:14px; cursor:pointer; padding:0;';
+      rm.addEventListener('click', () => {
+        capturedImages.splice(idx, 1);
+        renderCapturedImages();
+      });
+      wrap.appendChild(img);
+      wrap.appendChild(rm);
+      capturedImagesBox.appendChild(wrap);
+    });
+  }
 
   const btnGrabCurrentTab = document.getElementById('btnGrabCurrentTab');
   const btnSaveCatalog = document.getElementById('btnSaveCatalog');
@@ -149,7 +183,54 @@ document.addEventListener('DOMContentLoaded', () => {
           if (tab.url && /^https?:\/\//i.test(tab.url)) {
             prodUrlInput.value = tab.url;
           }
-          setStatus('- Đã lấy tiêu đề, nhận diện ngành hàng & đường dẫn từ Tab hiện tại.', 'success');
+          // Thu thập hình ảnh sản phẩm từ trang đang mở
+          if (chrome.scripting && tab.id) {
+            chrome.scripting.executeScript(
+              {
+                target: { tabId: tab.id },
+                func: () => {
+                  const urls = [];
+                  const seen = new Set();
+                  const addUrl = (u) => {
+                    if (!u || typeof u !== 'string') return;
+                    const clean = u.trim().split(' ')[0];
+                    if (!/^https?:\/\//i.test(clean)) return;
+                    if (/logo|icon|avatar|badge|sprite|1x1|blank\.|pixel/i.test(clean)) return;
+                    if (!seen.has(clean)) {
+                      seen.add(clean);
+                      urls.push(clean);
+                    }
+                  };
+                  document.querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]').forEach((m) => addUrl(m.content));
+                  document.querySelectorAll('img').forEach((img) => {
+                    const rect = img.getBoundingClientRect();
+                    const w = Math.max(img.naturalWidth || 0, rect.width || 0);
+                    const h = Math.max(img.naturalHeight || 0, rect.height || 0);
+                    if (w >= 180 && h >= 180) {
+                      addUrl(img.currentSrc || img.src || img.getAttribute('data-src'));
+                    }
+                  });
+                  return urls.slice(0, 6);
+                }
+              },
+              (results) => {
+                if (chrome.runtime.lastError) {
+                  setStatus('- Đã lấy tiêu đề & link (trang này hạn chế quét ảnh tự động).', 'success');
+                  return;
+                }
+                capturedImages = (results && results[0] && Array.isArray(results[0].result)) ? results[0].result : [];
+                renderCapturedImages();
+                setStatus(
+                  capturedImages.length
+                    ? `- Đã lấy tiêu đề, ${capturedImages.length} ảnh sản phẩm & đường dẫn.`
+                    : '- Đã lấy tiêu đề, nhận diện ngành hàng & đường dẫn từ Tab hiện tại.',
+                  'success'
+                );
+              }
+            );
+          } else {
+            setStatus('- Đã lấy tiêu đề, nhận diện ngành hàng & đường dẫn từ Tab hiện tại.', 'success');
+          }
         }
       });
     }
@@ -179,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
           price_retail: priceRetail,
           commission_rate: commissionRate,
           affiliate_base_url: affiliateBaseUrl,
+          images: capturedImages,
           specs: rawDesc ? { "Điểm nổi bật": rawDesc } : {}
         })
       });

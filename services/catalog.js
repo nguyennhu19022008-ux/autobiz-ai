@@ -46,6 +46,9 @@ function createProduct(payload) {
     price_retail: Number(payload.price_retail) || 0,
     commission_rate: Number(payload.commission_rate) || 10,
     affiliate_base_url: String(payload.affiliate_base_url || '').trim(),
+    images: Array.isArray(payload.images)
+      ? payload.images.map((img) => (typeof img === 'string' ? img.trim() : (img?.url || ''))).filter((u) => /^https?:\/\//i.test(u)).slice(0, 8)
+      : [],
     specs: Array.isArray(payload.specs)
       ? payload.specs.filter(Boolean)
       : String(payload.specs || '')

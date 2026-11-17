@@ -500,6 +500,26 @@
     }
   }
 
+  function getStudioMediaFiles() {
+    const input = $('#studioImageUrls');
+    if (!input) return [];
+    return input.value
+      .split(/\r?\n/)
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\//i.test(u))
+      .slice(0, 8)
+      .map((url) => ({ url, mimetype: 'image/jpeg' }));
+  }
+
+  function renderStudioImagePreview() {
+    const preview = $('#studioImagePreview');
+    if (!preview) return;
+    const files = getStudioMediaFiles();
+    preview.innerHTML = files
+      .map((f) => `<img src="${escapeHtml(f.url)}" alt="Ảnh sản phẩm" style="width:48px;height:48px;object-fit:cover;border:1px solid var(--border-subtle);border-radius:4px;" />`)
+      .join('');
+  }
+
   async function handleDispatchChannels() {
     const editor = $('#studioEditor');
     const finalContent = editor ? editor.value.trim() : '';
@@ -519,6 +539,7 @@
     }
 
     const target_channels = checkedBoxes.map((cb) => cb.value);
+    const mediaFiles = getStudioMediaFiles();
     const btnDispatch = $('#btnDispatchNow');
     const originalText = btnDispatch ? btnDispatch.innerHTML : '';
     if (btnDispatch) {
@@ -530,7 +551,8 @@
       const payload = {
         target_channels,
         channel_contents: state.studioContents,
-        finalContent
+        finalContent,
+        mediaFiles
       };
 
       const res = await fetch('/api/autobiz/dispatch', {
@@ -710,6 +732,13 @@
     if (priceInput) priceInput.value = product.price_retail || '';
     if (categorySelect) categorySelect.value = product.category || 'auto';
     if (baseUrlInput) baseUrlInput.value = product.affiliate_base_url || '';
+
+    const imageInput = $('#studioImageUrls');
+    if (imageInput) {
+      const imgs = Array.isArray(product.images) ? product.images : [];
+      imageInput.value = imgs.join('\n');
+      renderStudioImagePreview();
+    }
 
     // Compose formatted text for raw text box
     const specsList = Array.isArray(product.specs) ? product.specs.join('\n- ') : product.specs;
@@ -1097,6 +1126,10 @@
     $$('.setting-channel-toggle').forEach((cb) => {
       cb.addEventListener('change', () => applyEnabledChannels(readChannelTogglesFromUI()));
     });
+    const studioImageUrlsInput = $('#studioImageUrls');
+    if (studioImageUrlsInput) {
+      studioImageUrlsInput.addEventListener('input', renderStudioImagePreview);
+    }
 
     // Refresh Queue
     const btnRefreshQueue = $('#btnRefreshQueue');
