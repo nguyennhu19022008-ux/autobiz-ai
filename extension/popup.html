@@ -328,7 +328,7 @@
     </div>
 
     <div class="footer-bar">
-      <span id="quickStatusText" style="font-size:11px; color:var(--ink-muted);">Máy chủ: localhost:3000</span>
+      <span id="quickStatusText" style="font-size:11px; color:var(--ink-muted);">Máy chủ: autobiz-ai-seven.vercel.app</span>
       <button id="openFullAppBtn" class="btn btn-outline" style="width:auto; padding:5px 10px; font-size:11px;">Mở WebApp</button>
     </div>
   </div>
@@ -337,7 +337,11 @@
   <div id="tab-settings" class="tab-pane">
     <div class="field-group">
       <label class="label">URL Máy chủ AutoBiz AI:</label>
-      <input type="url" id="backendUrlInput" class="input" value="http://localhost:3000" placeholder="http://localhost:3000">
+      <input type="url" id="backendUrlInput" class="input" value="https://autobiz-ai-seven.vercel.app" placeholder="https://autobiz-ai-seven.vercel.app">
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button type="button" id="btnPresetVercel" class="btn btn-outline" style="padding:5px 8px; font-size:11px;">Dùng Vercel Public</button>
+        <button type="button" id="btnPresetLocal" class="btn btn-outline" style="padding:5px 8px; font-size:11px;">Dùng Local (3000)</button>
+      </div>
     </div>
 
     <div class="field-group">

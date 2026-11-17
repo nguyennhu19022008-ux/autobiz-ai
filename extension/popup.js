@@ -28,12 +28,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const quickStatusText = document.getElementById('quickStatusText');
 
   const backendUrlInput = document.getElementById('backendUrlInput');
+  const btnPresetVercel = document.getElementById('btnPresetVercel');
+  const btnPresetLocal = document.getElementById('btnPresetLocal');
   const subIdInput = document.getElementById('subIdInput');
   const saveBtn = document.getElementById('saveBtn');
   const connectionStatus = document.getElementById('connectionStatus');
 
-  let currentBackendUrl = 'http://localhost:3000';
+  const DEFAULT_VERCEL_URL = 'https://autobiz-ai-seven.vercel.app';
+  let currentBackendUrl = DEFAULT_VERCEL_URL;
   let currentSubId = 'vuonggia';
+
+  if (btnPresetVercel) {
+    btnPresetVercel.addEventListener('click', () => {
+      backendUrlInput.value = DEFAULT_VERCEL_URL;
+      saveBtn.click();
+    });
+  }
+  if (btnPresetLocal) {
+    btnPresetLocal.addEventListener('click', () => {
+      backendUrlInput.value = 'http://localhost:3000';
+      saveBtn.click();
+    });
+  }
 
   // 1. Chuyển tab
   tabBtns.forEach((btn) => {
@@ -66,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Lưu cấu hình
   saveBtn.addEventListener('click', () => {
-    const val = backendUrlInput.value.trim().replace(/\/$/, '') || 'http://localhost:3000';
+    const val = backendUrlInput.value.trim().replace(/\/$/, '') || DEFAULT_VERCEL_URL;
     const sub = subIdInput.value.trim() || 'vuonggia';
     currentBackendUrl = val;
     currentSubId = sub;
@@ -108,21 +124,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 4. Lấy thông tin từ Tab đang mở (Shopee / TikTok / Web)
+  function detectCategoryFromTitle(title) {
+    const t = String(title || '').toLowerCase();
+    if (/sữa rửa mặt|kem|serum|son|nước hoa|mỹ phẩm|dầu gội|sữa tắm|cerave|hasaki|skincare|lotion/.test(t)) return 'fmcg';
+    if (/áo|quần|váy|đầm|giày|dép|hoodie|túi xách|thời trang/.test(t)) return 'fashion';
+    if (/laptop|macbook|thinkpad|dell|asus|hp|lenovo|iphone|ipad|màn hình|pc/.test(t)) return 'tech';
+    if (/nồi|chảo|quạt|máy hút|đèn|bình giữ nhiệt|gia dụng|kệ/.test(t)) return 'home';
+    return 'accessories';
+  }
+
   btnGrabCurrentTab.addEventListener('click', () => {
     if (typeof chrome !== 'undefined' && chrome.tabs) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs && tabs[0]) {
           const tab = tabs[0];
           if (tab.title) {
-            prodNameInput.value = tab.title
+            const cleanTitle = tab.title
               .replace(/\| Shopee Việt Nam/gi, '')
               .replace(/- TikTok Shop/gi, '')
               .trim();
+            prodNameInput.value = cleanTitle;
+            prodCategoryInput.value = detectCategoryFromTitle(cleanTitle);
           }
           if (tab.url && /^https?:\/\//i.test(tab.url)) {
             prodUrlInput.value = tab.url;
           }
-          setStatus('- Đã lấy tiêu đề & đường dẫn từ Tab hiện tại.', 'success');
+          setStatus('- Đã lấy tiêu đề, nhận diện ngành hàng & đường dẫn từ Tab hiện tại.', 'success');
         }
       });
     }
