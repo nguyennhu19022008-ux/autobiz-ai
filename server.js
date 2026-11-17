@@ -400,6 +400,22 @@ app.get('/api/analytics/summary', (req, res) => {
   res.json({ success: true, summary });
 });
 
+app.post('/api/affiliate/record-order', (req, res) => {
+  try {
+    const { shortCode, orderAmount, quantity } = req.body || {};
+    if (!shortCode) {
+      return res.status(400).json({ success: false, error: 'Thiếu mã shortCode để ghi nhận đơn hàng.' });
+    }
+    const updated = affiliateService.recordOrderForLink(shortCode, { orderAmount, quantity });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy mã shortlink.' });
+    }
+    res.json({ success: true, link: updated, summary: affiliateService.getAnalyticsSummary() });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Phase 2: Omni-Channel Dispatch Hub (Facebook + TikTok + Zalo + Shopee)
 app.post('/api/autobiz/dispatch', async (req, res) => {
   try {

@@ -171,11 +171,25 @@
       if (statConversion) statConversion.textContent = `${Number(summary.conversionRate || 0).toFixed(1)}%`;
       if (statCommission) statCommission.textContent = formatCurrency(summary.totalCommission || 0);
 
+      // Finance & Revenue Stats
+      const statTotalRevenue = $('#statTotalRevenue');
+      const statConfirmedRevenue = $('#statConfirmedRevenue');
+      const statNetRevenue = $('#statNetRevenue');
+      const statTotalOrders = $('#statTotalOrders');
+
+      if (statTotalRevenue) statTotalRevenue.textContent = formatCurrency(summary.totalRevenue || 0);
+      if (statConfirmedRevenue) statConfirmedRevenue.textContent = formatCurrency(summary.confirmedRevenue || 0);
+      if (statNetRevenue) statNetRevenue.textContent = formatCurrency(summary.netShopRevenue || 0);
+      if (statTotalOrders) statTotalOrders.textContent = (summary.totalOrders || 0).toLocaleString('vi-VN');
+
       // Horizontal Bar Chart
       renderChannelChart(summary.byChannel || {});
 
       // Top Links Table
       renderTopLinksTable(summary.topLinks || []);
+
+      // CTV Revenue Leaderboard
+      renderCtvRevenueTable(summary.bySubId || []);
     } catch (err) {
       console.error('[Analytics Error]', err);
       showToast(err.message, true);
@@ -229,7 +243,7 @@
     if (!tbody) return;
 
     if (!Array.isArray(links) || links.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có link affiliate nào được tạo.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có link affiliate nào được tạo.</td></tr>`;
       return;
     }
 
@@ -238,21 +252,27 @@
       const chName = (l.channel || 'facebook').toUpperCase();
       const code = escapeHtml(l.shortCode || '');
       const clicks = Number(l.clicks) || 0;
-      const comm = Number(l.estimatedCommission) || 0;
+      const price = Number(l.priceRetail) || 250000;
+      const rev = Number(l.confirmedRevenue) > 0 ? Number(l.confirmedRevenue) : Math.round(clicks * 0.05 * price);
+      const comm = Number(l.confirmedCommission) > 0 ? Number(l.confirmedCommission) : (Number(l.estimatedCommission) || 0);
 
       html += `
         <tr>
           <td><span class="shortcode-badge">/r/${code}</span></td>
-          <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(l.productName || '')}">
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(l.productName || '')}">
             <strong>${escapeHtml(l.productName || 'Sản phẩm')}</strong>
           </td>
           <td><span class="tag tag-tech">${chName}</span></td>
           <td><strong>${clicks.toLocaleString('vi-VN')}</strong></td>
+          <td style="color: #7F1D1D; font-weight: 600;">${formatCurrency(rev)}</td>
           <td>${formatCurrency(comm)}</td>
           <td>
             <div style="display: flex; gap: 6px;">
               <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.openShortlink('${code}')" title="Mở đường link để kiểm tra click thực tế">
-                Mở thử /r/${code}
+                Mở /r/${code}
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="window.AutoBiz.recordOrder('${code}', ${price})" title="Ghi nhận 1 đơn hàng chốt thành công">
+                + Chốt đơn
               </button>
               <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.copyLink('/r/${code}')" title="Sao chép link rút gọn">
                 Sao chép
@@ -264,6 +284,47 @@
     });
 
     tbody.innerHTML = html;
+  }
+
+  function renderCtvRevenueTable(rows) {
+    const tbody = $('#ctvRevenueTableBody');
+    if (!tbody) return;
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có dữ liệu doanh thu theo CTV.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r) => `
+      <tr>
+        <td><strong>${escapeHtml(r.subId || 'mac_dinh')}</strong></td>
+        <td>${Number(r.links || 0).toLocaleString('vi-VN')}</td>
+        <td>${Number(r.clicks || 0).toLocaleString('vi-VN')}</td>
+        <td><strong>${Number(r.orders || 0).toLocaleString('vi-VN')}</strong></td>
+        <td style="color: #7F1D1D; font-weight: 600;">${formatCurrency(r.revenue || 0)}</td>
+        <td>${formatCurrency(r.commission || 0)}</td>
+        <td style="color: #166534; font-weight: 600;">${formatCurrency(r.netRevenue || 0)}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function recordOrder(shortCode, defaultPrice = 250000) {
+    const input = window.prompt(`Nhập giá trị đơn hàng cho link /r/${shortCode} (VNĐ):`, String(defaultPrice || 250000));
+    if (input === null) return;
+    const orderAmount = Number(String(input).replace(/[^\d]/g, '')) || Number(defaultPrice) || 250000;
+    try {
+      const res = await fetch('/api/affiliate/record-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortCode, orderAmount, quantity: 1 })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể ghi nhận đơn hàng.');
+      showToast(`Đã ghi nhận đơn ${formatCurrency(orderAmount)} cho /r/${shortCode}!`);
+      await loadAnalyticsSummary();
+    } catch (err) {
+      showToast(err.message, true);
+    }
   }
 
   function openShortlink(code) {
@@ -1055,6 +1116,7 @@
     switchView,
     openShortlink,
     copyLink,
+    recordOrder,
     loadProductToStudio,
     deleteProduct,
     publishPostNow,

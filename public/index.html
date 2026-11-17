@@ -182,6 +182,41 @@
             </div>
           </div>
 
+          <!-- 4 Finance & Revenue Stats -->
+          <div class="stats-grid" style="margin-top: 14px;">
+            <div class="stat-card">
+              <div class="stat-label">Tổng Doanh Thu (GMV)</div>
+              <div id="statTotalRevenue" class="stat-value" style="color: #7F1D1D;">0 đ</div>
+              <div class="stat-trend">
+                <span>Tổng giá trị đơn hàng qua link</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Doanh Thu Thực Chốt</div>
+              <div id="statConfirmedRevenue" class="stat-value">0 đ</div>
+              <div class="stat-trend">
+                <span>Từ các đơn đã xác nhận thanh toán</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Tiền Thực Thu Chủ Shop</div>
+              <div id="statNetRevenue" class="stat-value" style="color: #166534;">0 đ</div>
+              <div class="stat-trend">
+                <span>Doanh thu sau khi trừ hoa hồng CTV</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Tổng Đơn Hàng</div>
+              <div id="statTotalOrders" class="stat-value">0</div>
+              <div class="stat-trend">
+                <span>Đơn chốt thực tế &amp; ước tính</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Channel Breakdown Chart -->
           <div class="card">
             <div class="card-header">
@@ -211,13 +246,44 @@
                     <th>Sản phẩm</th>
                     <th>Kênh</th>
                     <th>Lượt Click</th>
+                    <th>Doanh thu</th>
                     <th>Hoa hồng</th>
                     <th>Hành động</th>
                   </tr>
                 </thead>
                 <tbody id="topLinksTableBody">
                   <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Đang tải dữ liệu...</td>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Đang tải dữ liệu...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CTV Revenue & Commission Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <span>Báo Cáo Doanh Thu &amp; Tiền Hoa Hồng Theo CTV (SubID)</span>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mã CTV (SubID)</th>
+                    <th>Số Link</th>
+                    <th>Lượt Click</th>
+                    <th>Đơn hàng</th>
+                    <th>Doanh thu (GMV)</th>
+                    <th>Hoa hồng CTV</th>
+                    <th>Thực thu Chủ Shop</th>
+                  </tr>
+                </thead>
+                <tbody id="ctvRevenueTableBody">
+                  <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có dữ liệu doanh thu theo CTV.</td>
                   </tr>
                 </tbody>
               </table>
