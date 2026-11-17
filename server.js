@@ -258,12 +258,19 @@ app.post('/api/generate-content', async (req, res) => {
 // 4a. Omni-Channel 4-in-1 Generator (Used by Chrome Extension v2.0 & Studio)
 app.post('/api/ai/omni-generate', async (req, res) => {
   try {
-    const { rawText, customPrice, category, affiliateUrl, campaign } = req.body;
+    const { rawText, customPrice, category, affiliateUrl, campaign, channels: requestedChannels } = req.body;
     if (!rawText) {
       return res.status(400).json({ success: false, error: 'Vui lòng cung cấp nội dung hoặc tên sản phẩm.' });
     }
     const settings = await getSettings();
-    const targetChannels = ['facebook', 'tiktok', 'zalo', 'shopee'];
+    const enabledMap = settings.enabledChannels || {};
+    const baseChannels = Array.isArray(requestedChannels) && requestedChannels.length
+      ? requestedChannels
+      : ['facebook', 'tiktok', 'zalo', 'shopee'];
+    const targetChannels = baseChannels.filter((ch) => enabledMap[ch] !== false);
+    if (targetChannels.length === 0) {
+      return res.status(400).json({ success: false, error: 'Tất cả kênh đang bị tắt trong Cài đặt. Vui lòng bật ít nhất 1 kênh.' });
+    }
     const results = await Promise.all(
       targetChannels.map((ch) =>
         generatePostWithGemini(rawText, settings, customPrice, null, {
@@ -397,9 +404,13 @@ app.get('/api/analytics/summary', (req, res) => {
 app.post('/api/autobiz/dispatch', async (req, res) => {
   try {
     const settings = await getSettings();
+    const enabledMap = settings.enabledChannels || {};
     const { target_channels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId } = req.body || {};
+    const filteredChannels = Array.isArray(target_channels)
+      ? target_channels.filter((ch) => enabledMap[ch] !== false)
+      : target_channels;
     const results = await dispatchToChannels(
-      { target_channels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId },
+      { target_channels: filteredChannels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId },
       settings
     );
     res.json({ success: true, results });

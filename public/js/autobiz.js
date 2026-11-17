@@ -892,7 +892,56 @@
   }
 
   // ======================== PHÂN HỆ 5: KẾT NỐI KÊNH & CÀI ĐẶT ========================
+  function readChannelTogglesFromUI() {
+    const map = { facebook: true, tiktok: true, zalo: true, shopee: true };
+    $$('.setting-channel-toggle').forEach((cb) => {
+      const ch = cb.dataset.channel;
+      if (ch) map[ch] = Boolean(cb.checked);
+    });
+    return map;
+  }
+
+  function applyEnabledChannels(rawMap) {
+    let savedLocal = null;
+    try {
+      savedLocal = JSON.parse(localStorage.getItem('autobiz_enabled_channels') || 'null');
+    } catch (_) {}
+    const map = Object.assign({ facebook: true, tiktok: true, zalo: true, shopee: true }, savedLocal || {}, rawMap || {});
+    try {
+      localStorage.setItem('autobiz_enabled_channels', JSON.stringify(map));
+    } catch (_) {}
+
+    // 1. Sync Settings checkboxes
+    $$('.setting-channel-toggle').forEach((cb) => {
+      const ch = cb.dataset.channel;
+      if (ch && typeof map[ch] === 'boolean') cb.checked = map[ch];
+    });
+
+    // 2. Show/hide Studio channel tabs & switch active tab if disabled
+    let firstEnabled = null;
+    $$('.channel-tab-btn').forEach((btn) => {
+      const ch = btn.dataset.channel;
+      const isOn = map[ch] !== false;
+      btn.style.display = isOn ? '' : 'none';
+      if (isOn && !firstEnabled) firstEnabled = btn;
+    });
+    if (map[state.activeStudioTab] === false && firstEnabled) {
+      firstEnabled.click();
+    }
+
+    // 3. Show/hide & uncheck Dispatch checkboxes
+    $$('.dispatch-channel-cb').forEach((cb) => {
+      const ch = cb.value;
+      const isOn = map[ch] !== false;
+      const wrapper = cb.closest('.dispatch-checkbox-label');
+      if (wrapper) wrapper.style.display = isOn ? '' : 'none';
+      cb.disabled = !isOn;
+      if (!isOn) cb.checked = false;
+    });
+  }
+
   async function loadSettings() {
+    applyEnabledChannels(null);
     try {
       const res = await fetch('/api/settings');
       if (!res.ok) throw new Error('Không thể tải cài đặt.');
@@ -911,6 +960,9 @@
       form.tiktokToken.value = data.tiktokToken || '';
       form.zaloToken.value = data.zaloToken || '';
       form.shopeePartnerId.value = data.shopeePartnerId || '';
+      if (data.enabledChannels) {
+        applyEnabledChannels(data.enabledChannels);
+      }
     } catch (err) {
       console.error('[Settings Error]', err);
       showToast(err.message, true);
@@ -923,6 +975,9 @@
     const form = $('#formSettings');
     if (!form) return;
 
+    const enabledChannels = readChannelTogglesFromUI();
+    applyEnabledChannels(enabledChannels);
+
     const payload = {
       geminiApiKey: form.geminiApiKey.value.trim(),
       fanpageName: form.fanpageName.value.trim(),
@@ -932,7 +987,8 @@
       facebookPageToken: form.facebookPageToken.value.trim(),
       tiktokToken: form.tiktokToken.value.trim(),
       zaloToken: form.zaloToken.value.trim(),
-      shopeePartnerId: form.shopeePartnerId.value.trim()
+      shopeePartnerId: form.shopeePartnerId.value.trim(),
+      enabledChannels
     };
 
     const btn = $('#btnSaveSettings');
@@ -1037,6 +1093,9 @@
     // Settings Form
     const formSettings = $('#formSettings');
     if (formSettings) formSettings.addEventListener('submit', handleSaveSettings);
+    $$('.setting-channel-toggle').forEach((cb) => {
+      cb.addEventListener('change', () => applyEnabledChannels(readChannelTogglesFromUI()));
+    });
 
     // Refresh Queue
     const btnRefreshQueue = $('#btnRefreshQueue');
