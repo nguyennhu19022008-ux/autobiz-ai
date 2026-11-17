@@ -1,30 +1,15 @@
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const { buildAffiliateUrl } = require('./gemini');
+const { readJsonSafe, writeJsonSafe } = require('../utils/runtime');
 
-const LINKS_FILE = path.join(__dirname, '..', 'data', 'affiliate_links.json');
-
-function ensureFile() {
-  const dir = path.dirname(LINKS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(LINKS_FILE)) fs.writeFileSync(LINKS_FILE, '[]', 'utf8');
-}
+const LINKS_FILENAME = 'affiliate_links.json';
 
 function readLinks() {
-  ensureFile();
-  try {
-    const raw = fs.readFileSync(LINKS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return readJsonSafe(LINKS_FILENAME, []);
 }
 
 function writeLinks(links) {
-  ensureFile();
-  fs.writeFileSync(LINKS_FILE, JSON.stringify(links, null, 2), 'utf8');
+  writeJsonSafe(LINKS_FILENAME, links);
 }
 
 function generateShortCode(prefix = '') {

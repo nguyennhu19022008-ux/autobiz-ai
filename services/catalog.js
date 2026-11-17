@@ -1,28 +1,13 @@
-const fs = require('fs');
-const path = require('path');
+const { readJsonSafe, writeJsonSafe } = require('../utils/runtime');
 
-const PRODUCTS_FILE = path.join(__dirname, '..', 'data', 'products.json');
-
-function ensureFile() {
-  const dir = path.dirname(PRODUCTS_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(PRODUCTS_FILE)) fs.writeFileSync(PRODUCTS_FILE, '[]', 'utf8');
-}
+const PRODUCTS_FILENAME = 'products.json';
 
 function readProducts() {
-  ensureFile();
-  try {
-    const raw = fs.readFileSync(PRODUCTS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return readJsonSafe(PRODUCTS_FILENAME, []);
 }
 
 function writeProducts(products) {
-  ensureFile();
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf8');
+  writeJsonSafe(PRODUCTS_FILENAME, products);
 }
 
 /**
