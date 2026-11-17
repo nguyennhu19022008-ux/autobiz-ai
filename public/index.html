@@ -1,0 +1,641 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoBiz AI - Hệ Sinh Thái Tiếp Thị Đa Kênh & FinTech Affiliate</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- PWA & Meta Tags -->
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+
+  <!-- Utilitarian Minimalist SaaS Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css?v=20261115_prod">
+</head>
+<body>
+
+  <!-- ======================== MOBILE HEADER ======================== -->
+  <header class="mobile-header">
+    <div class="brand-wrapper">
+      <div class="brand-mark">AB</div>
+      <div>
+        <div class="brand-title">AutoBiz AI</div>
+        <div class="brand-tag">v2026.1</div>
+      </div>
+    </div>
+    <button id="btnMobileMenu" class="btn btn-secondary btn-icon-only" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+  </header>
+
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- ======================== MAIN APP LAYOUT ======================== -->
+  <div class="app-layout">
+
+    <!-- ======================== SIDEBAR ======================== -->
+    <aside id="appSidebar" class="app-sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="brand-wrapper">
+          <div class="brand-mark">AB</div>
+          <div>
+            <div class="brand-title">AutoBiz AI</div>
+            <div class="brand-tag">PHASE 3 SAAS</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <!-- Phân hệ 1: Tổng quan & FinTech -->
+        <button class="nav-item active" data-view="analytics">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Tổng quan & FinTech</span>
+        </button>
+
+        <!-- Phân hệ 2: Studio Đa Kênh -->
+        <button class="nav-item" data-view="studio">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>Studio Đa Kênh</span>
+        </button>
+
+        <!-- Phân hệ 3: Kho Hàng Đa Ngành -->
+        <button class="nav-item" data-view="catalog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span>Kho Hàng Đa Ngành</span>
+        </button>
+
+        <!-- Phân hệ 4: Hàng Đợi & Lịch Phát -->
+        <button class="nav-item" data-view="queue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Hàng Đợi & Lịch Phát</span>
+        </button>
+
+        <!-- Phân hệ 5: Kết Nối Kênh & Cài Đặt -->
+        <button class="nav-item" data-view="settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>Kết Nối Kênh & Cài Đặt</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Status Footer -->
+      <div class="sidebar-footer">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>Hệ thống trực tuyến</span>
+        </div>
+        <div>Workspace: <strong>AutoBiz Main</strong></div>
+      </div>
+    </aside>
+
+    <!-- ======================== MAIN WORKSPACE ======================== -->
+    <main class="app-main">
+      <div class="workspace-content">
+
+        <!-- ==========================================================================
+             PHÂN HỆ 1: TỔNG QUAN & FINTECH (view-analytics)
+             ========================================================================== -->
+        <section id="view-analytics" class="view-section active">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Tổng quan & FinTech</h1>
+              <p class="page-subtitle">Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.</p>
+            </div>
+            <div class="header-actions">
+              <button id="btnRefreshAnalytics" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Làm mới số liệu</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Big Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Tổng lượt Click UTM</div>
+              <div id="statClicks" class="stat-value">0</div>
+              <div class="stat-trend">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>Lưu lượng truy cập thực tế</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Link Tiếp Thị Đã Tạo</div>
+              <div id="statLinks" class="stat-value">0</div>
+              <div class="stat-trend" style="color: var(--text-muted);">
+                <span>Bao phủ 4 kênh truyền thông</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Tỷ Lệ Chuyển Đổi (CVR)</div>
+              <div id="statConversion" class="stat-value">0.0%</div>
+              <div class="stat-trend">
+                <span>Ước tính theo mô hình FinTech</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Hoa Hồng Ước Tính</div>
+              <div id="statCommission" class="stat-value">0 đ</div>
+              <div class="stat-trend">
+                <span>Tính lũy kế hoa hồng CTV</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel Breakdown Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <span>Phân bổ Click & Doanh số theo Kênh</span>
+              </div>
+            </div>
+            <div id="channelChartContainer" class="chart-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Top Affiliate Links Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>Top Link Tiếp Thị Liên Kết Hoạt Động</span>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mã Link</th>
+                    <th>Sản phẩm</th>
+                    <th>Kênh</th>
+                    <th>Lượt Click</th>
+                    <th>Hoa hồng</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="topLinksTableBody">
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Đang tải dữ liệu...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================================================
+             PHÂN HỆ 2: STUDIO ĐA KÊNH (view-studio)
+             ========================================================================== -->
+        <section id="view-studio" class="view-section">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Studio Đa Kênh</h1>
+              <p class="page-subtitle">Sáng tạo, bóc tách và phân phối nội dung tiếp thị đồng thời lên Facebook, TikTok, Zalo OA và Shopee.</p>
+            </div>
+          </div>
+
+          <div class="studio-layout">
+            <!-- Left Column: Input & Configuration -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  <span>1. Thông tin sản phẩm & Khởi tạo</span>
+                </div>
+              </div>
+
+              <!-- SKU & Price -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="studioSku">Mã sản phẩm (SKU)</label>
+                  <input type="text" id="studioSku" class="form-input" placeholder="VD: TC01, PK02..." />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="studioPrice">Giá bán lẻ (VNĐ)</label>
+                  <input type="number" id="studioPrice" class="form-input" placeholder="VD: 490000" />
+                </div>
+              </div>
+
+              <!-- Category Select -->
+              <div class="form-group">
+                <label class="form-label" for="studioCategory">Ngành hàng sản phẩm</label>
+                <select id="studioCategory" class="form-select">
+                  <option value="auto">Tự động nhận diện (Smart Multi-Category)</option>
+                  <option value="tech">Công nghệ &amp; Điện tử (tech)</option>
+                  <option value="accessories">Phụ kiện &amp; Gadgets (accessories)</option>
+                  <option value="home">Gia dụng &amp; Đời sống (home)</option>
+                  <option value="fashion">Thời trang &amp; May mặc (fashion)</option>
+                  <option value="fmcg">Tiêu dùng nhanh &amp; Mỹ phẩm (fmcg)</option>
+                </select>
+              </div>
+
+              <!-- Raw Text Area -->
+              <div class="form-group">
+                <label class="form-label" for="studioRawText">Mô tả sản phẩm / Văn bản thô</label>
+                <textarea id="studioRawText" class="form-textarea" rows="5" placeholder="Nhập tên sản phẩm, thông số kỹ thuật, tính năng nổi bật hoặc dán bài viết thô từ nhà cung cấp..."></textarea>
+                <span class="form-hint">AI sẽ tự động lọc bỏ các từ ngữ nhạy cảm (giá sỉ, CTV, SĐT lạ) và giữ lại hotline chính thức.</span>
+              </div>
+
+              <!-- Smart Affiliate Link Box -->
+              <div class="smart-link-box">
+                <div class="smart-link-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                  <span>Smart Affiliate Link (UTM Tracking)</span>
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                  <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link gốc sản phẩm (Shopee, Lazada, Website...)" />
+                </div>
+                <div class="form-row" style="gap: 10px; margin-bottom: 8px;">
+                  <div>
+                    <input type="text" id="studioCampaign" class="form-input" value="autobiz_2026" placeholder="Chiến dịch UTM" />
+                  </div>
+                  <div>
+                    <input type="text" id="studioSubId" class="form-input" value="vuonggia" placeholder="SubID định danh" />
+                  </div>
+                </div>
+                <button type="button" id="btnCreateShortlink" class="btn btn-secondary btn-sm" style="width: 100%;">
+                  Tạo Shortlink /r/:code
+                </button>
+                <div id="studioGeneratedLinkContainer" class="generated-link-display" style="display: none;">
+                  <span id="studioGeneratedLinkText"></span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.AutoBiz.copyLink('/r/' + document.getElementById('studioGeneratedLinkText').textContent.split('/r/')[1])">
+                    Sao chép
+                  </button>
+                </div>
+              </div>
+
+              <!-- Primary CTA: Generate AI -->
+              <button type="button" id="btnGenerateContent" class="btn btn-primary" style="width: 100%; padding: 11px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>Phân tích AI &amp; Sinh 4 Kênh</span>
+              </button>
+            </div>
+
+            <!-- Right Column: Multi-Channel Editor & Dispatch -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>2. Biên tập 4 Kênh &amp; Phân phối</span>
+                </div>
+                <button type="button" id="btnCopyStudioContent" class="btn btn-secondary btn-sm">
+                  Sao chép nội dung
+                </button>
+              </div>
+
+              <!-- 4 Channel Tabs -->
+              <div class="channel-tabs">
+                <button type="button" class="channel-tab-btn active" data-channel="facebook">Facebook</button>
+                <button type="button" class="channel-tab-btn" data-channel="tiktok">TikTok Script</button>
+                <button type="button" class="channel-tab-btn" data-channel="zalo">Zalo OA</button>
+                <button type="button" class="channel-tab-btn" data-channel="shopee">Shopee SEO</button>
+              </div>
+
+              <!-- Editor Textarea -->
+              <div class="form-group">
+                <textarea id="studioEditor" class="form-textarea" rows="12" placeholder="Nội dung bài viết theo từng kênh sẽ hiển thị tại đây sau khi sinh AI hoặc chỉnh sửa trực tiếp..."></textarea>
+                <div class="editor-counter">
+                  <span id="studioCharCount">0 ký tự • 0 dòng</span>
+                  <span>Chuẩn văn phong từng nền tảng</span>
+                </div>
+              </div>
+
+              <!-- Multi-Channel Dispatch Selector -->
+              <div style="margin-top: 14px;">
+                <label class="form-label">Chọn các kênh phân phối đồng thời:</label>
+                <div class="dispatch-channels-grid">
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" class="dispatch-channel-cb" value="facebook" checked />
+                    <span>Facebook Fanpage</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" class="dispatch-channel-cb" value="tiktok" checked />
+                    <span>TikTok Creator</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" class="dispatch-channel-cb" value="zalo" checked />
+                    <span>Zalo OA Feed</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" class="dispatch-channel-cb" value="shopee" checked />
+                    <span>Shopee Feed / Chat</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Action Row -->
+              <div style="display: flex; gap: 10px; margin-top: 16px;">
+                <button type="button" id="btnDispatchNow" class="btn btn-primary" style="flex: 1;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  <span>Phân phối Đa Kênh Ngay</span>
+                </button>
+                <button type="button" id="btnAddToQueue" class="btn btn-secondary">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Lên lịch phát</span>
+                </button>
+              </div>
+
+              <!-- Results Container -->
+              <div id="dispatchResultsContainer" class="dispatch-results-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================================================
+             PHÂN HỆ 3: KHO HÀNG ĐA NGÀNH (view-catalog)
+             ========================================================================== -->
+        <section id="view-catalog" class="view-section">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Kho Hàng Đa Ngành</h1>
+              <p class="page-subtitle">Quản lý cơ sở dữ liệu sản phẩm đa lĩnh vực: Công nghệ, Phụ kiện, Gia dụng, Thời trang &amp; FMCG.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" id="btnOpenAddProductModal" class="btn btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ Thêm sản phẩm</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Catalog Toolbar -->
+          <div class="catalog-toolbar">
+            <!-- Filter Pills -->
+            <div class="filter-pills">
+              <button type="button" class="filter-pill active" data-category="all">Tất cả</button>
+              <button type="button" class="filter-pill" data-category="tech">Công nghệ (tech)</button>
+              <button type="button" class="filter-pill" data-category="accessories">Phụ kiện (accessories)</button>
+              <button type="button" class="filter-pill" data-category="home">Gia dụng (home)</button>
+              <button type="button" class="filter-pill" data-category="fashion">Thời trang (fashion)</button>
+              <button type="button" class="filter-pill" data-category="fmcg">Tiêu dùng (fmcg)</button>
+            </div>
+
+            <!-- Search -->
+            <div style="min-width: 240px;">
+              <input type="text" id="catalogSearch" class="form-input" placeholder="Tìm theo tên, SKU, thông số..." />
+            </div>
+          </div>
+
+          <!-- Editorial Products Table -->
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã SKU</th>
+                  <th>Tên sản phẩm &amp; Thông số</th>
+                  <th>Ngành hàng</th>
+                  <th>Giá bán lẻ</th>
+                  <th>Hoa hồng</th>
+                  <th>Link gốc</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="catalogTableBody">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Đang tải danh mục sản phẩm...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ==========================================================================
+             PHÂN HỆ 4: HÀNG ĐỢI & LỊCH PHÁT (view-queue)
+             ========================================================================== -->
+        <section id="view-queue" class="view-section">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Hàng Đợi &amp; Lịch Phát</h1>
+              <p class="page-subtitle">Theo dõi tiến độ phát sóng tự động đa kênh theo các khung giờ vàng trong ngày.</p>
+            </div>
+            <div class="header-actions">
+              <span id="queueCountBadge" class="tag tag-queued">0 bài chờ</span>
+              <button type="button" id="btnRefreshQueue" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Làm mới</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã SP</th>
+                  <th>Tiêu đề / Nội dung trích xuất</th>
+                  <th>Trạng thái</th>
+                  <th>Lịch phát</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="queueTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">Đang tải danh sách bài phát...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ==========================================================================
+             PHÂN HỆ 5: KẾT NỐI KÊNH & CÀI ĐẶT (view-settings)
+             ========================================================================== -->
+        <section id="view-settings" class="view-section">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Kết Nối Kênh &amp; Cài Đặt</h1>
+              <p class="page-subtitle">Quản lý kết nối API Gemini, Facebook Fanpage, TikTok Creator, Zalo OA và Shopee Open Platform.</p>
+            </div>
+          </div>
+
+          <form id="formSettings">
+            <!-- Box 1: Core AI & Shop Info -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                  <span>1. Lõi Trí Tuệ Nhân Tạo &amp; Thông Tin Doanh Nghiệp</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingGeminiApiKey">Gemini AI API Key</label>
+                <input type="password" id="settingGeminiApiKey" name="geminiApiKey" class="form-input" placeholder="AIzaSy..." />
+                <span class="form-hint">Dùng để phân tích thông số, nhận diện sản phẩm đa ngành và sinh văn phong 4 kênh.</span>
+              </div>
+
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label class="form-label" for="settingFanpageName">Tên Shop / Thương hiệu</label>
+                  <input type="text" id="settingFanpageName" name="fanpageName" class="form-input" placeholder="AutoBiz AI Store" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingHotline">Hotline / Zalo liên hệ</label>
+                  <input type="text" id="settingHotline" name="hotline" class="form-input" placeholder="0876637806" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingEmail">Email nhận báo cáo</label>
+                  <input type="email" id="settingEmail" name="email" class="form-input" placeholder="admin@domain.com" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Box 2: Social Channels & Platforms -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                  <span>2. Kết Nối Nền Tảng Phân Phối Đa Kênh</span>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="settingFanpageId">Facebook Fanpage ID</label>
+                  <input type="text" id="settingFanpageId" name="fanpageId" class="form-input" placeholder="VD: 1154184381110692" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingFacebookPageToken">Facebook Page Access Token</label>
+                  <input type="password" id="settingFacebookPageToken" name="facebookPageToken" class="form-input" placeholder="EAAZ..." />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="settingTiktokToken">TikTok Session / Access Token</label>
+                  <input type="password" id="settingTiktokToken" name="tiktokToken" class="form-input" placeholder="tt_act_..." />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingZaloToken">Zalo Official Account Token</label>
+                  <input type="password" id="settingZaloToken" name="zaloToken" class="form-input" placeholder="zalo_oa_..." />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingShopeePartnerId">Shopee Partner / Open Platform ID</label>
+                <input type="text" id="settingShopeePartnerId" name="shopeePartnerId" class="form-input" placeholder="shopee_pid_..." />
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="submit" id="btnSaveSettings" class="btn btn-primary" style="padding: 10px 24px;">
+                Lưu Toàn Bộ Cấu Hình
+              </button>
+            </div>
+          </form>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ======================== MODAL: + THÊM SẢN PHẨM ======================== -->
+  <div id="modalAddProduct" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">+ Thêm Sản Phẩm Vào Kho Hàng</h3>
+        <button type="button" id="btnCloseAddProductModal" class="btn btn-secondary btn-icon-only">✕</button>
+      </div>
+      <form id="formAddProduct">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mã SKU (*)</label>
+              <input type="text" name="sku" class="form-input" required placeholder="VD: TC03, PK05..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ngành hàng (*)</label>
+              <select name="category" class="form-select" required>
+                <option value="tech">Công nghệ (tech)</option>
+                <option value="accessories" selected>Phụ kiện (accessories)</option>
+                <option value="home">Gia dụng (home)</option>
+                <option value="fashion">Thời trang (fashion)</option>
+                <option value="fmcg">Tiêu dùng nhanh (fmcg)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tên sản phẩm (*)</label>
+            <input type="text" name="name" class="form-input" required placeholder="VD: Tai Nghe Chống Ồn Wireless Pro" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Giá bán lẻ (VNĐ)</label>
+              <input type="number" name="price_retail" class="form-input" placeholder="VD: 350000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tỷ lệ hoa hồng (%)</label>
+              <input type="number" name="commission_rate" class="form-input" value="15" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Link tiếp thị gốc (Shopee / Web)</label>
+            <input type="url" name="affiliate_base_url" class="form-input" placeholder="https://shopee.vn/product/..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Thông số kỹ thuật / Đặc điểm (Mỗi dòng 1 gạch đầu dòng)</label>
+            <textarea name="specs" class="form-textarea" rows="3" placeholder="- Bluetooth 5.4 độ trễ thấp&#10;- Thời lượng pin 30h liên tục&#10;- Chống nước IPX5"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCancelAddProductModal" class="btn btn-secondary">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu Sản Phẩm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Main JavaScript Controller -->
+  <script src="/js/autobiz.js?v=20261115_prod"></script>
+</body>
+</html>

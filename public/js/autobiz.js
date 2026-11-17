@@ -1,0 +1,1060 @@
+/**
+ * AutoBiz AI - Phase 3 Minimalist SaaS Frontend Controller
+ * High-performance, anti-AI-slop, utilitarian architecture
+ */
+
+(function () {
+  'use strict';
+
+  // ======================== STATE STORE ========================
+  const state = {
+    currentView: 'analytics',
+    activeStudioTab: 'facebook',
+    studioContents: {
+      facebook: '',
+      tiktok: '',
+      zalo: '',
+      shopee: ''
+    },
+    catalogProducts: [],
+    catalogFilter: 'all',
+    catalogSearch: '',
+    queuePosts: [],
+    settings: {}
+  };
+
+  // Category labels and pastel classes
+  const CATEGORY_MAP = {
+    tech: { label: 'Công nghệ', class: 'tag-tech' },
+    accessories: { label: 'Phụ kiện', class: 'tag-accessories' },
+    home: { label: 'Gia dụng', class: 'tag-home' },
+    fashion: { label: 'Thời trang', class: 'tag-fashion' },
+    fmcg: { label: 'Tiêu dùng', class: 'tag-fmcg' },
+    auto: { label: 'Tự động', class: 'tag-accessories' }
+  };
+
+  // ======================== DOM UTILITIES ========================
+  function $(selector) {
+    return document.querySelector(selector);
+  }
+
+  function $$(selector) {
+    return Array.from(document.querySelectorAll(selector));
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatCurrency(num) {
+    const val = Number(num) || 0;
+    return val.toLocaleString('vi-VN') + ' đ';
+  }
+
+  function formatDateTime(isoStr) {
+    if (!isoStr) return '--';
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    return d.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  // ======================== TOAST SYSTEM ========================
+  function showToast(message, isError = false) {
+    let container = $('#toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${isError ? 'toast-error' : ''}`;
+    
+    const iconSvg = isError
+      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+
+    toast.innerHTML = `${iconSvg}<span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      toast.style.transition = 'all 0.2s ease';
+      setTimeout(() => toast.remove(), 200);
+    }, 3200);
+  }
+
+  // ======================== NAVIGATION CONTROLLER ========================
+  function switchView(viewName) {
+    state.currentView = viewName;
+
+    // Update Nav Buttons
+    $$('.nav-item').forEach((btn) => {
+      if (btn.getAttribute('data-view') === viewName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Update Sections
+    $$('.view-section').forEach((sec) => {
+      sec.classList.remove('active');
+    });
+
+    const targetSec = $(`#view-${viewName}`);
+    if (targetSec) {
+      targetSec.classList.add('active');
+    }
+
+    // Close mobile sidebar if open
+    closeMobileSidebar();
+
+    // Load data specific to view
+    if (viewName === 'analytics') {
+      loadAnalyticsSummary();
+    } else if (viewName === 'catalog') {
+      loadCatalogProducts();
+    } else if (viewName === 'queue') {
+      loadQueuePosts();
+    } else if (viewName === 'settings') {
+      loadSettings();
+    }
+  }
+
+  function toggleMobileSidebar() {
+    const sidebar = $('#appSidebar');
+    const overlay = $('#sidebarOverlay');
+    if (sidebar && overlay) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+    }
+  }
+
+  function closeMobileSidebar() {
+    const sidebar = $('#appSidebar');
+    const overlay = $('#sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+  }
+
+  // ======================== PHÂN HỆ 1: TỔNG QUAN & FINTECH ========================
+  async function loadAnalyticsSummary() {
+    try {
+      const res = await fetch('/api/analytics/summary');
+      if (!res.ok) throw new Error('Không thể nạp số liệu thống kê.');
+      const data = await res.json();
+      const summary = data.summary || {};
+
+      // Big Stats
+      const statClicks = $('#statClicks');
+      const statLinks = $('#statLinks');
+      const statConversion = $('#statConversion');
+      const statCommission = $('#statCommission');
+
+      if (statClicks) statClicks.textContent = (summary.totalClicks || 0).toLocaleString('vi-VN');
+      if (statLinks) statLinks.textContent = (summary.totalLinks || 0).toLocaleString('vi-VN');
+      if (statConversion) statConversion.textContent = `${Number(summary.conversionRate || 0).toFixed(1)}%`;
+      if (statCommission) statCommission.textContent = formatCurrency(summary.totalCommission || 0);
+
+      // Horizontal Bar Chart
+      renderChannelChart(summary.byChannel || {});
+
+      // Top Links Table
+      renderTopLinksTable(summary.topLinks || []);
+    } catch (err) {
+      console.error('[Analytics Error]', err);
+      showToast(err.message, true);
+    }
+  }
+
+  function renderChannelChart(byChannel) {
+    const container = $('#channelChartContainer');
+    if (!container) return;
+
+    const channels = [
+      { key: 'facebook', label: 'Facebook' },
+      { key: 'tiktok', label: 'TikTok' },
+      { key: 'zalo', label: 'Zalo' },
+      { key: 'shopee', label: 'Shopee' }
+    ];
+
+    let maxClicks = 1;
+    channels.forEach(ch => {
+      const c = (byChannel[ch.key] && byChannel[ch.key].clicks) || 0;
+      if (c > maxClicks) maxClicks = c;
+    });
+
+    let html = '';
+    channels.forEach(ch => {
+      const data = byChannel[ch.key] || { clicks: 0, commission: 0 };
+      const clicks = Number(data.clicks) || 0;
+      const commission = Number(data.commission) || 0;
+      const pct = Math.max(4, Math.round((clicks / maxClicks) * 100));
+
+      html += `
+        <div class="chart-row">
+          <div class="chart-channel">
+            <span>${escapeHtml(ch.label)}</span>
+          </div>
+          <div class="chart-bar-bg">
+            <div class="chart-bar-fill" style="width: ${pct}%;"></div>
+          </div>
+          <div class="chart-values">
+            <strong>${clicks.toLocaleString('vi-VN')}</strong> clicks • ${formatCurrency(commission)}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function renderTopLinksTable(links) {
+    const tbody = $('#topLinksTableBody');
+    if (!tbody) return;
+
+    if (!Array.isArray(links) || links.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có link affiliate nào được tạo.</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    links.forEach(l => {
+      const chName = (l.channel || 'facebook').toUpperCase();
+      const code = escapeHtml(l.shortCode || '');
+      const clicks = Number(l.clicks) || 0;
+      const comm = Number(l.estimatedCommission) || 0;
+
+      html += `
+        <tr>
+          <td><span class="shortcode-badge">/r/${code}</span></td>
+          <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(l.productName || '')}">
+            <strong>${escapeHtml(l.productName || 'Sản phẩm')}</strong>
+          </td>
+          <td><span class="tag tag-tech">${chName}</span></td>
+          <td><strong>${clicks.toLocaleString('vi-VN')}</strong></td>
+          <td>${formatCurrency(comm)}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.openShortlink('${code}')" title="Mở đường link để kiểm tra click thực tế">
+                Mở thử /r/${code}
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.copyLink('/r/${code}')" title="Sao chép link rút gọn">
+                Sao chép
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function openShortlink(code) {
+    const fullUrl = `${window.location.origin}/r/${encodeURIComponent(code)}`;
+    window.open(fullUrl, '_blank');
+    showToast(`Đã mở /r/${code} trong tab mới! Đang ghi nhận lượt click...`);
+    // Refresh stats automatically after 1 second to show updated click count
+    setTimeout(() => {
+      loadAnalyticsSummary();
+    }, 1200);
+  }
+
+  function copyLink(path) {
+    const fullUrl = `${window.location.origin}${path}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      showToast(`Đã sao chép: ${fullUrl}`);
+    }).catch(() => {
+      showToast(`Không thể tự động sao chép. URL: ${fullUrl}`);
+    });
+  }
+
+  // ======================== PHÂN HỆ 2: STUDIO ĐA KÊNH ========================
+  function initStudio() {
+    // Channel Tab Switcher
+    $$('.channel-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetChannel = btn.getAttribute('data-channel');
+        switchStudioTab(targetChannel);
+      });
+    });
+
+    // Editor Textarea input sync
+    const editor = $('#studioEditor');
+    if (editor) {
+      editor.addEventListener('input', () => {
+        state.studioContents[state.activeStudioTab] = editor.value;
+        updateCharCounter();
+      });
+    }
+
+    // Copy Content Button
+    const btnCopy = $('#btnCopyStudioContent');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', () => {
+        const content = ($('#studioEditor') && $('#studioEditor').value) || '';
+        if (!content.trim()) {
+          showToast('Nội dung đang trống.', true);
+          return;
+        }
+        navigator.clipboard.writeText(content).then(() => {
+          showToast('Đã sao chép nội dung bài viết!');
+        });
+      });
+    }
+
+    // Create Shortlink Button
+    const btnShorten = $('#btnCreateShortlink');
+    if (btnShorten) {
+      btnShorten.addEventListener('click', handleCreateStudioShortlink);
+    }
+
+    // AI Generate Button
+    const btnGenerate = $('#btnGenerateContent');
+    if (btnGenerate) {
+      btnGenerate.addEventListener('click', handleAIGenerate);
+    }
+
+    // Dispatch Button
+    const btnDispatch = $('#btnDispatchNow');
+    if (btnDispatch) {
+      btnDispatch.addEventListener('click', handleDispatchChannels);
+    }
+
+    // Add to Queue Button
+    const btnQueue = $('#btnAddToQueue');
+    if (btnQueue) {
+      btnQueue.addEventListener('click', handleAddToQueue);
+    }
+  }
+
+  function switchStudioTab(channelKey) {
+    const editor = $('#studioEditor');
+    if (editor) {
+      // Save current tab's text first
+      state.studioContents[state.activeStudioTab] = editor.value;
+      // Set new active tab
+      state.activeStudioTab = channelKey;
+      // Populate editor with saved text
+      editor.value = state.studioContents[channelKey] || '';
+      updateCharCounter();
+    }
+
+    // Update tab button styles
+    $$('.channel-tab-btn').forEach((btn) => {
+      if (btn.getAttribute('data-channel') === channelKey) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  function updateCharCounter() {
+    const editor = $('#studioEditor');
+    const counter = $('#studioCharCount');
+    if (!editor || !counter) return;
+
+    const len = editor.value.length;
+    const lines = editor.value ? editor.value.split('\n').length : 0;
+    counter.textContent = `${len} ký tự • ${lines} dòng`;
+  }
+
+  async function handleCreateStudioShortlink() {
+    const baseUrlInput = $('#studioBaseUrl');
+    const campaignInput = $('#studioCampaign');
+    const subIdInput = $('#studioSubId');
+    const priceInput = $('#studioPrice');
+    const rawTextInput = $('#studioRawText');
+
+    const baseUrl = baseUrlInput ? baseUrlInput.value.trim() : '';
+    if (!baseUrl) {
+      showToast('Vui lòng nhập Link gốc sản phẩm (Shopee, Web...).', true);
+      if (baseUrlInput) baseUrlInput.focus();
+      return;
+    }
+
+    const payload = {
+      baseUrl,
+      productName: (rawTextInput && rawTextInput.value.trim().slice(0, 60)) || 'Sản phẩm Studio',
+      priceRetail: (priceInput && Number(priceInput.value)) || 0,
+      channel: state.activeStudioTab || 'facebook',
+      campaign: (campaignInput && campaignInput.value.trim()) || 'autobiz_2026',
+      subId: (subIdInput && subIdInput.value.trim()) || 'vuonggia'
+    };
+
+    try {
+      const res = await fetch('/api/affiliate/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Lỗi khi tạo shortlink.');
+      }
+
+      const container = $('#studioGeneratedLinkContainer');
+      const textSpan = $('#studioGeneratedLinkText');
+      if (container && textSpan) {
+        textSpan.textContent = data.shortUrl;
+        container.style.display = 'flex';
+      }
+
+      showToast(`Đã tạo link rút gọn thành công: ${data.shortUrl}`);
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function handleAIGenerate() {
+    const rawTextInput = $('#studioRawText');
+    const categorySelect = $('#studioCategory');
+    const priceInput = $('#studioPrice');
+    const baseUrlInput = $('#studioBaseUrl');
+    const campaignInput = $('#studioCampaign');
+    const btnGenerate = $('#btnGenerateContent');
+
+    const rawText = rawTextInput ? rawTextInput.value.trim() : '';
+    if (!rawText) {
+      showToast('Vui lòng nhập mô tả hoặc dán thông số sản phẩm.', true);
+      if (rawTextInput) rawTextInput.focus();
+      return;
+    }
+
+    const originalBtnText = btnGenerate ? btnGenerate.innerHTML : '';
+    if (btnGenerate) {
+      btnGenerate.disabled = true;
+      btnGenerate.innerHTML = `<svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"></circle></svg> Đang phân tích AI & tạo 4 kênh...`;
+    }
+
+    try {
+      const payload = {
+        rawText,
+        category: categorySelect ? categorySelect.value : 'auto',
+        customPrice: priceInput ? priceInput.value.trim() : '',
+        affiliateUrl: baseUrlInput ? baseUrlInput.value.trim() : '',
+        campaign: campaignInput ? campaignInput.value.trim() : 'autobiz_2026',
+        channel: state.activeStudioTab
+      };
+
+      const res = await fetch('/api/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Lỗi xử lý từ AI Service.');
+      }
+
+      // Populate multi-channel state
+      if (data.multiChannel) {
+        state.studioContents.facebook = data.multiChannel.facebook || '';
+        state.studioContents.tiktok = data.multiChannel.tiktok || '';
+        state.studioContents.zalo = data.multiChannel.zalo || '';
+        state.studioContents.shopee = data.multiChannel.shopee || '';
+      } else if (data.content) {
+        state.studioContents[state.activeStudioTab] = data.content;
+      }
+
+      // Populate parsed SKU if provided and not yet filled
+      const skuInput = $('#studioSku');
+      if (skuInput && !skuInput.value.trim() && data.machineCode) {
+        skuInput.value = data.machineCode;
+      }
+
+      // Reflect current tab in editor
+      const editor = $('#studioEditor');
+      if (editor) {
+        editor.value = state.studioContents[state.activeStudioTab] || '';
+        updateCharCounter();
+      }
+
+      showToast('Đã phân tích AI và khởi tạo bài viết 4 kênh!');
+    } catch (err) {
+      console.error('[AI Generate Error]', err);
+      showToast(err.message, true);
+    } finally {
+      if (btnGenerate) {
+        btnGenerate.disabled = false;
+        btnGenerate.innerHTML = originalBtnText;
+      }
+    }
+  }
+
+  async function handleDispatchChannels() {
+    const editor = $('#studioEditor');
+    const finalContent = editor ? editor.value.trim() : '';
+
+    if (!finalContent) {
+      showToast('Nội dung bài viết đang trống. Vui lòng tạo nội dung trước.', true);
+      return;
+    }
+
+    // Save editor value to current tab
+    state.studioContents[state.activeStudioTab] = finalContent;
+
+    const checkedBoxes = $$('.dispatch-channel-cb:checked');
+    if (checkedBoxes.length === 0) {
+      showToast('Vui lòng tích chọn ít nhất 1 kênh phân phối.', true);
+      return;
+    }
+
+    const target_channels = checkedBoxes.map((cb) => cb.value);
+    const btnDispatch = $('#btnDispatchNow');
+    const originalText = btnDispatch ? btnDispatch.innerHTML : '';
+    if (btnDispatch) {
+      btnDispatch.disabled = true;
+      btnDispatch.innerHTML = 'Đang phân phối...';
+    }
+
+    try {
+      const payload = {
+        target_channels,
+        channel_contents: state.studioContents,
+        finalContent
+      };
+
+      const res = await fetch('/api/autobiz/dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Lỗi phân phối kênh.');
+      }
+
+      renderDispatchResults(data.results || []);
+      showToast('Đã thực thi phân phối đa kênh thành công!');
+    } catch (err) {
+      console.error('[Dispatch Error]', err);
+      showToast(err.message, true);
+    } finally {
+      if (btnDispatch) {
+        btnDispatch.disabled = false;
+        btnDispatch.innerHTML = originalText;
+      }
+    }
+  }
+
+  function renderDispatchResults(results) {
+    const container = $('#dispatchResultsContainer');
+    if (!container) return;
+
+    if (!Array.isArray(results) || results.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '';
+    results.forEach((r) => {
+      const isSuccess = r.status === 'success' || r.status === 'simulated';
+      const tagClass = isSuccess ? 'tag-posted' : 'tag-failed';
+      const statusLabel = r.status === 'success' ? 'Thành công' : (r.status === 'simulated' ? 'Mô phỏng' : 'Lỗi');
+
+      html += `
+        <div class="dispatch-result-item">
+          <div>
+            <strong>${escapeHtml(r.channel ? r.channel.toUpperCase() : 'KÊNH')}</strong>:
+            <span style="color: var(--text-muted); margin-left: 6px;">${escapeHtml(r.message || '')}</span>
+          </div>
+          <span class="tag ${tagClass}">${statusLabel}</span>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  async function handleAddToQueue() {
+    const editor = $('#studioEditor');
+    const skuInput = $('#studioSku');
+    const priceInput = $('#studioPrice');
+
+    const content = editor ? editor.value.trim() : '';
+    if (!content) {
+      showToast('Nội dung bài viết đang trống.', true);
+      return;
+    }
+
+    const payload = {
+      machineCode: (skuInput && skuInput.value.trim()) || 'AUTOBIZ',
+      machineName: 'Sản phẩm Studio',
+      content,
+      price: (priceInput && priceInput.value.trim()) || '',
+      publishImmediately: false
+    };
+
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Không thể đưa vào hàng đợi.');
+
+      showToast('Đã đưa bài viết vào Hàng đợi lên lịch thành công!');
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ======================== PHÂN HỆ 3: KHO HÀNG ĐA NGÀNH ========================
+  async function loadCatalogProducts() {
+    try {
+      const params = new URLSearchParams();
+      if (state.catalogFilter && state.catalogFilter !== 'all') {
+        params.set('category', state.catalogFilter);
+      }
+      if (state.catalogSearch && state.catalogSearch.trim()) {
+        params.set('search', state.catalogSearch.trim());
+      }
+
+      const res = await fetch(`/api/products?${params.toString()}`);
+      if (!res.ok) throw new Error('Không thể nạp danh mục sản phẩm.');
+      const data = await res.json();
+
+      state.catalogProducts = data.products || [];
+      renderCatalogTable(state.catalogProducts);
+    } catch (err) {
+      console.error('[Catalog Error]', err);
+      showToast(err.message, true);
+    }
+  }
+
+  function renderCatalogTable(products) {
+    const tbody = $('#catalogTableBody');
+    if (!tbody) return;
+
+    if (!Array.isArray(products) || products.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 28px;">Không tìm thấy sản phẩm nào phù hợp.</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    products.forEach((p) => {
+      const catInfo = CATEGORY_MAP[p.category] || { label: p.category || 'Khác', class: 'tag-tech' };
+      const specsSummary = Array.isArray(p.specs) ? p.specs.join(' • ') : (p.specs || '');
+
+      html += `
+        <tr>
+          <td><span class="shortcode-badge">${escapeHtml(p.sku || '')}</span></td>
+          <td style="max-width: 280px;">
+            <div style="font-weight: 600; color: var(--text-main); margin-bottom: 2px;">${escapeHtml(p.name || '')}</div>
+            <div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(specsSummary)}">
+              ${escapeHtml(specsSummary)}
+            </div>
+          </td>
+          <td><span class="tag ${catInfo.class}">${catInfo.label}</span></td>
+          <td><strong>${formatCurrency(p.price_retail || 0)}</strong></td>
+          <td>${Number(p.commission_rate || 0)}%</td>
+          <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <a href="${escapeHtml(p.affiliate_base_url || '#')}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: var(--text-muted); text-decoration: underline;">
+              ${escapeHtml(p.affiliate_base_url ? 'Link Shopee/Web' : '--')}
+            </a>
+          </td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-sm" onclick="window.AutoBiz.loadProductToStudio('${p.id}')">
+                Nạp vào Studio
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.deleteProduct('${p.id}')" title="Xóa">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function loadProductToStudio(productId) {
+    const product = state.catalogProducts.find((p) => p.id === productId);
+    if (!product) {
+      showToast('Không tìm thấy thông tin sản phẩm.', true);
+      return;
+    }
+
+    // Populate Studio Inputs
+    const skuInput = $('#studioSku');
+    const priceInput = $('#studioPrice');
+    const categorySelect = $('#studioCategory');
+    const baseUrlInput = $('#studioBaseUrl');
+    const rawTextInput = $('#studioRawText');
+
+    if (skuInput) skuInput.value = product.sku || '';
+    if (priceInput) priceInput.value = product.price_retail || '';
+    if (categorySelect) categorySelect.value = product.category || 'auto';
+    if (baseUrlInput) baseUrlInput.value = product.affiliate_base_url || '';
+
+    // Compose formatted text for raw text box
+    const specsList = Array.isArray(product.specs) ? product.specs.join('\n- ') : product.specs;
+    const rawText = `${product.name}\n- ${specsList}\nGiá bán: ${formatCurrency(product.price_retail || 0)}`;
+    if (rawTextInput) rawTextInput.value = rawText;
+
+    // Switch view to Studio
+    switchView('studio');
+    showToast(`Đã nạp sản phẩm [${product.sku}] ${product.name} sang Studio Đa Kênh!`);
+  }
+
+  async function deleteProduct(productId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi Kho hàng?')) return;
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Không thể xóa sản phẩm.');
+      showToast('Đã xóa sản phẩm thành công.');
+      loadCatalogProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  function openAddProductModal() {
+    const modal = $('#modalAddProduct');
+    if (modal) modal.classList.add('open');
+  }
+
+  function closeAddProductModal() {
+    const modal = $('#modalAddProduct');
+    if (modal) modal.classList.remove('open');
+  }
+
+  async function handleSaveNewProduct(e) {
+    e.preventDefault();
+
+    const form = $('#formAddProduct');
+    if (!form) return;
+
+    const payload = {
+      sku: form.sku.value.trim(),
+      name: form.name.value.trim(),
+      category: form.category.value,
+      price_retail: Number(form.price_retail.value) || 0,
+      commission_rate: Number(form.commission_rate.value) || 10,
+      affiliate_base_url: form.affiliate_base_url.value.trim(),
+      specs: form.specs.value.trim()
+    };
+
+    if (!payload.name) {
+      showToast('Vui lòng nhập tên sản phẩm.', true);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Lỗi khi thêm sản phẩm.');
+      }
+
+      form.reset();
+      closeAddProductModal();
+      showToast('Đã thêm sản phẩm mới vào Kho hàng!');
+      loadCatalogProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ======================== PHÂN HỆ 4: HÀNG ĐỢI & LỊCH PHÁT ========================
+  async function loadQueuePosts() {
+    try {
+      const res = await fetch('/api/posts');
+      if (!res.ok) throw new Error('Không thể nạp danh sách bài viết.');
+      const posts = await res.json();
+      state.queuePosts = Array.isArray(posts) ? posts : [];
+      renderQueueTable(state.queuePosts);
+    } catch (err) {
+      console.error('[Queue Error]', err);
+      showToast(err.message, true);
+    }
+  }
+
+  function renderQueueTable(posts) {
+    const tbody = $('#queueTableBody');
+    const queueCountBadge = $('#queueCountBadge');
+    if (!tbody) return;
+
+    const queuedOnly = posts.filter((p) => p.status === 'queued' || p.status === 'pending_media');
+    if (queueCountBadge) {
+      queueCountBadge.textContent = `${queuedOnly.length} bài chờ`;
+    }
+
+    if (posts.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 28px;">Hàng đợi đang trống. Bạn có thể tạo bài mới từ Studio Đa Kênh.</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    posts.forEach((p) => {
+      let statusTag = '<span class="tag tag-queued">Đang chờ</span>';
+      if (p.status === 'posted') {
+        statusTag = '<span class="tag tag-posted">Đã phát</span>';
+      } else if (p.status === 'failed') {
+        statusTag = '<span class="tag tag-failed">Thất bại</span>';
+      }
+
+      const scheduledTimeStr = formatDateTime(p.scheduled_time || p.scheduledTime);
+      const excerpt = (p.content || '').slice(0, 90).replace(/\n/g, ' ');
+
+      html += `
+        <tr>
+          <td><span class="shortcode-badge">${escapeHtml(p.machineCode || p.id.slice(-6))}</span></td>
+          <td style="max-width: 320px;">
+            <div style="font-size: 13px; color: var(--text-main); font-weight: 500;">${escapeHtml(p.machineName || 'Bài viết đa kênh')}</div>
+            <div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(p.content || '')}">
+              ${escapeHtml(excerpt)}...
+            </div>
+          </td>
+          <td>${statusTag}</td>
+          <td><span style="font-size: 12px; color: var(--text-muted);">${scheduledTimeStr}</span></td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              ${p.status !== 'posted' ? `
+                <button class="btn btn-primary btn-sm" onclick="window.AutoBiz.publishPostNow('${p.id}')">
+                  Đăng ngay
+                </button>
+              ` : `
+                <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.5;">
+                  Hoàn thành
+                </button>
+              `}
+              <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.deletePost('${p.id}')" title="Xóa">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  async function publishPostNow(postId) {
+    if (!confirm('Bạn có chắc chắn muốn phát bài này ngay lập tức lên các kênh đã cấu hình?')) return;
+
+    try {
+      showToast('Đang phát bài viết...');
+      const res = await fetch(`/api/posts/${postId}/publish-now`, { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Lỗi khi phát bài viết.');
+      }
+
+      showToast(data.message || 'Đã thực thi phát bài thành công!');
+      loadQueuePosts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function deletePost(postId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa bài viết này khỏi danh sách?')) return;
+
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Không thể xóa bài viết.');
+      showToast('Đã xóa bài viết.');
+      loadQueuePosts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ======================== PHÂN HỆ 5: KẾT NỐI KÊNH & CÀI ĐẶT ========================
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('Không thể tải cài đặt.');
+      const data = await res.json();
+      state.settings = data || {};
+
+      const form = $('#formSettings');
+      if (!form) return;
+
+      form.geminiApiKey.value = data.geminiApiKey || '';
+      form.fanpageName.value = data.fanpageName || '';
+      form.hotline.value = data.hotline || '';
+      form.email.value = data.email || '';
+      form.fanpageId.value = data.fanpageId || '';
+      form.facebookPageToken.value = data.facebookPageToken || '';
+      form.tiktokToken.value = data.tiktokToken || '';
+      form.zaloToken.value = data.zaloToken || '';
+      form.shopeePartnerId.value = data.shopeePartnerId || '';
+    } catch (err) {
+      console.error('[Settings Error]', err);
+      showToast(err.message, true);
+    }
+  }
+
+  async function handleSaveSettings(e) {
+    e.preventDefault();
+
+    const form = $('#formSettings');
+    if (!form) return;
+
+    const payload = {
+      geminiApiKey: form.geminiApiKey.value.trim(),
+      fanpageName: form.fanpageName.value.trim(),
+      hotline: form.hotline.value.trim(),
+      email: form.email.value.trim(),
+      fanpageId: form.fanpageId.value.trim(),
+      facebookPageToken: form.facebookPageToken.value.trim(),
+      tiktokToken: form.tiktokToken.value.trim(),
+      zaloToken: form.zaloToken.value.trim(),
+      shopeePartnerId: form.shopeePartnerId.value.trim()
+    };
+
+    const btn = $('#btnSaveSettings');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'Đang lưu...';
+    }
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Không thể lưu cài đặt.');
+      }
+
+      showToast(data.message || 'Đã lưu cấu hình thành công!');
+    } catch (err) {
+      showToast(err.message, true);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  // ======================== GLOBAL ATTACHMENTS & INITIALIZATION ========================
+  window.AutoBiz = {
+    switchView,
+    openShortlink,
+    copyLink,
+    loadProductToStudio,
+    deleteProduct,
+    publishPostNow,
+    deletePost
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Nav Items click bindings
+    $$('.nav-item').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const view = item.getAttribute('data-view');
+        if (view) switchView(view);
+      });
+    });
+
+    // Mobile Hamburger & Overlay
+    const btnMobileMenu = $('#btnMobileMenu');
+    const sidebarOverlay = $('#sidebarOverlay');
+    if (btnMobileMenu) btnMobileMenu.addEventListener('click', toggleMobileSidebar);
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
+
+    // Refresh Analytics Button
+    const btnRefreshAnalytics = $('#btnRefreshAnalytics');
+    if (btnRefreshAnalytics) {
+      btnRefreshAnalytics.addEventListener('click', () => {
+        showToast('Đang làm mới số liệu FinTech...');
+        loadAnalyticsSummary();
+      });
+    }
+
+    // Catalog Filter Pills
+    $$('.filter-pill').forEach((pill) => {
+      pill.addEventListener('click', () => {
+        $$('.filter-pill').forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.catalogFilter = pill.getAttribute('data-category') || 'all';
+        loadCatalogProducts();
+      });
+    });
+
+    // Catalog Search Input
+    const catalogSearchInput = $('#catalogSearch');
+    if (catalogSearchInput) {
+      let debounceTimer = null;
+      catalogSearchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          state.catalogSearch = catalogSearchInput.value;
+          loadCatalogProducts();
+        }, 300);
+      });
+    }
+
+    // Modal Add Product
+    const btnOpenAddModal = $('#btnOpenAddProductModal');
+    const btnCloseAddModal = $('#btnCloseAddProductModal');
+    const btnCancelAddModal = $('#btnCancelAddProductModal');
+    const formAddProduct = $('#formAddProduct');
+
+    if (btnOpenAddModal) btnOpenAddModal.addEventListener('click', openAddProductModal);
+    if (btnCloseAddModal) btnCloseAddModal.addEventListener('click', closeAddProductModal);
+    if (btnCancelAddModal) btnCancelAddModal.addEventListener('click', closeAddProductModal);
+    if (formAddProduct) formAddProduct.addEventListener('submit', handleSaveNewProduct);
+
+    // Settings Form
+    const formSettings = $('#formSettings');
+    if (formSettings) formSettings.addEventListener('submit', handleSaveSettings);
+
+    // Refresh Queue
+    const btnRefreshQueue = $('#btnRefreshQueue');
+    if (btnRefreshQueue) btnRefreshQueue.addEventListener('click', loadQueuePosts);
+
+    // Listen for live sync events from AutoBiz AI Collector Chrome Extension (v2.0)
+    window.addEventListener('message', (event) => {
+      if (event.source !== window || !event.data) return;
+      if (event.data.action === 'AUTOBIZ_EXTENSION_SYNC') {
+        loadCatalogProducts();
+        loadAnalyticsSummary();
+        showToast('Đã đồng bộ sản phẩm & link mới từ AutoBiz Collector Extension!');
+      }
+    });
+
+    // Init Studio & Default view
+    initStudio();
+    switchView('analytics');
+  });
+
+})();

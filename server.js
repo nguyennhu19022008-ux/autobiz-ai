@@ -1,0 +1,1195 @@
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const axios = require('axios');
+require('dotenv').config();
+
+const {
+  PRODUCT_CATEGORIES,
+  generatePostWithGemini,
+  sanitizeRawText,
+  extractExplicitMachineCode,
+  buildAffiliateUrl
+} = require('./services/gemini');
+const catalogService = require('./services/catalog');
+const affiliateService = require('./services/affiliate');
+const { dispatchToChannels } = require('./services/adapters');
+const { verifyPageToken } = require('./services/facebook');
+const { sendTestEmail } = require('./services/mailer');
+const {
+  handleTelegramUpdate,
+  setTelegramWebhook,
+  sendTelegramMessage
+} = require('./services/telegram');
+const { parseStockTableFromImage } = require('./services/tableParser');
+const {
+  uploadToSupabaseStorage,
+  deleteFromSupabaseStorage,
+  upsertPostToDb,
+  deletePostFromDb
+} = require('./services/supabase');
+const { normalizeMachineCode, isValidMachineCode, deduplicateItemsByCode } = require('./utils/dedup');
+const { inspectMedia } = require('./services/mediaFilter');
+const {
+  startScheduler,
+  executePost,
+  checkAndPublishDuePosts,
+  getNextAvailableScheduleTime,
+  getConsecutiveScheduleSlots,
+  getPosts,
+  savePosts,
+  getSettings,
+  saveSettings
+} = require('./services/scheduler');
+const dataPostService = require('./services/dataPost');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Dedicated routes for Web App Dashboard Cockpit -> Serve new Utilitarian Minimalism UI (index.html)
+app.get(['/app', '/dashboard', '/cockpit'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Dedicated routes for 16:9 Pitch Deck Presentation (CV17 - Phase 6)
+app.get(['/slides', '/pitch-deck'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pitch-deck.html'));
+});
+app.use('/charts', express.static(path.join(__dirname, 'charts')));
+
+// Storage configuration for media uploads: Memory storage for universal serverless/Vercel support
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 } // 200MB max per video/image
+});
+
+// ======================== API ROUTES ========================
+
+// 1. Get current settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 1.1. Autonomous Cockpit Status Overview
+app.get('/api/cockpit/status', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    const queuedPosts = posts.filter(p => p.status === 'queued' || p.status === 'processing' || p.status === 'pending_media' || p.status === 'skipped_no_media');
+    const historyPosts = posts.filter(p => p.status === 'posted');
+    const templates = await dataPostService.getModelTemplates();
+
+    const sortedQueued = [...queuedPosts].sort((a, b) => {
+      const tA = new Date(a.scheduled_time || a.scheduledTime || 0).getTime();
+      const tB = new Date(b.scheduled_time || b.scheduledTime || 0).getTime();
+      return tA - tB;
+    });
+
+    const nextPost = sortedQueued[0] || null;
+    const lastPost = sortedQueued[sortedQueued.length - 1] || null;
+
+    res.json({
+      success: true,
+      queueCount: queuedPosts.length,
+      historyCount: historyPosts.length,
+      templateCount: templates.length,
+      nextPost,
+      scheduledUntil: lastPost ? (lastPost.scheduled_time || lastPost.scheduledTime) : null,
+      recentUpcoming: sortedQueued.slice(0, 6)
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Update settings
+app.post('/api/settings', async (req, res) => {
+  try {
+    const currentSettings = await getSettings();
+    const newSettings = { ...currentSettings, ...req.body };
+    await saveSettings(newSettings);
+    res.json({ success: true, settings: newSettings, message: 'Đã lưu cấu hình thành công!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Test Facebook Page Connection
+app.post('/api/test-fb', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const pageId = req.body.fanpageId || settings.fanpageId;
+    const token = req.body.facebookPageToken || settings.facebookPageToken;
+
+    const result = await verifyPageToken(pageId, token);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3.1. Test Email Connection
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const currentSettings = await getSettings();
+    const testConfig = { ...currentSettings, ...req.body };
+    const result = await sendTestEmail(testConfig);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// 3.2. Telegram Webhook (Processes updates from Telegram)
+app.post('/api/telegram-webhook', async (req, res) => {
+  // Respond 200 immediately to Telegram so webhook never times out
+  res.status(200).json({ ok: true });
+
+  try {
+    const settings = await getSettings();
+    await handleTelegramUpdate(req.body, settings, {
+      getPosts,
+      savePosts,
+      upsertPostToDb,
+      publishPost: executePost
+    });
+  } catch (err) {
+    console.error('[Server] Telegram Webhook Error:', err);
+  }
+});
+
+// 3.3. Setup Telegram Webhook
+app.post('/api/telegram/setup-webhook', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const token = req.body.telegramBotToken || settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Chưa có Telegram Bot Token. Vui lòng nhập token trước.' });
+    }
+
+    const host = req.get('host');
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+    const baseUrl = process.env.BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${protocol}://${host}`);
+    const webhookUrl = `${baseUrl}/api/telegram-webhook`;
+
+    const result = await setTelegramWebhook(token, webhookUrl);
+    res.json({
+      success: true,
+      webhookUrl,
+      result,
+      message: `Đã kích hoạt Webhook thành công tới: ${webhookUrl}`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3.4. Test Telegram Message
+app.post('/api/telegram/test-message', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const token = req.body.telegramBotToken || settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = req.body.telegramChatId || settings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatId) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp cả Bot Token và Chat ID để gửi tin nhắn thử.' });
+    }
+
+    const testText = `
+🔔 <b>XIN CHÀO ANH VƯƠNG GIA!</b>
+────────────────────────
+Đây là tin nhắn thử nghiệm từ hệ thống <b>Laptop Vương Gia Autopost</b>.
+Kết nối giữa Telegram Bot và Fanpage đã sẵn sàng 100%!
+
+Từ bây giờ anh có thể:
+1️⃣ Chọn 1 video + nhiều ảnh, dán bài Zalo vào Chú thích và gửi vào đây.
+2️⃣ Bấm <b>[⚡ Đăng ngay]</b> khi muốn xuất bản tức thì.
+────────────────────────
+    `.trim();
+
+    await sendTelegramMessage(token, chatId, testText, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🌐 Mở Dashboard Web', url: 'https://auto-post-fanpage-coral.vercel.app' }]
+        ]
+      }
+    });
+
+    res.json({ success: true, message: 'Đã gửi tin nhắn thử nghiệm thành công tới Telegram!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. AI Generate Post Content (Omni-Channel & Multi-Category AutoBiz AI Engine)
+app.post('/api/generate-content', async (req, res) => {
+  try {
+    const { rawText, customPrice, imageBase64, category, channel, affiliateUrl, campaign } = req.body;
+    const settings = await getSettings();
+
+    const result = await generatePostWithGemini(rawText, settings, customPrice, imageBase64, {
+      category: category || 'auto',
+      channel: channel || 'facebook',
+      affiliateUrl: affiliateUrl || '',
+      campaign: campaign || 'autobiz_2026'
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4b. AutoBiz AI: Get Supported Multi-Categories & Generate Smart Affiliate UTM Link
+app.get('/api/autobiz/categories', (req, res) => {
+  res.json({ success: true, categories: Object.values(PRODUCT_CATEGORIES) });
+});
+
+app.post('/api/autobiz/affiliate-link', (req, res) => {
+  try {
+    const { baseUrl, channel, campaign, subId } = req.body;
+    if (!baseUrl) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp đường link sản phẩm gốc.' });
+    }
+    const links = {
+      facebook: buildAffiliateUrl(baseUrl, 'facebook', campaign || 'autobiz_2026', subId || 'vuonggia'),
+      tiktok: buildAffiliateUrl(baseUrl, 'tiktok', campaign || 'autobiz_2026', subId || 'vuonggia'),
+      zalo: buildAffiliateUrl(baseUrl, 'zalo', campaign || 'autobiz_2026', subId || 'vuonggia'),
+      shopee: buildAffiliateUrl(baseUrl, 'shopee', campaign || 'autobiz_2026', subId || 'vuonggia')
+    };
+    res.json({
+      success: true,
+      primary: channel ? links[channel] || links.facebook : links.facebook,
+      links
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ======================== PHASE 1: MULTI-CATEGORY CATALOG & FINTECH AFFILIATE ENGINE ========================
+
+// Shortlink Redirect & Real-Time Click Tracker (GET /r/:code)
+app.get('/r/:code', (req, res) => {
+  const resolved = affiliateService.recordClickAndResolve(req.params.code);
+  if (!resolved || !resolved.targetUrl) {
+    return res.status(404).send('<h3>AutoBiz AI: Link tiếp thị liên kết không tồn tại hoặc đã hết hạn.</h3>');
+  }
+  return res.redirect(302, resolved.targetUrl);
+});
+
+// Multi-Category Product Catalog CRUD
+app.get('/api/products', (req, res) => {
+  const { category, search } = req.query;
+  const products = catalogService.listProducts({ category, search });
+  res.json({ success: true, total: products.length, products });
+});
+
+app.post('/api/products', (req, res) => {
+  try {
+    const created = catalogService.createProduct(req.body || {});
+    res.status(201).json({ success: true, product: created });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/products/:id', (req, res) => {
+  const updated = catalogService.updateProduct(req.params.id, req.body || {});
+  if (!updated) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
+  res.json({ success: true, product: updated });
+});
+
+app.delete('/api/products/:id', (req, res) => {
+  const deleted = catalogService.deleteProduct(req.params.id);
+  if (!deleted) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
+  res.json({ success: true });
+});
+
+// Affiliate Shortlink Management & FinTech Analytics
+app.get('/api/affiliate/links', (req, res) => {
+  const links = affiliateService.listAffiliateLinks();
+  res.json({ success: true, total: links.length, links });
+});
+
+app.post('/api/affiliate/shorten', (req, res) => {
+  try {
+    const { baseUrl, productId, productName, priceRetail, commissionRate, channel, campaign, subId } = req.body || {};
+    if (!baseUrl) {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp baseUrl.' });
+    }
+    const entry = affiliateService.createShortLink({
+      baseUrl,
+      productId,
+      productName,
+      priceRetail,
+      commissionRate,
+      channel,
+      campaign,
+      subId
+    });
+    const host = req.get('host') || `localhost:${PORT}`;
+    const protocol = req.protocol || 'http';
+    res.status(201).json({
+      success: true,
+      shortUrl: `${protocol}://${host}/r/${entry.shortCode}`,
+      entry,
+      link: entry
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/analytics/summary', (req, res) => {
+  const baseSummary = affiliateService.getAnalyticsSummary();
+  const totalProducts = catalogService.listProducts().length;
+  const summary = {
+    ...baseSummary,
+    totalProducts,
+    totalEstimatedCommission: baseSummary.totalCommission
+  };
+  res.json({ success: true, summary });
+});
+
+// Phase 2: Omni-Channel Dispatch Hub (Facebook + TikTok + Zalo + Shopee)
+app.post('/api/autobiz/dispatch', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const { target_channels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId } = req.body || {};
+    const results = await dispatchToChannels(
+      { target_channels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId },
+      settings
+    );
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 5. Upload Media Files (Images / Videos - Up to 35 files)
+app.post('/api/upload-media', upload.array('files', 35), async (req, res) => {
+  try {
+    const files = [];
+    for (const f of (req.files || [])) {
+      if (f.mimetype && !f.mimetype.startsWith('video/')) {
+        const banCheck = inspectMedia({ buffer: f.buffer, url: f.originalname });
+        if (banCheck.isBanned) {
+          console.log(`[MediaFilter] 🚫 Bỏ qua tệp tải lên cấm: ${banCheck.reason} (${f.originalname})`);
+          continue;
+        }
+      }
+      let fileObj = null;
+      try {
+        const supaRes = await uploadToSupabaseStorage(f.buffer, f.originalname, f.mimetype);
+        if (supaRes && supaRes.url) {
+          fileObj = supaRes;
+        }
+      } catch (err) {
+        console.warn('[Storage] Supabase upload failed, using local/tmp fallback:', err.message);
+      }
+
+      if (!fileObj) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const isVideo = (f.mimetype && f.mimetype.startsWith('video/')) || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(f.originalname || '');
+        const ext = path.extname(f.originalname) || (isVideo ? '.mp4' : '.jpg');
+        const filename = `${uniqueSuffix}${ext}`;
+        let localPath = null;
+        try {
+          const uploadDir = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'public', 'uploads');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          localPath = path.join(uploadDir, filename);
+          fs.writeFileSync(localPath, f.buffer);
+        } catch (e) {
+          console.warn('[Storage] Local write notice:', e.message);
+        }
+
+        fileObj = {
+          originalname: f.originalname,
+          filename: filename,
+          path: localPath,
+          url: `/uploads/${filename}`,
+          mimetype: f.mimetype || (isVideo ? 'video/mp4' : 'image/jpeg'),
+          size: f.size
+        };
+      }
+
+      files.push(fileObj);
+    }
+    res.json({ success: true, files });
+  } catch (error) {
+    console.error('[UploadMedia Error]', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route: Quick Upload Page for mobile 1-click photo upload from email
+app.get('/quick-upload', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'quick-upload.html'));
+});
+
+// Parse Excel Stock Table Image into structured items (with auto-deduplication)
+app.post('/api/parse-table', async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    const settings = await getSettings();
+    const rawItems = await parseStockTableFromImage(imageBase64, settings);
+
+    // Auto-deduplicate parsed items: if duplicate machine codes exist in table/images, keep newest!
+    const { dedupedItems, replacedCount, replacedCodes } = deduplicateItemsByCode(rawItems);
+
+    res.json({
+      success: true,
+      count: dedupedItems.length,
+      replacedCount,
+      replacedCodes,
+      items: dedupedItems
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Batch schedule multiple items from stock table (with auto-deduplication & old queue replacement)
+app.post('/api/batch-schedule', async (req, res) => {
+  try {
+    const { items = [] } = req.body;
+    if (items.length === 0) {
+      return res.status(400).json({ success: false, error: 'Danh sách máy trống.' });
+    }
+
+    // 1. Deduplicate inside the incoming items: if user selected duplicate codes, keep the newest one!
+    const { dedupedItems } = deduplicateItemsByCode(items);
+
+    let posts = await getPosts();
+    const replacedCodes = [];
+
+    // 2. Check against existing queue: If any item code is already in queue (queued or pending_media),
+    // delete the old post so the new post replaces it cleanly!
+    for (const item of dedupedItems) {
+      const norm = normalizeMachineCode(item.machineCode);
+      if (isValidMachineCode(norm)) {
+        const oldIndex = posts.findIndex(p => 
+          (p.status === 'queued' || p.status === 'pending_media' || p.status === 'skipped_no_media') &&
+          normalizeMachineCode(p.machineCode) === norm
+        );
+        if (oldIndex !== -1) {
+          const oldPost = posts[oldIndex];
+          console.log(`[Deduplicate] 🗑️ Tự động xóa bài cũ #${norm} (ID: ${oldPost.id}) trong hàng đợi để thay bằng bài mới.`);
+          posts.splice(oldIndex, 1);
+          await deletePostFromDb(oldPost.id);
+          if (!replacedCodes.includes(norm)) replacedCodes.push(norm);
+        }
+      }
+    }
+
+    const slots = await getConsecutiveScheduleSlots(dedupedItems.length);
+    const newPosts = [];
+
+    for (let index = 0; index < dedupedItems.length; index++) {
+      const item = dedupedItems[index];
+      const scheduledTime = slots[index] || (await getNextAvailableScheduleTime());
+      const newPost = {
+        id: 'post_' + (Date.now() + index),
+        machineCode: (item.machineCode || 'MÁY').toUpperCase(),
+        machineName: item.machineName || 'Laptop Nhật Bãi',
+        content: item.postContent || '',
+        price: item.price || '',
+        mediaFiles: [], // Starts empty, waiting for photos
+        scheduledTime,
+        status: 'pending_media', // Waiting for media from email reminder
+        mediaReminderSent: false,
+        createdAt: new Date().toISOString()
+      };
+      posts.unshift(newPost);
+      newPosts.push(newPost);
+    }
+
+    await savePosts(posts);
+    for (const np of newPosts) {
+      await upsertPostToDb(np);
+    }
+
+    let message = `Đã lên lịch hàng loạt thành công cho ${newPosts.length} máy!`;
+    if (replacedCodes.length > 0) {
+      message += ` (Đã tự động xóa ${replacedCodes.length} mã cũ bị trùng: #${replacedCodes.join(', #')}, thay bằng mã mới)`;
+    }
+
+    res.json({
+      success: true,
+      count: newPosts.length,
+      replacedCount: replacedCodes.length,
+      replacedCodes,
+      message,
+      posts: newPosts
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get single post details
+app.get('/api/posts/:id', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết.' });
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Attach media to a post from Mobile Quick-Upload or Web (Up to 35 files)
+app.post('/api/posts/:id/attach-media', upload.array('files', 35), async (req, res) => {
+  try {
+    const posts = await getPosts();
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết.' });
+
+    const newFiles = [];
+    for (const f of (req.files || [])) {
+      if (f.mimetype && !f.mimetype.startsWith('video/')) {
+        const banCheck = inspectMedia({ buffer: f.buffer, url: f.originalname });
+        if (banCheck.isBanned) {
+          console.log(`[MediaFilter] 🚫 Bỏ qua tệp tải lên cấm: ${banCheck.reason} (${f.originalname})`);
+          continue;
+        }
+      }
+      let fileObj = null;
+      try {
+        const supaRes = await uploadToSupabaseStorage(f.buffer, f.originalname, f.mimetype);
+        if (supaRes && supaRes.url) {
+          fileObj = supaRes;
+        }
+      } catch (err) {
+        console.warn('[Storage] Supabase upload failed, using local/tmp fallback:', err.message);
+      }
+
+      if (!fileObj) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const isVideo = (f.mimetype && f.mimetype.startsWith('video/')) || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(f.originalname || '');
+        const ext = path.extname(f.originalname) || (isVideo ? '.mp4' : '.jpg');
+        const filename = `${uniqueSuffix}${ext}`;
+        let localPath = null;
+        try {
+          const uploadDir = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'public', 'uploads');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          localPath = path.join(uploadDir, filename);
+          fs.writeFileSync(localPath, f.buffer);
+        } catch (e) {
+          console.warn('[Storage] Local write notice:', e.message);
+        }
+
+        fileObj = {
+          originalname: f.originalname,
+          filename: filename,
+          path: localPath,
+          url: `/uploads/${filename}`,
+          mimetype: f.mimetype || (isVideo ? 'video/mp4' : 'image/jpeg'),
+          size: f.size
+        };
+      }
+
+      newFiles.push(fileObj);
+    }
+
+    if (!post.mediaFiles) post.mediaFiles = [];
+    post.mediaFiles = [...post.mediaFiles, ...newFiles];
+
+    if (req.body.cloudLink) {
+      post.cloudLink = req.body.cloudLink;
+    }
+
+    // Now that media is supplied, move post to queued (ready to publish)
+    if (post.mediaFiles.length > 0 || post.cloudLink) {
+      post.status = 'queued';
+    }
+
+    post.mediaReminderSent = true;
+    await savePosts(posts);
+    await upsertPostToDb(post);
+
+    console.log(`[QuickUpload] 📸 Đã cập nhật ${newFiles.length} tệp media cho bài [${post.id}] - Mã #${post.machineCode}`);
+    res.json({ success: true, post, message: 'Đã cập nhật hình ảnh thành công!' });
+  } catch (error) {
+    console.error('[AttachMedia Error]', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove a media file from a post
+app.delete('/api/posts/:id/media/:filename', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết.' });
+
+    if (post.mediaFiles) {
+      post.mediaFiles = post.mediaFiles.filter(m => m.filename !== req.params.filename);
+    }
+    await savePosts(posts);
+    await upsertPostToDb(post);
+    res.json({ success: true, post });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Get Next Suggested Schedule Slot
+app.get('/api/next-slot', async (req, res) => {
+  try {
+    const nextSlot = await getNextAvailableScheduleTime();
+    res.json({ nextSlot });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Get All Posts (Queued, Posted, Draft)
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Create or Schedule a Post (with auto-deduplication: replaces old post if same machine code is in queue)
+app.post('/api/posts', async (req, res) => {
+  try {
+    const {
+      machineCode,
+      machineName,
+      content,
+      price,
+      mediaFiles = [],
+      scheduledTime,
+      publishImmediately = false
+    } = req.body;
+
+    let posts = await getPosts();
+    const normCode = normalizeMachineCode(machineCode);
+    let replacedOldPost = null;
+
+    // Auto-deduplication: Check if an existing queued post has the exact same machine code
+    if (isValidMachineCode(normCode)) {
+      const oldIndex = posts.findIndex(p => 
+        (p.status === 'queued' || p.status === 'pending_media' || p.status === 'skipped_no_media') &&
+        normalizeMachineCode(p.machineCode) === normCode
+      );
+      if (oldIndex !== -1) {
+        replacedOldPost = posts[oldIndex];
+        console.log(`[Deduplicate] 🗑️ Tìm thấy bài cũ trùng mã #${normCode} (ID: ${replacedOldPost.id}). Xóa mã cũ để thay thế bằng mã mới.`);
+        posts.splice(oldIndex, 1);
+        await deletePostFromDb(replacedOldPost.id);
+      }
+    }
+
+    const nextAvailableTime = await getNextAvailableScheduleTime();
+
+    // Strict Anti-Spam: Filter out any banned media (Zalo avatars, Excel spreadsheets, tiny images)
+    const cleanedMedia = (mediaFiles || []).filter(m => {
+      const url = typeof m === 'string' ? m : (m.url || '');
+      const check = inspectMedia({ url });
+      if (check.isBanned) {
+        console.log(`[MediaFilter] 🚫 Loại bỏ ảnh cấm khỏi bài đăng: ${check.reason} (${url.slice(0, 80)})`);
+        return false;
+      }
+      return true;
+    });
+
+    const newPost = {
+      id: 'post_' + Date.now(),
+      machineCode: (machineCode || 'MÁY').toUpperCase(),
+      machineName: machineName || 'Laptop Nhật Bãi',
+      content: content || '',
+      price: price || '',
+      mediaFiles: cleanedMedia,
+      scheduledTime: publishImmediately ? new Date().toISOString() : (scheduledTime || nextAvailableTime),
+      status: publishImmediately ? 'processing' : (cleanedMedia.length === 0 ? 'pending_media' : 'queued'),
+      notes: cleanedMedia.length === 0 ? 'Chờ bổ sung ảnh máy thật (đã lọc bỏ ảnh đại diện/bảng tính).' : undefined,
+      createdAt: new Date().toISOString()
+    };
+
+    if (publishImmediately) {
+      posts.unshift(newPost);
+      await savePosts(posts);
+      await upsertPostToDb(newPost);
+      // Run immediately
+      executePost(newPost).then(async (executedPost) => {
+        console.log(`[Instant Post] Hoàn tất đăng ngay bài ${newPost.id}`);
+        await upsertPostToDb(executedPost);
+      });
+      return res.json({
+        success: true,
+        post: newPost,
+        replacedOldPost: !!replacedOldPost,
+        message: replacedOldPost
+          ? `Đã đăng ngay mã #${newPost.machineCode}! (Đã tự động xóa bài cũ trùng mã trong hàng đợi)`
+          : 'Đang tiến hành đăng bài lên Fanpage...'
+      });
+    } else {
+      posts.unshift(newPost);
+      await savePosts(posts);
+      await upsertPostToDb(newPost);
+      return res.json({
+        success: true,
+        post: newPost,
+        replacedOldPost: !!replacedOldPost,
+        message: replacedOldPost
+          ? `Đã xếp mã #${newPost.machineCode} vào hàng đợi lúc ${new Date(newPost.scheduledTime).toLocaleString('vi-VN')}! (Đã tự động xóa bài cũ trùng mã)`
+          : `Đã đưa bài vào hàng đợi lên lịch lúc: ${new Date(newPost.scheduledTime).toLocaleString('vi-VN')}`
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8.1. Dedicated 1-Click Push from Chrome Extension (Zalo Web)
+app.post('/api/extension/push-post', async (req, res) => {
+  try {
+    const { rawText, mediaUrls = [], publishImmediately = false, customPrice = '', target = 'fanpage' } = req.body;
+    if (!rawText && (!mediaUrls || mediaUrls.length === 0)) {
+      return res.status(400).json({ success: false, error: 'Thiếu nội dung hoặc ảnh/video từ Zalo.' });
+    }
+
+    const settings = await getSettings();
+
+    // 1. AI or Fallback parse post content
+    const textToParse = rawText || 'Laptop xách tay Nhật Bản chính hãng';
+    const generated = await generatePostWithGemini(textToParse, settings, customPrice);
+
+    const finalCode = generated.machineCode || extractExplicitMachineCode(textToParse) || String(Date.now()).slice(-4);
+    const finalName = generated.machineName || `Laptop #${finalCode}`;
+
+    // 2. Download media URLs or decode base64 and upload directly to Supabase Storage
+    const uploadedMediaFiles = [];
+    if (Array.isArray(mediaUrls) && mediaUrls.length > 0) {
+      console.log(`[Extension] 📥 Đang xử lý ${mediaUrls.length} tệp media (kênh: ${target})...`);
+      for (let i = 0; i < mediaUrls.length; i++) {
+        const mUrl = mediaUrls[i];
+        if (!mUrl) continue;
+
+        try {
+          let buffer;
+          let mime = 'image/jpeg';
+          let ext = '.jpg';
+
+          // A. Handle Base64 Data URLs (from browser blobs)
+          if (mUrl.startsWith('data:')) {
+            const matches = mUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (matches) {
+              mime = matches[1];
+              buffer = Buffer.from(matches[2], 'base64');
+              const isVideo = mime.startsWith('video/');
+              ext = isVideo ? '.mp4' : (mime.includes('png') ? '.png' : '.jpg');
+            } else {
+              continue;
+            }
+          } else if (mUrl.startsWith('http')) {
+            // B. Handle HTTP / HTTPS direct CDN URLs
+            const mediaRes = await axios.get(mUrl, {
+              responseType: 'arraybuffer',
+              timeout: 30000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://chat.zalo.me/'
+              }
+            });
+            buffer = Buffer.from(mediaRes.data);
+            const contentType = mediaRes.headers['content-type'] || '';
+            const isVideo = contentType.startsWith('video/') || /\.(mp4|mov|avi)$/i.test(mUrl);
+            ext = isVideo ? '.mp4' : '.jpg';
+            mime = isVideo ? 'video/mp4' : 'image/jpeg';
+          } else {
+            continue;
+          }
+
+          if (!isVideo) {
+            const banCheck = inspectMedia({ buffer, url: mUrl });
+            if (banCheck.isBanned) {
+              console.log(`[MediaFilter] 🚫 Đã chặn ảnh cấm từ Zalo (#${finalCode}): ${banCheck.reason}`);
+              continue;
+            }
+          }
+
+          const originalName = `zalo_${finalCode}_${i + 1}${ext}`;
+          const uploaded = await uploadToSupabaseStorage(buffer, originalName, mime);
+          if (uploaded) {
+            uploadedMediaFiles.push(uploaded);
+            console.log(`[Extension] ✅ Đã lưu media #${i + 1} lên Supabase Storage:`, uploaded.url);
+          }
+        } catch (mediaErr) {
+          console.warn(`[Extension] ⚠️ Lỗi xử lý media #${i + 1}:`, mediaErr.message);
+        }
+      }
+    }
+
+    // 2b. Auto-Replenish Fallback: Nếu bài thiếu ảnh hoặc toàn bộ ảnh bị bộ lọc chặn, tự động bù ảnh HD từ kho Template
+    if (uploadedMediaFiles.length === 0) {
+      try {
+        const matchRes = await dataPostService.smartMatchTemplate(`${finalName || ''} ${rawText || ''} ${generated.content || ''}`);
+        if (matchRes && matchRes.matched && matchRes.template && Array.isArray(matchRes.template.media_files) && matchRes.template.media_files.length > 0) {
+          uploadedMediaFiles.push(...matchRes.template.media_files);
+          console.log(`[AutoReplenish] 📸 Đã tự động bù ${uploadedMediaFiles.length} ảnh HD chính hãng từ template [${matchRes.template.model_name}] cho mã #${finalCode}`);
+        }
+      } catch (repErr) {
+        console.warn('[AutoReplenish] Không thể bù ảnh từ template:', repErr.message);
+      }
+    }
+
+    // 3. Build Post Object
+    const scheduledTime = await getNextAvailableScheduleTime();
+    const newPost = {
+      id: `post_${Date.now()}`,
+      machineCode: finalCode,
+      machineName: finalName,
+      content: generated.content,
+      price: generated.price || customPrice || '',
+      mediaFiles: uploadedMediaFiles,
+      scheduledTime: scheduledTime,
+      status: target === 'personal' ? 'personal_draft' : (uploadedMediaFiles.length > 0 ? 'queued' : 'pending_media'),
+      targetChannel: target,
+      mediaReminderSent: false,
+      cloudLink: null,
+      createdAt: new Date().toISOString(),
+      postedAt: null,
+      failedAt: null,
+      skippedAt: null,
+      fbPostId: null,
+      fbPostUrl: null,
+      isSimulation: false,
+      lastMessage: `Được tạo bởi Zalo Extension (Chế độ: ${target})`
+    };
+
+    // 4. Save to Posts list & Supabase DB
+    const posts = await getPosts();
+    posts.unshift(newPost);
+    await savePosts(posts);
+    await upsertPostToDb(newPost);
+
+    // 5. Handle Target: PERSONAL (Chỉ đăng trang cá nhân)
+    if (target === 'personal') {
+      return res.json({
+        success: true,
+        target: 'personal',
+        post: newPost,
+        message: `Đã chuẩn bị xong bài viết #${finalCode} kèm ${uploadedMediaFiles.length} ảnh HD cho Trang Cá Nhân!`
+      });
+    }
+
+    // 6. Handle Target: BOTH (Đăng Fanpage ngay + Chuẩn bị link chia sẻ Trang Cá Nhân)
+    if (target === 'both') {
+      console.log(`[Extension] 🚀 Đang tiến hành đăng kép Fanpage + Cá nhân cho bài [${newPost.id}]...`);
+      const published = await executePost(newPost);
+      await upsertPostToDb(published);
+
+      if (published.status === 'failed') {
+        return res.status(500).json({
+          success: false,
+          target: 'both',
+          post: published,
+          error: published.errorMessage || 'Lỗi xuất bản Fanpage khi đăng kép',
+          message: published.errorMessage || 'Lỗi xuất bản Fanpage khi đăng kép'
+        });
+      }
+
+      const shareUrl = published.fbPostUrl
+        ? `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(published.fbPostUrl)}`
+        : null;
+
+      return res.json({
+        success: true,
+        target: 'both',
+        post: published,
+        fbPostUrl: published.fbPostUrl,
+        shareUrl: shareUrl,
+        message: 'Đã xuất bản thành công lên Fanpage và sẵn sàng chia sẻ lên Trang Cá Nhân!'
+      });
+    }
+
+    // 7. Handle Target: FANPAGE (Đăng ngay hoặc lên lịch)
+    if (publishImmediately) {
+      console.log(`[Extension] ⚡ Đang tiến hành đăng ngay bài [${newPost.id}] lên Facebook...`);
+      const published = await executePost(newPost);
+      await upsertPostToDb(published);
+
+      if (published.status === 'failed') {
+        return res.status(500).json({
+          success: false,
+          target: 'fanpage',
+          post: published,
+          error: published.errorMessage || 'Lỗi xuất bản bài viết lên Facebook Fanpage',
+          message: published.errorMessage || 'Lỗi xuất bản bài viết lên Facebook Fanpage'
+        });
+      }
+
+      return res.json({
+        success: true,
+        target: 'fanpage',
+        post: published,
+        fbPostUrl: published.fbPostUrl,
+        message: 'Đã xuất bản thành công bài viết lên Facebook Fanpage!'
+      });
+    }
+
+    return res.json({
+      success: true,
+      target: 'fanpage',
+      post: newPost,
+      message: `Đã đưa bài #${finalCode} vào hàng đợi lên lịch lúc ${new Date(scheduledTime).toLocaleString('vi-VN')}!`
+    });
+
+  } catch (error) {
+    console.error('[Extension Push Error]', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 9. Trigger Post Immediately
+app.post('/api/posts/:id/publish-now', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết.' });
+    }
+
+    const updatedPost = await executePost(post);
+    await upsertPostToDb(updatedPost);
+
+    if (updatedPost.status === 'failed') {
+      return res.status(500).json({
+        success: false,
+        error: updatedPost.errorMessage || 'Lỗi đăng bài Facebook',
+        post: updatedPost
+      });
+    }
+
+    res.json({
+      success: true,
+      post: updatedPost,
+      facebookPostUrl: updatedPost.fbPostUrl || updatedPost.facebookPostUrl,
+      message: 'Đã thực thi đăng bài thành công!'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 10. Delete a Post
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    let posts = await getPosts();
+    const initialLength = posts.length;
+    posts = posts.filter(p => p.id !== req.params.id);
+
+    if (posts.length !== initialLength) {
+      await savePosts(posts);
+      await deletePostFromDb(req.params.id);
+      res.json({ success: true, message: 'Đã xóa bài viết khỏi danh sách.' });
+    } else {
+      res.status(404).json({ error: 'Không tìm thấy bài viết.' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 11. External Cron Check Trigger (for cron-job.org / GitHub Actions / Vercel Serverless)
+app.get(['/api/cron', '/api/cron-check'], async (req, res) => {
+  const key = req.query.key || req.headers['authorization'];
+  const expected = process.env.CRON_SECRET || 'vg_cron_2026_laptop';
+  // Allow Vercel native cron (sends CRON_SECRET in header) or secret key query param
+  const authHeader = req.headers['authorization'];
+  const isVercelCron = authHeader === `Bearer ${expected}` || req.headers['x-vercel-cron'] === '1';
+
+  if (!isVercelCron && key !== expected && authHeader !== `Bearer ${expected}`) {
+    return res.status(401).json({ error: 'Unauthorized: Sai mã CRON_SECRET key.' });
+  }
+
+  console.log('[CronCheck] ⏰ Đã nhận tín hiệu quét tự động từ dịch vụ Cron bên ngoài!');
+  try {
+    await checkAndPublishDuePosts();
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      message: 'Đã quét và xử lý đăng bài thành công!'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ========================================================
+// 12. DATA POST & CIRCULAR ENGINE API ROUTES
+// ========================================================
+
+// 12.1. Get Model Templates with Filters
+app.get('/api/data-post/templates', async (req, res) => {
+  try {
+    const templates = await dataPostService.getModelTemplates({
+      brand: req.query.brand,
+      price_range: req.query.price_range || req.query.priceRange,
+      status: req.query.status,
+      search: req.query.search
+    });
+    res.json({
+      success: true,
+      count: templates.length,
+      data: templates,
+      templates
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 12.2. Get Single Model Template by ID
+app.get('/api/data-post/templates/:id', async (req, res) => {
+  try {
+    const template = await dataPostService.getModelTemplateById(req.params.id);
+    if (!template) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy Model Template.' });
+    }
+    res.json({ success: true, data: template, template });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 12.3. Create Model Template
+app.post('/api/data-post/templates', async (req, res) => {
+  try {
+    const template = await dataPostService.createModelTemplate(req.body);
+    res.status(201).json({
+      success: true,
+      data: template,
+      template,
+      message: 'Đã tạo Model Template thành công!'
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// 12.4. Update Model Template
+app.put('/api/data-post/templates/:id', async (req, res) => {
+  try {
+    const updated = await dataPostService.updateModelTemplate(req.params.id, req.body);
+    res.json({
+      success: true,
+      data: updated,
+      template: updated,
+      message: 'Đã cập nhật Model Template thành công!'
+    });
+  } catch (error) {
+    const status = error.message.includes('Không tìm thấy') ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+// 12.5. Delete Model Template
+app.delete('/api/data-post/templates/:id', async (req, res) => {
+  try {
+    const result = await dataPostService.deleteModelTemplate(req.params.id);
+    res.json(result);
+  } catch (error) {
+    const status = error.message.includes('Không tìm thấy') ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+// 12.6. Smart Match Model Template from Zalo Text
+app.post('/api/data-post/smart-match', async (req, res) => {
+  try {
+    const rawText = req.body.raw_text !== undefined ? req.body.raw_text : req.body.rawText;
+    const result = await dataPostService.smartMatchTemplate(rawText);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 12.7. Get Circular Queue
+app.get('/api/data-post/queue', async (req, res) => {
+  try {
+    const queue = await dataPostService.getCircularQueue();
+    res.json({
+      success: true,
+      count: queue.length,
+      data: queue
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 12.8. Enqueue Circular Post
+app.post('/api/data-post/queue', async (req, res) => {
+  try {
+    const result = await dataPostService.enqueueCircularPost(req.body);
+    res.status(201).json({
+      success: true,
+      queue_id: result.queue_id,
+      status: result.status,
+      data: result.data,
+      message: 'Đã đưa bài vào hàng đợi tuần hoàn thành công!'
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// 12.9. Delete Circular Queue Item
+app.delete('/api/data-post/queue/:id', async (req, res) => {
+  try {
+    const result = await dataPostService.deleteCircularQueueItem(req.params.id);
+    res.json(result);
+  } catch (error) {
+    const status = error.message.includes('Không tìm thấy') ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+// 12.10. Trigger Circular Post Immediately (Dual Route Alias)
+app.post(['/api/data-post/trigger-circular', '/api/data-post/queue/trigger-post'], async (req, res) => {
+  try {
+    const result = await dataPostService.triggerCircularPost(req.body);
+    res.json(result);
+  } catch (error) {
+    const status = (error.message.includes('Không tìm thấy') || error.message.includes('Vui lòng') || error.message.includes('thiếu')) ? 400 : 500;
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+// Start Server and Scheduler if running as standalone Node process
+if (require.main === module) {
+  startScheduler();
+  app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`AutoBiz AI — Hệ Sinh Thái Tiếp Thị Đa Kênh & Affiliate FinTech`);
+    console.log(`Truy cập giao diện tại: http://localhost:${PORT}`);
+    console.log(`=======================================================`);
+  });
+}
+
+module.exports = app;

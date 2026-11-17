@@ -1,0 +1,10 @@
+node_modules/
+.env
+.vercel/
+public/uploads/*
+!public/uploads/.gitkeep
+*.log
+.agents/
+data/zalo_batch_*.json
+
+data/settings.json

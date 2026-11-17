@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoBiz AI — Bộ Slide Thuyết Trình Dự Thi Khởi Nghiệp (LV03)</title>
+  <style>
+    :root {
+      --bg-paper: #FBFBFA;
+      --bg-white: #FFFFFF;
+      --bg-header: #F3F4F6;
+      --ink-black: #111827;
+      --ink-charcoal: #1F2937;
+      --ink-muted: #4B5563;
+      --accent-burgundy: #7F1D1D;
+      --accent-crimson: #991B1B;
+      --accent-bronze: #92400E;
+      --line-hairline: #D1D5DB;
+      --line-strong: #111827;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-paper);
+      color: var(--ink-black);
+      font-family: "Times New Roman", Times, Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 16:9 Full-Bleed Editorial Viewport */
+    .deck-viewport {
+      width: 100vw;
+      height: calc(100vh - 52px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 36px 56px 28px 56px;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--bg-paper);
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    /* Editorial Top Bar */
+    .slide-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 2px solid var(--ink-black);
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+      flex-shrink: 0;
+    }
+
+    .slide-kicker {
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-burgundy);
+    }
+
+    .slide-meta {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-muted);
+    }
+
+    /* Main Content Area */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .slide-title {
+      font-size: 40px;
+      line-height: 1.15;
+      font-weight: 700;
+      color: var(--ink-black);
+      margin-bottom: 18px;
+    }
+
+    .slide-subtitle {
+      font-size: 21px;
+      line-height: 1.45;
+      color: var(--ink-charcoal);
+      margin-bottom: 22px;
+    }
+
+    /* Open Editorial Grid (Anti-Card-Slop: 1px hairlines, no rounded gray boxes) */
+    .editorial-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--line-hairline);
+      border-bottom: 1px solid var(--line-hairline);
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .editorial-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid var(--line-hairline);
+      border-bottom: 1px solid var(--line-hairline);
+      flex: 1;
+    }
+
+    .editorial-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line-hairline);
+      border-bottom: 1px solid var(--line-hairline);
+      margin-bottom: 18px;
+    }
+
+    .col-pane {
+      padding: 20px 24px;
+      border-right: 1px solid var(--line-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .col-pane:first-child {
+      padding-left: 0;
+    }
+
+    .col-pane:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    /* Big Stat Typography */
+    .big-stat {
+      font-size: 62px;
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--accent-burgundy);
+      margin-bottom: 6px;
+    }
+
+    .big-stat-ink {
+      font-size: 62px;
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--ink-black);
+      margin-bottom: 6px;
+    }
+
+    .stat-caption {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink-black);
+      margin-bottom: 6px;
+    }
+
+    .stat-desc {
+      font-size: 16.5px;
+      line-height: 1.45;
+      color: var(--ink-muted);
+    }
+
+    /* Dash Lists */
+    .dash-list {
+      list-style: none;
+    }
+
+    .dash-list li {
+      font-size: 19px;
+      line-height: 1.55;
+      color: var(--ink-black);
+      margin-bottom: 10px;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .dash-list li::before {
+      content: "-";
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+      color: var(--accent-burgundy);
+    }
+
+    /* Formal Comparison Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-white);
+      border: 1px solid var(--ink-black);
+    }
+
+    .data-table th {
+      background: var(--bg-header);
+      color: var(--ink-black);
+      font-size: 17px;
+      font-weight: 700;
+      text-align: left;
+      padding: 11px 14px;
+      border: 1px solid var(--line-hairline);
+      border-bottom: 1.5px solid var(--ink-black);
+    }
+
+    .data-table td {
+      font-size: 17px;
+      line-height: 1.45;
+      color: var(--ink-black);
+      padding: 10px 14px;
+      border: 1px solid var(--line-hairline);
+      vertical-align: top;
+    }
+
+    .data-table tr.highlight-row td {
+      background: #FEF2F2;
+      font-weight: 700;
+      color: var(--accent-burgundy);
+    }
+
+    /* Authentic Chart Frame */
+    .chart-frame {
+      background: var(--bg-white);
+      border: 1px solid var(--line-hairline);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-height: 100%;
+    }
+
+    .chart-frame img {
+      max-width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .chart-caption {
+      margin-top: 8px;
+      font-size: 15px;
+      font-style: italic;
+      color: var(--ink-muted);
+      text-align: center;
+    }
+
+    /* Bottom Navigation Dock */
+    .deck-dock {
+      height: 52px;
+      background: var(--ink-black);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 56px;
+      border-top: 1px solid var(--ink-black);
+    }
+
+    .dock-left {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .dock-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dock-btn {
+      background: transparent;
+      color: #FFFFFF;
+      border: 1px solid #4B5563;
+      padding: 5px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .dock-btn:hover {
+      background: var(--accent-burgundy);
+      border-color: var(--accent-burgundy);
+    }
+
+    .slide-counter {
+      font-size: 15px;
+      font-weight: 700;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    @media (max-width: 1024px) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      .slide {
+        padding: 20px 24px;
+        overflow-y: auto;
+      }
+      .slide-title { font-size: 28px; }
+      .big-stat, .big-stat-ink { font-size: 42px; }
+      .editorial-grid-2, .editorial-grid-3, .editorial-grid-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="deck-viewport">
+
+    <!-- ==================== SLIDE 01: TRANG BÌA DỰ ÁN ==================== -->
+    <section class="slide active" data-index="1">
+      <div class="slide-top">
+        <span class="slide-kicker">SỞ GIÁO DỤC VÀ ĐÀO TẠO TP. HỒ CHÍ MINH — KẾ HOẠCH SỐ 11677/KH-SGDĐT</span>
+        <span class="slide-meta">LĨNH VỰC DỰ THI: LV03 (DỊCH VỤ, TÀI CHÍNH, NGÂN HÀNG)</span>
+      </div>
+      <div class="slide-body">
+        <div style="font-size:18px; font-weight:700; color:var(--accent-burgundy); letter-spacing:0.06em; margin-bottom:10px;">
+          CUỘC THI “HỌC SINH VỚI Ý TƯỞNG KHỞI NGHIỆP” CẤP THÀNH PHỐ NĂM HỌC 2026 – 2027
+        </div>
+        <h1 style="font-size:66px; font-weight:700; color:var(--ink-black); line-height:1.05; margin-bottom:14px;">
+          AUTOBIZ AI
+        </h1>
+        <div style="font-size:28px; font-weight:700; color:var(--accent-burgundy); line-height:1.3; margin-bottom:28px; max-width:92%;">
+          HỆ SINH THÁI TỰ ĐỘNG HÓA TIẾP THỊ ĐA KÊNH VÀ CHUỖI CUNG ỨNG THƯƠNG MẠI ĐIỆN TỬ ĐA MẶT HÀNG
+        </div>
+
+        <div class="editorial-grid-4">
+          <div class="col-pane">
+            <div class="big-stat">10.920</div>
+            <div class="stat-caption">Mẫu Khảo sát Thực nghiệm</div>
+            <div class="stat-desc">- B2B Sellers: N = 5.240<br>- B2C Gen Z: N = 5.680</div>
+          </div>
+          <div class="col-pane">
+            <div class="big-stat-ink">94%</div>
+            <div class="stat-caption">Chỉ số Đồng thuận 2 Phía</div>
+            <div class="stat-desc">- 94% Chủ shop đón nhận<br>- 94% Gen Z sẵn sàng làm CTV</div>
+          </div>
+          <div class="col-pane">
+            <div class="big-stat">5 Ngành</div>
+            <div class="stat-caption">&amp; 4 Kênh Tự động hóa</div>
+            <div class="stat-desc">- Phụ kiện, Thời trang, Gia dụng, FMCG, Điện tử (FB/TikTok/Zalo/Shopee)</div>
+          </div>
+          <div class="col-pane">
+            <div class="big-stat-ink">Tháng 5</div>
+            <div class="stat-caption">Đạt Điểm Hòa Vốn</div>
+            <div class="stat-desc">- Thuê bao SaaS Pro 199k/tháng<br>- Hoa hồng Shortlink /r/:code</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 02: TẠI SAO PHẢI CÓ 2 BÀI KHẢO SÁT SONG SONG ==================== -->
+    <section class="slide" data-index="2">
+      <div class="slide-top">
+        <span class="slide-kicker">01. PHƯƠNG PHÁP LUẬN NGHIÊN CỨU THỊ TRƯỜNG HAI PHÍA</span>
+        <span class="slide-meta">TỔNG QUY MÔ MẪU: N = 10.920</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Tại Sao Phải Thực Hiện Đồng Thời 2 Bài Khảo Sát Độc Lập?</h2>
+        <p class="slide-subtitle">AutoBiz AI vận hành theo cấu trúc Thị trường Hai Phía (Two-Sided Marketplace): kết nối Chủ shop có nguồn hàng với lực lượng Học sinh – Sinh viên làm Tiếp thị Liên kết 0 đồng vốn.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:20%;">Tiêu chí Đối chiếu</th>
+              <th style="width:40%;">Khảo sát 1: Phía Cung / B2B Sellers (N = 5.240)</th>
+              <th style="width:40%;">Khảo sát 2: Phía Cầu &amp; CTV Gen Z (N = 5.680)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tên bài khảo sát</strong></td>
+              <td>- Khảo sát Thực trạng Tiếp thị Đa kênh &amp; Nhu cầu Tự động hóa AI của Người Bán lẻ</td>
+              <td>- Khảo sát Hành vi Mua sắm Đa kênh &amp; Nhu cầu Tiếp thị Liên kết của Học sinh – Sinh viên</td>
+            </tr>
+            <tr>
+              <td><strong>Đối tượng mục tiêu</strong></td>
+              <td>- Cá nhân bán online (47%), Chủ shop nhỏ 1–3 nhân sự (35%), Doanh nghiệp SMEs (15%)</td>
+              <td>- Học sinh THPT Lớp 10–11 (38%), THPT Lớp 12 (35%), Sinh viên năm 1–2 (27%)</td>
+            </tr>
+            <tr>
+              <td><strong>Mục đích thiết kế câu hỏi</strong></td>
+              <td>- Định lượng thời gian lãng phí đăng bài thủ công<br>- Kiểm chứng nhu cầu mở rộng 5 ngành hàng<br>- Xác định mức giá thuê bao SaaS tối ưu</td>
+              <td>- Đo lường thói quen lướt MXH &amp; nguồn dẫn dắt mua hàng<br>- Chứng minh tỷ lệ bấm Link Affiliate (CTR)<br>- Xác thực nhu cầu kiếm tiền online 0 đồng vốn</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Bảo chứng Dòng tiền LV03</strong></td>
+              <td>- Bảo chứng Dòng tiền 1: Doanh thu Thuê bao Phần mềm SaaS (Gói Pro 199.000đ/tháng)</td>
+              <td>- Bảo chứng Dòng tiền 2: Doanh thu Chia sẻ Hoa hồng Tiếp thị Liên kết qua Shortlink /r/:code</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 03: KẾT QUẢ KHẢO SÁT 1 (PHẦN A) ==================== -->
+    <section class="slide" data-index="3">
+      <div class="slide-top">
+        <span class="slide-kicker">02. KẾT QUẢ KHẢO SÁT 1 — PHÍA CUNG B2B (N = 5.240)</span>
+        <span class="slide-meta">QUY MÔ, KÊNH PHÂN PHỐI &amp; NGÀNH HÀNG</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">82% Người Bán Siêu Tinh Gọn — 55% Bắt Buộc Phải Bán Đa Kênh</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane">
+            <div class="chart-frame">
+              <img src="/charts/chart1_b2b_scale_channels.png" alt="Biểu đồ 1 B2B" />
+              <div class="chart-caption">Hình 1: Quy mô người bán (Câu 1.1) &amp; Kênh phân phối đang dùng (Câu 1.3)</div>
+            </div>
+            <ul class="dash-list" style="margin-top:12px;">
+              <li><strong>82% thiếu đội Marketing riêng</strong>: Gồm 47% (2.483) cá nhân/HS-SV và 35% (1.818) chủ shop nhỏ 1–3 người.</li>
+              <li><strong>55% (2.871) đã bán đa kênh hợp nhất</strong> (FB + TikTok + Shopee + Zalo).</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div class="chart-frame">
+              <img src="/charts/chart2_b2b_categories_pain.png" alt="Biểu đồ 2 B2B" />
+              <div class="chart-caption">Hình 2: Cơ cấu 5 ngành hàng (Câu 1.2) &amp; Thời gian đăng bài/ngày (Câu 1.4)</div>
+            </div>
+            <ul class="dash-list" style="margin-top:12px;">
+              <li><strong>Mở rộng 5 ngành hàng tăng gấp 3 thị trường</strong>: Phụ kiện số (63%), Thời trang Gen Z (52%), Gia dụng (47%), FMCG (38%), Điện tử (29%).</li>
+              <li><strong>58% mất từ 2 tiếng/ngày trở lên</strong> chỉ để copy-paste bài đăng thủ công.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 04: KẾT QUẢ KHẢO SÁT 1 (PHẦN B) ==================== -->
+    <section class="slide" data-index="4">
+      <div class="slide-top">
+        <span class="slide-kicker">03. KẾT QUẢ KHẢO SÁT 1 — NÚT THẮT KỸ THUẬT &amp; ĐỊNH GIÁ SAAS</span>
+        <span class="slide-meta">PHÂN TÍCH CÂU 1.5, 1.6 &amp; 1.7 (N = 5.240)</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">70% Kẹt Vì Khác Văn Phong MXH — 54% Chọn Mức Phí 150k–250k/Tháng</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane" style="justify-content:center;">
+            <div class="chart-frame">
+              <img src="/charts/chart3_b2b_difficulties_pricing.png" alt="Biểu đồ 3 B2B" />
+              <div class="chart-caption">Hình 3: Rào cản nội dung đa kênh (Câu 1.5) &amp; Mức phí sẵn sàng chi trả (Câu 1.7)</div>
+            </div>
+          </div>
+          <div class="col-pane" style="justify-content:center;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Chỉ số Khảo sát 1</th>
+                  <th>Số liệu Thực tế</th>
+                  <th>Quyết định Thiết kế Sản phẩm</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Khác văn phong MXH</strong></td>
+                  <td><strong>70%</strong> (3.657 mẫu)</td>
+                  <td>- Xây dựng AI Copywriter sinh đồng thời 4 văn phong: FB, TikTok, Zalo, Shopee</td>
+                </tr>
+                <tr>
+                  <td><strong>Bí ý tưởng / Quên giờ</strong></td>
+                  <td><strong>61%</strong> &amp; <strong>43%</strong></td>
+                  <td>- Tích hợp Gemini AI gợi ý góc tiếp cận &amp; bộ lập lịch khung giờ vàng</td>
+                </tr>
+                <tr>
+                  <td><strong>Đánh giá độ cần thiết</strong></td>
+                  <td><strong>94%</strong> (71% điểm 5/5)</td>
+                  <td>- Khẳng định Product-Market Fit rất cao ở nhóm người bán lẻ</td>
+                </tr>
+                <tr class="highlight-row">
+                  <td><strong>Sẵn sàng trả 150k–250k</strong></td>
+                  <td><strong>54%</strong> (2.823 mẫu)</td>
+                  <td>- Ấn định giá Gói Pro = 199.000đ/tháng (cùng 16% chọn Gói Team 499k)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 05: KẾT QUẢ KHẢO SÁT 2 (PHÍA CẦU GEN Z) ==================== -->
+    <section class="slide" data-index="5">
+      <div class="slide-top">
+        <span class="slide-kicker">04. KẾT QUẢ KHẢO SÁT 2 — PHÍA CẦU &amp; CTV GEN Z (N = 5.680)</span>
+        <span class="slide-meta">HÀNH VI MUA SẮM &amp; TƯƠNG TÁC LINK AFFILIATE</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">80% Mua Qua Video/Group — 88% Có Thói Quen Bấm Link Affiliate</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane">
+            <div class="chart-frame">
+              <img src="/charts/chart4_b2c_platforms_influence.png" alt="Biểu đồ 4 B2C" />
+              <div class="chart-caption">Hình 4: Nền tảng sử dụng (Câu 2.2) &amp; Nguồn ảnh hưởng quyết định mua (Câu 2.3)</div>
+            </div>
+            <ul class="dash-list" style="margin-top:12px;">
+              <li><strong>TikTok (86%) và Facebook (71%)</strong> chiếm lĩnh tuyệt đối thời gian online của học sinh – sinh viên.</li>
+              <li><strong>80% quyết định mua</strong> được dẫn dắt bởi Video review ngắn (56%) và bài phân tích Group FB (24%).</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div class="chart-frame">
+              <img src="/charts/chart5_b2c_affiliate_barriers.png" alt="Biểu đồ 5 B2C" />
+              <div class="chart-caption">Hình 5: Tần suất bấm Link Affiliate (Câu 2.4) &amp; Rào cản kiếm tiền online (Câu 2.5)</div>
+            </div>
+            <ul class="dash-list" style="margin-top:12px;">
+              <li><strong>88% (5.003 mẫu) bấm Link Affiliate</strong> xem giá và mua hàng; 12% ngại link lạ được giải quyết bằng Shortlink sạch <code>/r/:code</code>.</li>
+              <li><strong>82% kẹt khởi nghiệp</strong> vì thiếu vốn nhập hàng (52%) và không biết viết bài/làm video (30%).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 06: HỘI TỤ CUNG - CẦU 94% ==================== -->
+    <section class="slide" data-index="6">
+      <div class="slide-top">
+        <span class="slide-kicker">05. TỔNG HỢP MINH CHỨNG THỰC NGHIỆM HAI PHÍA</span>
+        <span class="slide-meta">ĐỒNG THUẬN TUYỆT ĐỐI: 94% TRÊN N = 10.920</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Sự Hội Tụ Cung – Cầu Hoàn Hảo: 94% Thị Trường Đón Nhận AutoBiz AI</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane" style="justify-content:center;">
+            <div class="chart-frame">
+              <img src="/charts/chart6_adoption_comparison.png" alt="Biểu đồ 6 Hội tụ" />
+              <div class="chart-caption">Hình 6: Đối chiếu tỷ lệ đồng thuận 94% ở cả Phía Cung (N=5.240) và Phía Cầu (N=5.680)</div>
+            </div>
+          </div>
+          <div class="col-pane" style="justify-content:center;">
+            <ul class="dash-list">
+              <li><strong>Phía Cung (B2B Sellers — N = 5.240)</strong>: 71% (3.699) đánh giá <em>Cực kỳ cần thiết</em> + 23% (1.184) đánh giá <em>Hữu ích</em> $\rightarrow$ Tổng đồng thuận <strong>94% (4.883 người bán)</strong>.</li>
+              <li><strong>Phía Cầu &amp; CTV (Gen Z — N = 5.680)</strong>: 69% (3.891) <em>Chắc chắn tham gia ngay</em> + 25% (1.428) <em>Tham gia khi có hướng dẫn</em> $\rightarrow$ Tổng đồng thuận <strong>94% (5.319 học sinh – sinh viên)</strong>.</li>
+              <li><strong>Ý nghĩa Kinh tế Học đường</strong>: Chủ shop có sẵn hàng hóa đa ngành nhưng thiếu thời gian đăng bài; học sinh – sinh viên có thời gian lướt mạng nhưng thiếu vốn nhập hàng. AutoBiz AI chính là cầu nối công nghệ giải quyết đồng thời cả hai phía.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 07: ĐỐI CHIẾU CHUYỂN ĐỔI KIẾN TRÚC ==================== -->
+    <section class="slide" data-index="7">
+      <div class="slide-top">
+        <span class="slide-kicker">06. ĐỊNH VỊ GIẢI PHÁP &amp; SỰ CHUYỂN HÓA ĐỘT PHÁ</span>
+        <span class="slide-meta">TỪ ĐƠN NGÀNH THỦ CÔNG SANG HỆ SINH THÁI ĐA NGÀNH</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Bảng Đối Chiếu Giá Trị Đột Phá Của Hệ Sinh Thái AutoBiz AI</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:22%;">Trụ cột So sánh</th>
+              <th style="width:39%;">Phương thức Bán lẻ &amp; Đăng bài Cũ</th>
+              <th style="width:39%;">Hệ sinh thái Mới — AutoBiz AI (LV03)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Phạm vi Ngành hàng</strong></td>
+              <td>- Cố định ở 1 mặt hàng đơn lẻ, cấu trúc dữ liệu cứng nhắc</td>
+              <td>- <strong>Đa ngành hàng (5 nhóm)</strong>: Phụ kiện số, Thời trang Gen Z, Gia dụng, FMCG, Thiết bị điện tử</td>
+            </tr>
+            <tr>
+              <td><strong>2. Sáng tạo Nội dung</strong></td>
+              <td>- Viết tay từng bài, tốn 2–4 tiếng/ngày, bí ý tưởng khi đổi kênh</td>
+              <td>- <strong>Omni-Channel AI Studio</strong>: 1 lần nhập sinh song song 4 bản (FB Post, TikTok Script, Zalo OA, Shopee SEO)</td>
+            </tr>
+            <tr>
+              <td><strong>3. Động cơ Tài chính (LV03)</strong></td>
+              <td>- Phải bỏ vốn nhập kho, tự gắn link dài dễ lỗi và không đo được hiệu quả kênh</td>
+              <td>- <strong>Smart Shortlink Engine (<code>/r/:code</code>)</strong>: Tự động gắn UTM, chuyển hướng 302 và tính hoa hồng thời gian thực</td>
+            </tr>
+            <tr>
+              <td><strong>4. Công cụ Thu thập</strong></td>
+              <td>- Tải ảnh và copy thông số thủ công từng trang</td>
+              <td>- <strong>AutoBiz Collector Extension v2.0</strong>: Lấy sản phẩm từ Tab hiện tại đẩy thẳng vào Kho hàng &amp; tạo link 1 chạm</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>5. Ngôn ngữ Thiết kế</strong></td>
+              <td>- Nhiều chi tiết trang trí rườm rà, gây mỏi mắt khi vận hành lâu</td>
+              <td>- <strong>Utilitarian Minimalism</strong>: Tối giản thực dụng, bảng màu truyền thống, phản hồi tức thì trên mọi thiết bị</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 08: KIẾN TRÚC 6 CẤU PHẦN KỸ THUẬT ==================== -->
+    <section class="slide" data-index="8">
+      <div class="slide-top">
+        <span class="slide-kicker">07. KIẾN TRÚC KỸ THUẬT &amp; MÃ NGUỒN THỰC TẾ</span>
+        <span class="slide-meta">5 PHÂN HỆ WEBAPP + CHROME EXTENSION V2.0</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Kiến Trúc 6 Cấu Phần Đã Hoàn Thiện 100% Trong Mã Nguồn</h2>
+        <div class="editorial-grid-3">
+          <div class="col-pane">
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">01. Dashboard FinTech</div>
+            <ul class="dash-list">
+              <li>Hiển thị 4 chỉ số lớn: Sản phẩm, Bài đăng, Lượt Click Affiliate, Hoa hồng dự kiến (VNĐ).</li>
+              <li>Biểu đồ đối chiếu hiệu quả chuyển đổi giữa 4 kênh theo thời gian thực.</li>
+            </ul>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">04. Shortlink Engine (/r/:code)</div>
+            <ul class="dash-list">
+              <li>Module <code>services/affiliate.js</code> sinh mã ngắn định danh độc nhất.</li>
+              <li>Tự động đếm click và quy đổi doanh thu hoa hồng theo tỷ lệ chuyển đổi.</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">02. Omni-Channel AI Studio</div>
+            <ul class="dash-list">
+              <li>Tích hợp Google Gemini AI với JSON Schema chặt chẽ.</li>
+              <li>Biến mô tả thô thành 4 văn phong chuyên biệt chỉ trong 30 giây.</li>
+            </ul>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">05. Bộ Chuyển tiếp 5 Kênh</div>
+            <ul class="dash-list">
+              <li>Hệ thống <code>services/adapters/*</code> độc lập cho Facebook, TikTok, Zalo OA, Shopee, Telegram.</li>
+              <li>Hàng đợi <code>scheduler.js</code> chống nghẽn API.</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">03. Kho Hàng 5 Ngành (Catalog)</div>
+            <ul class="dash-list">
+              <li>Quản lý CRUD sản phẩm linh hoạt kèm giá bán lẻ và % chiết khấu Affiliate.</li>
+              <li>Hỗ trợ nạp/xóa nhanh dữ liệu mẫu bằng 1 lệnh.</li>
+            </ul>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">06. Collector Extension v2.0</div>
+            <ul class="dash-list">
+              <li>Tiện ích Chrome Manifest V3 lấy tên &amp; URL từ Tab đang mở.</li>
+              <li>Đồng bộ tức thì với WebApp qua cầu nối <code>web_bridge.js</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 09: ĐỘNG CƠ FINTECH LV03 ==================== -->
+    <section class="slide" data-index="9">
+      <div class="slide-top">
+        <span class="slide-kicker">08. CƠ CHẾ VẬN HÀNH ĐỘNG CƠ TÀI CHÍNH (FINTECH ENGINE LV03)</span>
+        <span class="slide-meta">KIỂM ĐỊNH END-TO-END ĐẠT 100%</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Luồng Dòng Tiền &amp; Theo Dõi Hoa Hồng Qua Smart Shortlink (/r/:code)</h2>
+        <p class="slide-subtitle">Giải quyết bài toán thất thoát hoa hồng và tâm lý ngại bấm link dài chứa mã theo dõi lạ của 12% người tiêu dùng trẻ:</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:16%;">Bước Nghiệp vụ</th>
+              <th style="width:28%;">Cơ chế Xử lý Kỹ thuật</th>
+              <th style="width:32%;">Ví dụ Dữ liệu Thực tế (Đã Kiểm định E2E)</th>
+              <th style="width:24%;">Giá trị Tài chính (LV03)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Bước 1: Nhập Hàng</strong></td>
+              <td>- Lưu vào <code>POST /api/products</code> kèm Giá bán lẻ &amp; % Hoa hồng</td>
+              <td>- Tai nghe ANC Pro | Giá: <code>400.000đ</code> | Hoa hồng: <code>15%</code> (60.000đ/đơn)</td>
+              <td>- Chuẩn hóa biên lợi nhuận từng mặt hàng</td>
+            </tr>
+            <tr>
+              <td><strong>Bước 2: Tạo Link</strong></td>
+              <td>- <code>POST /api/affiliate/shorten</code> gắn tham số UTM &amp; SubID người bán</td>
+              <td>- Sinh link sạch: <code>http://.../r/TIE318</code> gắn vào bài đăng TikTok/FB</td>
+              <td>- Tăng tỷ lệ bấm link (CTR) nhờ đường dẫn ngắn uy tín</td>
+            </tr>
+            <tr>
+              <td><strong>Bước 3: Chuyển hướng</strong></td>
+              <td>- Khách bấm <code>GET /r/TIE318</code> $\rightarrow$ Server trả về <code>HTTP 302 Redirect</code></td>
+              <td>- Chuyển tới: <code>shopee.vn/...?utm_source=tiktok&amp;sub_id=vuonggia</code></td>
+              <td>- Định danh chính xác CTV nào mang khách về</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Bước 4: Đối soát</strong></td>
+              <td>- Tự động ghi nhận Click &amp; tính Hoa hồng kỳ vọng theo thời gian thực</td>
+              <td>- <code>GET /api/analytics/summary</code> cập nhật tức thì trên Dashboard</td>
+              <td>- Minh bạch hóa dòng tiền cho cả Chủ shop &amp; CTV Gen Z</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 10: MÔ HÌNH KINH DOANH CANVAS ==================== -->
+    <section class="slide" data-index="10">
+      <div class="slide-top">
+        <span class="slide-kicker">09. MÔ HÌNH KINH DOANH &amp; CHIẾN LƯỢC THƯƠNG MẠI HÓA</span>
+        <span class="slide-meta">BUSINESS MODEL CANVAS</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Mô Hình Doanh Thu Kép: Thuê Bao SaaS &amp; Chia Sẻ Hoa Hồng Affiliate</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane">
+            <div style="font-size:22px; font-weight:700; color:var(--ink-black); margin-bottom:12px;">1. Ba Gói Dịch vụ Phần mềm (SaaS Tiers)</div>
+            <ul class="dash-list">
+              <li><strong>Gói Starter (0đ – Phễu Học đường)</strong>: Dành cho Học sinh – Sinh viên làm CTV Affiliate 0 đồng vốn; giới hạn 5 bài AI/ngày, chia sẻ 1,5% trên hoa hồng phát sinh.</li>
+              <li><strong>Gói Pro Seller (199.000đ/tháng — Trọng tâm)</strong>: Khớp với 54% (2.823) người bán trong khảo sát; không giới hạn AI 4 kênh, quản lý 300 sản phẩm, Shortlink <code>/r/:code</code> riêng.</li>
+              <li><strong>Gói Team / SMEs (499.000đ/tháng)</strong>: Khớp với 16% (850) chủ shop quy mô vừa; phân quyền đa tài khoản CTV, kết nối API đẩy hàng tự động.</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div style="font-size:22px; font-weight:700; color:var(--ink-black); margin-bottom:12px;">2. Lợi thế Cạnh tranh &amp; Rào cản Gia nhập</div>
+            <ul class="dash-list">
+              <li><strong>Chi phí sở hữu khách hàng (CAC) cực thấp</strong>: Lan tỏa tự nhiên qua mạng lưới CLB Khởi nghiệp &amp; Tin học tại các trường THPT, Đại học ở TP.HCM.</li>
+              <li><strong>Tích hợp dọc toàn trình</strong>: Thay thế 3 công cụ rời rạc (Công cụ viết bài AI + Phần mềm hẹn giờ đăng bài + Trình rút gọn link đo lường hoa hồng) trong 1 giao diện duy nhất với chi phí rẻ hơn 60%.</li>
+              <li><strong>Kiến trúc Serverless siêu nhẹ</strong>: Vận hành trên Vercel &amp; Supabase giúp biên lợi nhuận gộp phần mềm đạt trên 80%.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 11: KẾ HOẠCH TÀI CHÍNH 3 NĂM ==================== -->
+    <section class="slide" data-index="11">
+      <div class="slide-top">
+        <span class="slide-kicker">10. DỰ PHÓNG TÀI CHÍNH 3 NĂM (2027 – 2029)</span>
+        <span class="slide-meta">ĐIỂM HÒA VỐN: THÁNG THỨ 5</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Hiệu Quả Kinh Tế Vững Chắc &amp; Khả Năng Tự Chủ Dòng Tiền Sớm</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:36%;">Chỉ tiêu Tài chính &amp; Quy mô</th>
+              <th style="width:21%; text-align:right;">Năm 1 (2027)</th>
+              <th style="width:21%; text-align:right;">Năm 2 (2028)</th>
+              <th style="width:22%; text-align:right;">Năm 3 (2029)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>- Số người dùng trả phí (Active Paid Sellers)</td>
+              <td style="text-align:right;">250 Users</td>
+              <td style="text-align:right;">1.100 Users</td>
+              <td style="text-align:right;">3.800 Users</td>
+            </tr>
+            <tr>
+              <td>- Mạng lưới CTV Gen Z hoạt động (0đ vốn)</td>
+              <td style="text-align:right;">1.200 CTV</td>
+              <td style="text-align:right;">4.500 CTV</td>
+              <td style="text-align:right;">15.000 CTV</td>
+            </tr>
+            <tr>
+              <td>- 1. Doanh thu Thuê bao SaaS (Pro 199k / Team 499k)</td>
+              <td style="text-align:right;">420.000.000 VNĐ</td>
+              <td style="text-align:right;">1.820.000.000 VNĐ</td>
+              <td style="text-align:right;">6.350.000.000 VNĐ</td>
+            </tr>
+            <tr>
+              <td>- 2. Doanh thu Chia sẻ Hoa hồng Affiliate &amp; API Kho</td>
+              <td style="text-align:right;">100.000.000 VNĐ</td>
+              <td style="text-align:right;">600.000.000 VNĐ</td>
+              <td style="text-align:right;">2.680.000.000 VNĐ</td>
+            </tr>
+            <tr style="font-weight:700; background:#F3F4F6;">
+              <td><strong>TỔNG DOANH THU THUẦN</strong></td>
+              <td style="text-align:right;">520.000.000 VNĐ</td>
+              <td style="text-align:right;">2.420.000.000 VNĐ</td>
+              <td style="text-align:right;">9.030.000.000 VNĐ</td>
+            </tr>
+            <tr>
+              <td>- Tổng Chi phí Hạ tầng Cloud, AI Token, R&amp;D &amp; Vận hành</td>
+              <td style="text-align:right;">220.000.000 VNĐ</td>
+              <td style="text-align:right;">980.000.000 VNĐ</td>
+              <td style="text-align:right;">3.250.000.000 VNĐ</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>LỢI NHUẬN TRƯỚC THUẾ (EBT) &amp; BIÊN LỢI NHUẬN</strong></td>
+              <td style="text-align:right;">300.000.000 VNĐ (57,7%)</td>
+              <td style="text-align:right;">1.440.000.000 VNĐ (59,5%)</td>
+              <td style="text-align:right;">5.780.000.000 VNĐ (64,0%)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== SLIDE 12: ĐỘI NGŨ, ĐẠO ĐỨC AI & CAM KẾT ==================== -->
+    <section class="slide" data-index="12">
+      <div class="slide-top">
+        <span class="slide-kicker">11. ĐỘI NGŨ TÁC GIẢ, KÊ KHAI AI CÓ TRÁCH NHIỆM &amp; TÁC ĐỘNG XÃ HỘI</span>
+        <span class="slide-meta">HOÀN THIỆN 100% HỒ SƠ &amp; SẢN PHẨM THỰC TẾ</span>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-title">Đội Ngũ Thực Hiện &amp; Cam Kết Khởi Nghiệp Bền Vững</h2>
+        <div class="editorial-grid-2">
+          <div class="col-pane">
+            <div style="font-size:21px; font-weight:700; color:var(--ink-black); margin-bottom:10px;">Nhóm 05 Học sinh Nòng cốt Thực hiện</div>
+            <ul class="dash-list">
+              <li><strong>01. Nguyễn Như Vương Gia (Trưởng nhóm)</strong>: Kiến trúc sư phần mềm 5 phân hệ, AI Parser &amp; Shortlink Engine.</li>
+              <li><strong>02. Nguyễn Quốc Khánh</strong>: Kỹ sư Backend 5 Adapters &amp; Chrome Extension v2.0.</li>
+              <li><strong>03. Trần Kim Hoa</strong>: Giám đốc Dữ liệu &amp; Chủ trì 2 khảo sát thực nghiệm ($N = 10.920$).</li>
+              <li><strong>04. Lê Hoàng Nam</strong>: Chuyên viên Phân tích Tài chính &amp; Định giá SaaS/FinTech.</li>
+              <li><strong>05. Phạm Minh Triết</strong>: Chuyên viên Pháp chế TMĐT, Bản quyền &amp; Kê khai Đạo đức AI.</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div style="font-size:21px; font-weight:700; color:var(--ink-black); margin-bottom:10px;">Kê khai AI Có Trách nhiệm &amp; Giá trị Cộng đồng</div>
+            <ul class="dash-list">
+              <li><strong>Kiểm duyệt Con người làm Trung tâm (Human-in-the-loop)</strong>: AI chỉ tạo bản nháp trong Studio; người bán luôn kiểm tra và xác nhận trước khi xuất bản.</li>
+              <li><strong>An toàn &amp; Bảo mật</strong>: Chỉ sử dụng API chính thức, không tiếp thị hàng cấm, bảo vệ khóa kết nối của người dùng.</li>
+              <li><strong>Quỹ Ươm mầm Khởi nghiệp Học đường</strong>: Trích 5% lợi nhuận ròng hàng năm tài trợ tài khoản Pro miễn phí cho các CLB Khởi nghiệp THPT tại TP.HCM.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Dock -->
+  <footer class="deck-dock">
+    <div class="dock-left">AUTOBIZ AI — BÁO CÁO THUYẾT TRÌNH DỰ THI CẤP THÀNH PHỐ (LV03)</div>
+    <div class="dock-controls">
+      <button type="button" id="btnPrev" class="dock-btn">[←] Trang trước</button>
+      <span id="slideIndicator" class="slide-counter">01 / 12</span>
+      <button type="button" id="btnNext" class="dock-btn">Trang tiếp [→]</button>
+      <button type="button" id="btnFullscreen" class="dock-btn">Toàn màn hình [F]</button>
+      <a href="/" class="dock-btn" style="text-decoration:none;">Mở WebApp Live</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const total = slides.length;
+      const indicator = document.getElementById('slideIndicator');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const btnFullscreen = document.getElementById('btnFullscreen');
+      let current = 0;
+
+      function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= total) index = total - 1;
+        current = index;
+        slides.forEach((s, idx) => {
+          s.classList.toggle('active', idx === current);
+        });
+        const num = String(current + 1).padStart(2, '0');
+        const tot = String(total).padStart(2, '0');
+        indicator.textContent = `${num} / ${tot}`;
+      }
+
+      btnPrev.addEventListener('click', () => showSlide(current - 1));
+      btnNext.addEventListener('click', () => showSlide(current + 1));
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          showSlide(current + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          showSlide(current - 1);
+        } else if (e.key === 'f' || e.key === 'F') {
+          btnFullscreen.click();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
