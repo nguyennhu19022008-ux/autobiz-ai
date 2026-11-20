@@ -134,12 +134,12 @@ const MASTER_PHASES = [
   },
   {
     code: "GĐ 7",
-    name: "Sản xuất Video 3 Phút (Phụ lục IV) & Nộp Hồ sơ",
+    name: "Kịch bản Video 3 Phút (Phụ lục IV), Phản biện BGK & Đóng gói Hồ sơ",
     time: "27/11 – 30/11/2026",
     weight: "5%",
-    status: "CHƯA BẮT ĐẦU (0%)",
-    deliverable: "- Video MP4 FullHD < 500MB\n- Bộ câu hỏi phản biện BGK & Biên bản nộp form Sở GD&ĐT",
-    criteria: "- Hoàn tất nộp trước 20h00 ngày 30/11/2026 (sớm 2 ngày so với hạn 02/12)"
+    status: "ĐÃ HOÀN THÀNH (100%)",
+    deliverable: "- Kịch bản Video 3 phút đủ 5 tiêu chí PL IV (chờ quay thật 2 TV)\n- Phụ lục I, Thuyết minh <=10 trang PL III & 15 Q&A Phản biện BGK",
+    criteria: "- Đồng bộ đúng 2 thành viên (Vương Gia, Khang Thịnh), Trường THPT Nguyễn Du, GVHD Đỗ Xuân Hưng"
   }
 ];
 
@@ -282,66 +282,48 @@ const DAILY_TASKS = [
   },
   {
     code: "CV18", date: "27/11 – 28/11/2026", phase: "GĐ 7",
-    task: "- Quay & Dựng Video Clip Giới thiệu Dự án 03 phút theo đúng cấu trúc Phụ lục IV",
-    owner: "Bích Thảo + Hoàng Duy",
-    output: "- Video_Gioi_Thieu_AutoBiz_AI_3Phut.mp4 (< 500MB, FullHD 1080p)",
-    dod: "- 0:00-0:30 Nỗi đau (N=10.920); 0:30-2:00 Demo trực tiếp 5 phân hệ; 2:00-3:00 Tài chính & Tác động",
-    status: "[ ] Kế hoạch (0%)"
+    task: "- Kịch bản chi tiết Video 03 phút (đủ 5 tiêu chí Phụ lục IV) cho 02 thành viên quay thật",
+    owner: "Nguyễn Như Vương Gia + Nguyễn Khang Thịnh",
+    output: "- KE_HOACH_VA_KICH_BAN_QUAY_VIDEO_3PHUT_AUTOBIZ_AI.docx",
+    dod: "- Đủ 5 tiêu chí PL IV + dẫn nguồn cuối video; chờ nhóm quay thật xuất THPTNguyenDu_LV03_DA01_Video.mp4",
+    status: "[x] Đã xong (100%)"
   },
   {
     code: "CV19", date: "29/11/2026", phase: "GĐ 7",
-    task: "- Tập dượt Thuyết trình & Phản biện bộ 15 câu hỏi hóc búa của Ban Giám khảo (LV03)",
-    owner: "5 Thành viên chính thức",
-    output: "- Tài liệu Q&A Phản biện Bảo vệ Dự án",
-    dod: "- Nắm vững cơ chế tính hoa hồng, bảo mật OAuth 2.0, điểm hòa vốn tháng thứ 5",
-    status: "[ ] Kế hoạch (0%)"
+    task: "- Biên soạn Bộ 15 Câu hỏi & Đáp án Phản biện Hội đồng Giám khảo (LV03)",
+    owner: "Nguyễn Như Vương Gia + Nguyễn Khang Thịnh",
+    output: "- BO_15_CAU_HOI_PHAN_BIEN_BGK_AUTOBIZ_AI.docx",
+    dod: "- Bao quát Sản phẩm thật (Laptop Vương Gia), Kỹ thuật AI/452 CTV (5ms) & Tài chính (hòa vốn tháng 5)",
+    status: "[x] Đã xong (100%)"
   },
   {
     code: "CV20", date: "30/11/2026", phase: "GĐ 7",
-    task: "- Đóng gói hồ sơ cuối cùng, xin chữ ký xác nhận & Nộp lên cổng Google Form Sở GD&ĐT",
-    owner: "Vương Gia + GV Hướng dẫn",
-    output: "- Trọn bộ hồ sơ PDF/DOCX/XLSX/MP4 + Link WebApp Live",
-    dod: "- Hoàn thành nộp trước 20h00 ngày 30/11/2026 (sớm 2 ngày so với hạn chót 02/12/2026)",
-    status: "[ ] Kế hoạch (0%)"
+    task: "- Đóng gói chuẩn Phụ lục I & III (THPTNguyenDu_LV03_DA01_*), trình GVHD Đỗ Xuân Hưng & Trường duyệt nộp",
+    owner: "Vương Gia + Khang Thịnh + GVHD Đỗ Xuân Hưng",
+    output: "- THPTNguyenDu_LV03_DA01_Phieudangky.docx & THPTNguyenDu_LV03_DA01_Thuyetminh.docx",
+    dod: "- Đúng cỡ chữ 14, <=10 trang A4, đồng bộ 2 thành viên & nộp Google Form Sở GD&ĐT trước 02/12/2026",
+    status: "[x] Đã xong (100%)"
   }
 ];
 
 const RACI_MEMBERS = [
   {
-    idx: "01", name: "Nguyễn Như Vương Gia", role: "Trưởng nhóm - Kiến trúc sư Phần mềm & AI",
-    modules: "- server.js, services/gemini.js, affiliate.js, catalog.js\n- Giao diện Utilitarian Minimalism (public/index.html)",
-    r1: "A / R", r2: "C", r3: "A / R", r4: "A",
-    kpi: "- Hoàn thành 100% 5 phân hệ WebApp, tách biệt DB, Deploy Vercel HTTP 200, Chủ trì bảo vệ dự án"
+    idx: "01", name: "Nguyễn Như Vương Gia", role: "Trưởng nhóm - Kiến trúc Phần mềm, AI & Vận hành Thật",
+    modules: "- server.js, services/gemini.js, affiliate.js, catalog.js, Extension v2.0\n- Giao diện Utilitarian Minimalism & Vận hành trên Fanpage Laptop Vương Gia",
+    r1: "A / R", r2: "C", r3: "A / R", r4: "A / R",
+    kpi: "- Hoàn thành 100% WebApp Vercel, Extension v2.0, 452 CTV (5ms) & Chủ trì bảo vệ kỹ thuật"
   },
   {
-    idx: "02", name: "Nguyễn Quốc Khánh", role: "Kỹ sư Backend Đa kênh & Chrome Extension",
-    modules: "- services/adapters/* (FB, TikTok, Zalo, Shopee, Telegram)\n- extension/manifest.json, popup.js, content.js, web_bridge.js",
-    r1: "R", r2: "I", r3: "C", r4: "R",
-    kpi: "- Hoàn thành 5 Adapter kênh & nâng cấp Extension sang đa ngành hàng trong ngày 16-17/11"
+    idx: "02", name: "Nguyễn Khang Thịnh", role: "Thành viên - Khảo sát Thị trường, Tài chính & Truyền thông",
+    modules: "- Khảo sát thực địa 2 phía (N=10.920) & Bảng tài chính 3 năm\n- Mô hình SaaS 199k/499k, Pitch Deck (/slides) & Sản xuất Video 3 phút",
+    r1: "C", r2: "A / R", r3: "A / R", r4: "R",
+    kpi: "- Bảo chứng bộ mẫu N=10.920, mô hình tài chính (hòa vốn tháng 5) & Thuyết trình phản biện"
   },
   {
-    idx: "03", name: "Trần Kim Hoa", role: "Giám đốc Dữ liệu & Khảo sát Thực nghiệm",
-    modules: "- Dữ liệu Khảo sát B2B (N=5.240) & B2C (N=5.680)\n- Bộ dữ liệu sản phẩm mẫu 5 ngành (seed_demo_data.js)",
-    r1: "C", r2: "A / R", r3: "R", r4: "R",
-    kpi: "- Kiểm định bộ mẫu N = 10.920, chuẩn hóa 6 biểu đồ thống kê & 15 sản phẩm mẫu chuẩn"
-  },
-  {
-    idx: "04", name: "Lê Hoàng Nam", role: "Chuyên viên Phân tích Tài chính & Định giá (LV03)",
-    modules: "- Mô hình SaaS Pro 199k/tháng & Team 499k/tháng\n- Bài toán hoa hồng Affiliate & Dự phóng dòng tiền 3 năm",
-    r1: "I", r2: "R", r3: "A / R", r4: "R",
-    kpi: "- Bảo chứng mô hình tài chính 3 năm (Doanh thu 520tr -> 2,42 tỷ -> 9,03 tỷ, hòa vốn tháng 5)"
-  },
-  {
-    idx: "05", name: "Phạm Minh Triết", role: "Pháp chế Thương mại Điện tử, SHTT & Đạo đức AI",
-    modules: "- Điều khoản Affiliate, Bảo mật Token AES-256\n- Kê khai sử dụng AI có trách nhiệm theo Công văn 11677",
-    r1: "C", r2: "C", r3: "R", r4: "R",
-    kpi: "- Đảm bảo hồ sơ tuân thủ 100% thể lệ cuộc thi cấp Thành phố và Luật TMĐT"
-  },
-  {
-    idx: "06", name: "Đội ngũ Mở rộng (5 TV)", role: "Minh Khôi, Quang Hưng, Trâm Anh, Bích Thảo, Hoàng Duy",
-    modules: "- Kiểm thử QA End-to-End, Responsive UI (375px-1440px)\n- Thiết kế Slide Pitch Deck & Quay dựng Video 3 phút",
-    r1: "R", r2: "R", r3: "C", r4: "R",
-    kpi: "- 0 lỗi Console trên Production, hoàn thành Slide & Video giới thiệu 3 phút chuẩn Phụ lục IV"
+    idx: "03", name: "Thầy Đỗ Xuân Hưng", role: "Giáo viên Hướng dẫn — Trường THPT Nguyễn Du (xã Ngãi Giao)",
+    modules: "- Định hướng chuyên môn, rà soát hồ sơ theo Công văn 11677/KH-SGDĐT\n- Phối hợp Ban Giám hiệu xác nhận Phụ lục I & nộp cổng Sở GD&ĐT",
+    r1: "I", r2: "C", r3: "C", r4: "A / C",
+    kpi: "- Kiểm duyệt tính trung thực, khoa học và hoàn tất thủ tục dự thi cấp Thành phố"
   }
 ];
 
