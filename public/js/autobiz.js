@@ -1347,6 +1347,78 @@
     }
   }
 
+  // ======================== LANDING PAGE & ONBOARDING QUESTIONNAIRE ========================
+  let pendingSurveyUser = null;
+
+  function showLandingPage() {
+    const landing = $('#landingPage');
+    if (landing) landing.style.display = 'flex';
+  }
+
+  function hideLandingPage() {
+    const landing = $('#landingPage');
+    if (landing) landing.style.display = 'none';
+  }
+
+  function openRegisterSurvey() {
+    pendingSurveyUser = null;
+    const modal = $('#modalRegisterSurvey');
+    const step1 = $('#surveyStep1');
+    const step2 = $('#surveyStep2');
+    const step3 = $('#surveyStep3Shop');
+    const title = $('#surveyModalTitle');
+
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (step3) step3.style.display = 'none';
+    if (title) title.textContent = 'Đăng Ký Tài Khoản Mới';
+    if (modal) modal.classList.add('open');
+  }
+
+  function closeRegisterSurvey() {
+    const modal = $('#modalRegisterSurvey');
+    if (modal) modal.classList.remove('open');
+  }
+
+  async function registerAndCompleteSurvey(regData, surveyData) {
+    try {
+      showToast('Đang khởi tạo tài khoản & không gian làm việc...');
+      const regRes = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regData)
+      });
+      const regJson = await regRes.json();
+      if (!regRes.ok || !regJson.success) {
+        throw new Error(regJson.error || 'Đăng ký tài khoản thất bại.');
+      }
+
+      state.authUser = regJson.user;
+
+      const onbRes = await fetch('/api/auth/onboarding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + regJson.token
+        },
+        body: JSON.stringify(surveyData)
+      });
+      const onbJson = await onbRes.json();
+      if (onbRes.ok && onbJson.success && onbJson.user) {
+        state.authUser = onbJson.user;
+      }
+
+      closeRegisterSurvey();
+      hideLandingPage();
+      applyRolePermissions(state.authUser);
+      showToast(onbJson.message || `Chào mừng ${state.authUser.displayName} đến với AutoBiz AI!`);
+      await loadAnalyticsSummary();
+      await loadCatalogProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
   async function loadWebhookLogs() {
     const listEl = $('#webhookLogsList');
     if (!listEl) return;
@@ -1566,7 +1638,10 @@
     changeUserRole,
     toggleUserActive,
     deleteUserAccount,
-    chooseOnboardingPersona
+    chooseOnboardingPersona,
+    showLandingPage,
+    hideLandingPage,
+    openRegisterSurvey
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -1764,6 +1839,137 @@
         navigator.clipboard?.writeText(val);
         showToast('Đã sao chép Webhook URL!');
       });
+    }
+
+    // Landing Page Entry & Bypass bindings
+    const btnLandingLogin = $('#btnLandingLogin');
+    const btnLandingHeroLogin = $('#btnLandingHeroLogin');
+    const btnLandingRegister = $('#btnLandingRegister');
+    const btnLandingHeroRegister = $('#btnLandingHeroRegister');
+    const btnBypassToWorkspace = $('#btnBypassToWorkspace');
+    const btnBackToLanding = $('#btnBackToLanding');
+
+    const openLoginFromLanding = () => {
+      const modal = $('#modalAuthRole');
+      if (modal) modal.classList.add('open');
+    };
+
+    if (btnLandingLogin) btnLandingLogin.addEventListener('click', openLoginFromLanding);
+    if (btnLandingHeroLogin) btnLandingHeroLogin.addEventListener('click', openLoginFromLanding);
+    if (btnLandingRegister) btnLandingRegister.addEventListener('click', openRegisterSurvey);
+    if (btnLandingHeroRegister) btnLandingHeroRegister.addEventListener('click', openRegisterSurvey);
+    if (btnBypassToWorkspace) {
+      btnBypassToWorkspace.addEventListener('click', () => {
+        hideLandingPage();
+        showToast('Đang ở chế độ xem nhanh Workspace dành cho Ban Giám khảo.');
+      });
+    }
+    if (btnBackToLanding) {
+      btnBackToLanding.addEventListener('click', showLandingPage);
+    }
+
+    // Step-by-Step Questionnaire Form bindings
+    const formSurveyStep1 = $('#formSurveyStep1');
+    const btnCloseRegisterSurvey = $('#btnCloseRegisterSurvey');
+    const btnCancelSurvey = $('#btnCancelSurvey');
+    const optRoleShop = $('#optRoleShop');
+    const optRoleAffiliate = $('#optRoleAffiliate');
+    const optCtvYes = $('#optCtvYes');
+    const optCtvNo = $('#optCtvNo');
+    const btnBackToStep1 = $('#btnBackToStep1');
+    const btnBackToStep2 = $('#btnBackToStep2');
+
+    if (btnCloseRegisterSurvey) btnCloseRegisterSurvey.addEventListener('click', closeRegisterSurvey);
+    if (btnCancelSurvey) btnCancelSurvey.addEventListener('click', closeRegisterSurvey);
+
+    if (formSurveyStep1) {
+      formSurveyStep1.addEventListener('submit', (e) => {
+        e.preventDefault();
+        pendingSurveyUser = {
+          email: $('#surveyEmail')?.value?.trim() || '',
+          displayName: $('#surveyDisplayName')?.value?.trim() || '',
+          password: $('#surveyPassword')?.value || ''
+        };
+        const step1 = $('#surveyStep1');
+        const step2 = $('#surveyStep2');
+        const title = $('#surveyModalTitle');
+        if (step1) step1.style.display = 'none';
+        if (step2) step2.style.display = 'block';
+        if (title) title.textContent = 'Định Hướng Tài Khoản';
+      });
+    }
+
+    if (btnBackToStep1) {
+      btnBackToStep1.addEventListener('click', () => {
+        const step1 = $('#surveyStep1');
+        const step2 = $('#surveyStep2');
+        const title = $('#surveyModalTitle');
+        if (step1) step1.style.display = 'block';
+        if (step2) step2.style.display = 'none';
+        if (title) title.textContent = 'Đăng Ký Tài Khoản Mới';
+      });
+    }
+
+    if (optRoleShop) {
+      optRoleShop.addEventListener('click', () => {
+        if (!pendingSurveyUser) return;
+        pendingSurveyUser.role = 'shop_owner';
+        const step2 = $('#surveyStep2');
+        const step3 = $('#surveyStep3Shop');
+        const title = $('#surveyModalTitle');
+        if (step2) step2.style.display = 'none';
+        if (step3) step3.style.display = 'block';
+        if (title) title.textContent = 'Xác Nhận Mô Hình';
+      });
+    }
+
+    if (btnBackToStep2) {
+      btnBackToStep2.addEventListener('click', () => {
+        const step2 = $('#surveyStep2');
+        const step3 = $('#surveyStep3Shop');
+        const title = $('#surveyModalTitle');
+        if (step2) step2.style.display = 'block';
+        if (step3) step3.style.display = 'none';
+        if (title) title.textContent = 'Định Hướng Tài Khoản';
+      });
+    }
+
+    if (optRoleAffiliate) {
+      optRoleAffiliate.addEventListener('click', () => {
+        if (!pendingSurveyUser) return;
+        registerAndCompleteSurvey(pendingSurveyUser, {
+          persona: 'independent_affiliate',
+          hasAffiliates: false
+        });
+      });
+    }
+
+    if (optCtvYes) {
+      optCtvYes.addEventListener('click', () => {
+        if (!pendingSurveyUser) return;
+        registerAndCompleteSurvey(pendingSurveyUser, {
+          persona: 'shop_with_affiliates',
+          hasAffiliates: true
+        });
+      });
+    }
+
+    if (optCtvNo) {
+      optCtvNo.addEventListener('click', () => {
+        if (!pendingSurveyUser) return;
+        registerAndCompleteSurvey(pendingSurveyUser, {
+          persona: 'shop_solo',
+          hasAffiliates: false
+        });
+      });
+    }
+
+    // Default Landing Display: Show Landing Page on entry unless explicit dashboard path or demo flag
+    const isExplicitAppPath = ['/app', '/dashboard', '/cockpit'].includes(window.location.pathname) || window.location.search.includes('mode=demo');
+    if (isExplicitAppPath) {
+      hideLandingPage();
+    } else {
+      showLandingPage();
     }
 
     // Init Studio, Auth & Default view

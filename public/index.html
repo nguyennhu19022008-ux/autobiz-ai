@@ -20,6 +20,48 @@
 </head>
 <body>
 
+  <!-- ======================== 1. ENTRY LANDING PAGE (HIỂN THỊ MẶC ĐỊNH CHO NGƯỜI MỚI) ======================== -->
+  <div id="landingPage" class="landing-wrapper">
+    <header class="landing-header">
+      <div class="brand-wrapper">
+        <div class="brand-mark">AB</div>
+        <div>
+          <div class="brand-title">AutoBiz AI</div>
+          <div class="brand-tag">PHASE 3 SAAS</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" id="btnLandingLogin" class="btn btn-secondary">Đăng nhập</button>
+        <button type="button" id="btnLandingRegister" class="btn btn-primary">Đăng ký</button>
+      </div>
+    </header>
+
+    <main class="landing-hero">
+      <div class="landing-pill">
+        <span>Tiếp Thị Đa Kênh &amp; FinTech Affiliate</span>
+      </div>
+      <h1 class="landing-title">
+        Đơn giản hóa kinh doanh online &amp; tiếp thị liên kết cho mọi người.
+      </h1>
+      <p class="landing-subtitle">
+        Hỗ trợ Chủ shop mở rộng mạng lưới bán hàng và người làm Affiliate kiếm hoa hồng tự do với công nghệ AI tự động hóa.
+      </p>
+
+      <div class="landing-cta-group">
+        <button type="button" id="btnLandingHeroRegister" class="btn btn-primary landing-cta-btn">
+          Đăng Ký Tài Khoản
+        </button>
+        <button type="button" id="btnLandingHeroLogin" class="btn btn-secondary landing-cta-btn">
+          Đăng Nhập
+        </button>
+      </div>
+
+      <a id="btnBypassToWorkspace" class="landing-bypass-link">
+        (Dành cho Ban Giám khảo &amp; Thử nghiệm: Bấm để vào nhanh bản Demo)
+      </a>
+    </main>
+  </div>
+
   <!-- ======================== MOBILE HEADER ======================== -->
   <header class="mobile-header">
     <div class="brand-wrapper">
@@ -171,6 +213,13 @@
             </svg>
             <span>Tải Extension AB (.zip)</span>
           </a>
+          <button type="button" id="btnBackToLanding" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Trang Giới Thiệu (Landing)</span>
+          </button>
         </div>
       </div>
     </aside>
@@ -1054,6 +1103,81 @@
         <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 14px;">
           * Bạn luôn có thể đổi lại luồng trải nghiệm bất kỳ lúc nào từ góc Sidebar tài khoản.
         </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== MODAL: ĐĂNG KÝ & KHẢO SÁT ĐỊNH HƯỚNG TỪNG BƯỚC ======================== -->
+  <div id="modalRegisterSurvey" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 id="surveyModalTitle" class="modal-title">Đăng Ký Tài Khoản Mới</h3>
+        <button type="button" id="btnCloseRegisterSurvey" class="btn btn-secondary btn-icon-only">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Bước 1: Nhập Email, Tên, Mật khẩu -->
+        <div id="surveyStep1">
+          <form id="formSurveyStep1">
+            <div class="form-group">
+              <label class="form-label">Địa chỉ Email (*)</label>
+              <input type="email" id="surveyEmail" class="form-input" placeholder="VD: banhang@gmail.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Họ và tên / Tên hiển thị (*)</label>
+              <input type="text" id="surveyDisplayName" class="form-input" placeholder="VD: Nguyễn Văn A" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mật khẩu (Ít nhất 4 ký tự) (*)</label>
+              <input type="password" id="surveyPassword" class="form-input" placeholder="••••••" minlength="4" required />
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+              <button type="button" id="btnCancelSurvey" class="btn btn-secondary">Đóng</button>
+              <button type="submit" class="btn btn-primary">Tiếp tục →</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Bước 2: Câu hỏi 1 - Bạn tham gia với vai trò nào? (Chỉ hỏi ngắn gọn) -->
+        <div id="surveyStep2" style="display: none;">
+          <h4 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 14px; text-align: center;">
+            Bạn tham gia với vai trò nào?
+          </h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div id="optRoleShop" class="question-option-card">
+              <span class="card-opt-title" style="font-weight: 600; font-size: 14px;">Chủ shop / Doanh nghiệp</span>
+              <span>→</span>
+            </div>
+            <div id="optRoleAffiliate" class="question-option-card">
+              <span class="card-opt-title" style="font-weight: 600; font-size: 14px;">Cộng tác viên / KOC độc lập</span>
+              <span>→</span>
+            </div>
+          </div>
+          <div style="margin-top: 16px; text-align: left;">
+            <button type="button" id="btnBackToStep1" class="btn btn-secondary btn-sm">← Quay lại</button>
+          </div>
+        </div>
+
+        <!-- Bước 3: Câu hỏi 2 (nếu chọn Chủ shop) - Bạn có CTV chưa? (Chỉ hỏi ngắn gọn) -->
+        <div id="surveyStep3Shop" style="display: none;">
+          <h4 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 14px; text-align: center;">
+            Bạn đã có đội ngũ cộng tác viên (CTV) chưa?
+          </h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div id="optCtvYes" class="question-option-card">
+              <span class="card-opt-title" style="font-weight: 600; font-size: 14px;">Đã có đội ngũ CTV bán phụ</span>
+              <span>✓</span>
+            </div>
+            <div id="optCtvNo" class="question-option-card">
+              <span class="card-opt-title" style="font-weight: 600; font-size: 14px;">Chưa có, muốn tự bán trước</span>
+              <span>✓</span>
+            </div>
+          </div>
+          <div style="margin-top: 16px; text-align: left;">
+            <button type="button" id="btnBackToStep2" class="btn btn-secondary btn-sm">← Quay lại</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
