@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Utilitarian Minimalist SaaS Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261124_v4">
+  <link rel="stylesheet" href="/css/style.css?v=20261124_v5">
 </head>
 <body>
 
@@ -85,25 +85,19 @@
 
       <!-- Role & Account Switcher (RBAC: Chủ shop vs CTV vs KOC Độc lập) -->
       <div id="sidebarAccountBox" style="padding: 10px 14px; border-bottom: 1px solid var(--border-color); background: #FAFAFA;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
           <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Vai trò</span>
           <span id="currentRoleBadge" class="tag tag-accessories" style="font-size: 10px;">Chủ shop</span>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-          <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 8px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <span>Tài khoản &amp; Đăng ký mới</span>
+        <div id="currentUserName" style="font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Admin Tổng (Hệ thống)
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px;">
+            <span>Đổi tài khoản</span>
           </button>
-          <button type="button" id="btnOpenOnboardingModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 8px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <span>Đổi luồng: Chủ shop / KOC Sàn</span>
+          <button type="button" id="btnLogout" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px; color: #B91C1C; border-color: #FECACA;">
+            <span>Đăng xuất</span>
           </button>
         </div>
       </div>
@@ -164,7 +158,7 @@
         </button>
 
         <!-- Phân hệ 6: Quản Lý Tài Khoản & Phân Quyền -->
-        <button class="nav-item admin-only" data-view="users">
+        <button class="nav-item admin-only ctv-network-only" data-view="users">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -221,7 +215,7 @@
           <div class="page-header">
             <div>
               <h1 class="page-title">Tổng quan & FinTech</h1>
-              <p class="page-subtitle">Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.</p>
+              <p id="analyticsSubtitle" class="page-subtitle">Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.</p>
             </div>
             <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
               <button id="btnSeedDemo" class="btn btn-primary admin-only" title="Nạp nhanh 10 sản phẩm đa ngành & 8 chiến dịch CTV mẫu phục vụ thuyết trình BGK">
@@ -302,8 +296,8 @@
               </div>
             </div>
 
-            <div class="stat-card">
-              <div class="stat-label">Tiền Thực Thu Chủ Shop</div>
+            <div id="statNetRevenueCard" class="stat-card">
+              <div id="statNetRevenueLabel" class="stat-label">Tiền Thực Thu Chủ Shop</div>
               <div id="statNetRevenue" class="stat-value" style="color: #166534;">0 đ</div>
               <div class="stat-trend">
                 <span id="statNetRevenueTrend">Doanh thu sau khi trừ hoa hồng CTV</span>
@@ -363,7 +357,7 @@
           </div>
 
           <!-- CTV Revenue & Commission Table -->
-          <div class="card">
+          <div id="cardCtvRevenueReport" class="card ctv-network-only">
             <div class="card-header">
               <div class="card-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -450,7 +444,7 @@
               <div class="smart-link-box">
                 <div class="smart-link-title">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                  <span>Smart Affiliate Link (UTM Tracking)</span>
+                  <span id="studioSmartLinkTitle">Smart Affiliate Link (UTM Tracking)</span>
                 </div>
                 <div class="form-group" style="margin-bottom: 8px;">
                   <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link sản phẩm của Shop hoặc link Shopee/TikTok Affiliate cá nhân..." />
@@ -565,13 +559,13 @@
         <section id="view-catalog" class="view-section">
           <div class="page-header">
             <div>
-              <h1 class="page-title">Kho Hàng Đa Ngành</h1>
-              <p class="page-subtitle">Quản lý cơ sở dữ liệu sản phẩm đa lĩnh vực: Công nghệ, Phụ kiện, Gia dụng, Thời trang &amp; FMCG.</p>
+              <h1 id="catalogPageTitle" class="page-title">Kho Hàng Đa Ngành</h1>
+              <p id="catalogPageSubtitle" class="page-subtitle">Quản lý cơ sở dữ liệu sản phẩm đa lĩnh vực: Công nghệ, Phụ kiện, Gia dụng, Thời trang &amp; FMCG.</p>
             </div>
             <div class="header-actions">
-              <button type="button" id="btnOpenAddProductModal" class="btn btn-primary admin-only">
+              <button type="button" id="btnOpenAddProductModal" class="btn btn-primary catalog-write-allowed">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                <span>+ Thêm sản phẩm</span>
+                <span id="btnAddProductLabel">+ Thêm sản phẩm</span>
               </button>
             </div>
           </div>
@@ -982,69 +976,6 @@
     </div>
   </div>
 
-  <!-- ======================== MODAL: KHẢO SÁT ĐỊNH HƯỚNG ONBOARDING (CHỦ SHOP vs CTV ĐỘC LẬP) ======================== -->
-  <div id="modalOnboarding" class="modal-backdrop">
-    <div class="modal-content" style="max-width: 620px;">
-      <div class="modal-header">
-        <h3 class="modal-title">Chào Mừng! Bạn Muốn Sử Dụng AutoBiz AI Để Làm Gì?</h3>
-        <button type="button" id="btnCloseOnboardingModal" class="btn btn-secondary btn-icon-only">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          AutoBiz AI thiết kế không gian làm việc chuyên biệt theo nhu cầu thực tế của bạn. Hãy chọn mô hình phù hợp nhất:
-        </p>
-
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <!-- Lựa chọn 1: Chủ Shop có/muốn có CTV -->
-          <div id="cardOnboardingShop" class="card" style="margin-bottom: 0; padding: 16px; border: 2px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span class="tag tag-accessories" style="font-size: 11px;">Mô Hình 1</span>
-                  <strong style="font-size: 15px; color: var(--text-main);">Tôi là Chủ Shop / Doanh Nghiệp</strong>
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                  Có hàng hóa sẵn. Cần AI tự viết bài đa kênh, quản lý kho hàng, tạo link tiếp thị và tính toán hoa hồng tự động cho đội ngũ CTV bán phụ.
-                </p>
-                <div style="margin-top: 8px; font-size: 11px; color: #166534; font-weight: 600;">
-                  Bao gồm: Kho hàng, Studio AI 4 kênh, Quản lý &amp; Cấp quyền CTV, Đối soát FinTech chốt đơn.
-                </div>
-              </div>
-              <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap; margin-top: 4px;">
-                Chọn Luồng Này
-              </button>
-            </div>
-          </div>
-
-          <!-- Lựa chọn 2: Người làm Affiliate / KOC Độc Lập -->
-          <div id="cardOnboardingAffiliate" class="card" style="margin-bottom: 0; padding: 16px; border: 2px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span class="tag tag-tech" style="font-size: 11px;">Mô Hình 2</span>
-                  <strong style="font-size: 15px; color: var(--text-main);">Tôi là Người Làm Affiliate / KOC Độc Lập</strong>
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                  Không có hàng. Tự làm tiếp thị liên kết cho Shopee, TikTok Shop, AccessTrade. Cần bóc tách sản phẩm nhanh bằng Extension, AI viết 4 bài và đo click từng kênh.
-                </p>
-                <div style="margin-top: 8px; font-size: 11px; color: #1E40AF; font-weight: 600;">
-                  Bao gồm: Extension bóc link Shopee/Web, Studio AI 4 kênh, Rút gọn UTM đo click thật, Lọc Bot rác.
-                </div>
-              </div>
-              <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap; margin-top: 4px;">
-                Chọn Luồng Này
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 14px;">
-          * Bạn luôn có thể đổi lại luồng trải nghiệm bất kỳ lúc nào từ góc Sidebar tài khoản.
-        </p>
-      </div>
-    </div>
-  </div>
-
   <!-- ======================== MODAL: ĐĂNG KÝ & KHẢO SÁT ĐỊNH HƯỚNG TỪNG BƯỚC ======================== -->
   <div id="modalRegisterSurvey" class="modal-backdrop">
     <div class="modal-content" style="max-width: 480px;">
@@ -1123,6 +1054,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261124_v4"></script>
+  <script src="/js/autobiz.js?v=20261124_v5"></script>
 </body>
 </html>

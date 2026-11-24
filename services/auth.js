@@ -357,11 +357,27 @@ function isShopOrAdmin(user) {
   return Boolean(user && (user.role === 'superadmin' || user.role === 'shop_owner' || user.role === 'admin'));
 }
 
+function canManageOwnCatalog(user) {
+  if (!user) return false;
+  if (isShopOrAdmin(user)) return true;
+  return user.role === 'ctv' && user.persona === 'independent_affiliate';
+}
+
 function requireAdmin(req, res, next) {
   if (!isShopOrAdmin(req.authUser)) {
     return res.status(403).json({
       success: false,
       error: 'Phân quyền: Tài khoản CTV không có quyền thực hiện thao tác quản trị của Chủ shop / Admin.'
+    });
+  }
+  return next();
+}
+
+function requireCatalogWrite(req, res, next) {
+  if (!canManageOwnCatalog(req.authUser)) {
+    return res.status(403).json({
+      success: false,
+      error: 'Phân quyền: Chỉ Chủ shop, Admin hoặc KOC/Affiliate độc lập mới được thêm/sửa sản phẩm cá nhân.'
     });
   }
   return next();
@@ -392,6 +408,8 @@ module.exports = {
   authenticateUser,
   attachAuthUser,
   isShopOrAdmin,
+  canManageOwnCatalog,
   requireAdmin,
+  requireCatalogWrite,
   requireSuperAdmin
 };

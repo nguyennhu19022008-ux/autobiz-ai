@@ -29,13 +29,14 @@ function createShortLink({
   commissionRate = 10,
   channel = 'facebook',
   campaign = 'autobiz_2026',
-  subId = 'vuonggia'
+  subId = 'vuonggia',
+  owner = 'superadmin'
 }) {
   const links = readLinks();
   const targetUrl = buildAffiliateUrl(baseUrl, channel, campaign, subId);
 
-  // Return existing shortlink if exact same targetUrl already tracked
-  const existing = links.find((l) => l.targetUrl === targetUrl);
+  // Return existing shortlink if exact same targetUrl already tracked by same owner
+  const existing = links.find((l) => l.targetUrl === targetUrl && (!owner || !l.owner || l.owner === owner));
   if (existing) return existing;
 
   let shortCode = generateShortCode(channel.slice(0, 2));
@@ -52,6 +53,7 @@ function createShortLink({
     channel: String(channel).toLowerCase(),
     campaign,
     subId,
+    owner: owner || 'superadmin',
     baseUrl,
     targetUrl,
     clicks: 0,
@@ -232,18 +234,47 @@ function processOrderWebhook({ orderId, shortCode, subId, orderAmount, quantity 
   };
 }
 
-function listAffiliateLinks({ subId } = {}) {
-  const links = readLinks();
-  if (!subId) return links;
-  const cleanSub = String(subId).trim().toLowerCase();
-  return links.filter((l) => String(l.subId || '').trim().toLowerCase() === cleanSub);
+function filterLinksByScope(links, { subId, owner, role } = {}) {
+  if (!role || role === 'superadmin') {
+    if (!subId) return links;
+    const cleanSub = String(subId).trim().toLowerCase();
+    return links.filter((l) => String(l.subId || '').trim().toLowerCase() === cleanSub);
+  }
+  const cleanOwner = String(owner || '').trim().toLowerCase();
+  const cleanSub = String(subId || '').trim().toLowerCase();
+
+  if (role === 'ctv') {
+    return links.filter((l) => {
+      const lSub = String(l.subId || '').trim().toLowerCase();
+      const lOwner = String(l.owner || '').trim().toLowerCase();
+      return (cleanSub && lSub === cleanSub) || (cleanOwner && lOwner === cleanOwner);
+    });
+  }
+
+  if (role === 'shop_owner' && cleanOwner) {
+    if (cleanOwner === 'admin') {
+      return links.filter((l) => {
+        const lOwner = String(l.owner || '').trim().toLowerCase();
+        const lSub = String(l.subId || '').trim().toLowerCase();
+        return !lOwner || lOwner === 'admin' || lOwner === 'superadmin' || lSub.startsWith('ctv');
+      });
+    }
+    return links.filter((l) => {
+      const lOwner = String(l.owner || '').trim().toLowerCase();
+      const lSub = String(l.subId || '').trim().toLowerCase();
+      return lOwner === cleanOwner || lSub === cleanOwner;
+    });
+  }
+
+  return links;
 }
 
-function getAnalyticsSummary({ subId } = {}) {
-  const allLinks = readLinks();
-  const links = subId
-    ? allLinks.filter((l) => String(l.subId || '').trim().toLowerCase() === String(subId).trim().toLowerCase())
-    : allLinks;
+function listAffiliateLinks({ subId, owner, role } = {}) {
+  return filterLinksByScope(readLinks(), { subId, owner, role });
+}
+
+function getAnalyticsSummary({ subId, owner, role } = {}) {
+  const links = filterLinksByScope(readLinks(), { subId, owner, role });
   const byChannel = {
     facebook: { clicks: 0, links: 0, commission: 0, revenue: 0 },
     tiktok: { clicks: 0, links: 0, commission: 0, revenue: 0 },

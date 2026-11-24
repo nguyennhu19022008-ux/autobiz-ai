@@ -11,10 +11,33 @@ function writeProducts(products) {
 }
 
 /**
- * List products with optional category and search query filters
+ * List products with optional category, search query, and multi-tenant owner filters
  */
-function listProducts({ category = 'all', search = '' } = {}) {
+function listProducts({ category = 'all', search = '', owner = null, role = 'superadmin', persona = null } = {}) {
   let items = readProducts();
+
+  if (role && role !== 'superadmin' && owner) {
+    const cleanOwner = String(owner).trim().toLowerCase();
+    if (role === 'ctv' && persona === 'independent_affiliate') {
+      items = items.filter((p) => String(p.owner || '').toLowerCase() === cleanOwner);
+    } else if (role === 'ctv') {
+      // CTV thuộc shop xem kho hàng của shop mặc định + sản phẩm cá nhân nếu có
+      items = items.filter((p) => {
+        const pOwner = String(p.owner || '').toLowerCase();
+        return !pOwner || pOwner === 'admin' || pOwner === 'superadmin' || pOwner === cleanOwner;
+      });
+    } else if (role === 'shop_owner') {
+      if (cleanOwner === 'admin') {
+        items = items.filter((p) => {
+          const pOwner = String(p.owner || '').toLowerCase();
+          return !pOwner || pOwner === 'admin' || pOwner === 'superadmin';
+        });
+      } else {
+        items = items.filter((p) => String(p.owner || '').toLowerCase() === cleanOwner);
+      }
+    }
+  }
+
   if (category && category !== 'all') {
     items = items.filter((p) => p.category === category);
   }
@@ -56,6 +79,7 @@ function createProduct(payload) {
           .map((s) => s.trim())
           .filter(Boolean),
     status: payload.status || 'active',
+    owner: payload.owner || 'superadmin',
     created_at: new Date().toISOString()
   };
 

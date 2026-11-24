@@ -834,9 +834,9 @@
               <button class="btn btn-primary btn-sm" onclick="window.AutoBiz.loadProductToStudio('${p.id}')">
                 Nạp vào Studio
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.deleteProduct('${p.id}')" title="Xóa">
+              ${(state.authUser?.role !== 'ctv' || state.authUser?.persona === 'independent_affiliate') ? `<button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.deleteProduct('${p.id}')" title="Xóa">
                 ✕
-              </button>
+              </button>` : ''}
             </div>
           </td>
         </tr>
@@ -1206,6 +1206,15 @@
     const isCtv = role === 'ctv';
     const isSuperAdmin = role === 'superadmin';
     const isIndependentAffiliate = user?.persona === 'independent_affiliate' || (isCtv && user?.hasAffiliates === false);
+    const isShopSolo = !isCtv && !isSuperAdmin && (user?.persona === 'shop_solo' || user?.hasAffiliates === false);
+    const hasCtvNetwork = isSuperAdmin || (!isCtv && !isShopSolo);
+    const canWriteCatalog = isSuperAdmin || !isCtv || isIndependentAffiliate;
+
+    const userNameEl = $('#currentUserName');
+    if (userNameEl) {
+      userNameEl.textContent = user?.displayName || user?.username || 'AutoBiz User';
+    }
+
     const badge = $('#currentRoleBadge');
     if (badge) {
       if (isIndependentAffiliate) {
@@ -1217,16 +1226,68 @@
       } else if (isSuperAdmin) {
         badge.textContent = 'Admin Tổng';
         badge.className = 'tag tag-fashion';
+      } else if (isShopSolo) {
+        badge.textContent = 'Chủ shop (Tự bán)';
+        badge.className = 'tag tag-accessories';
       } else {
-        badge.textContent = 'Chủ shop';
+        badge.textContent = 'Chủ shop (Có CTV)';
         badge.className = 'tag tag-accessories';
       }
     }
 
-    // Hide Admin-only buttons, tabs and actions when logged in as CTV / Independent Affiliate
+    // 1. Admin-only controls (Settings, Demo Seed/Clear)
     $$('.admin-only').forEach((el) => {
       el.style.display = isCtv ? 'none' : '';
     });
+
+    // 2. CTV Network controls (User/CTV management tab, CTV revenue split table)
+    $$('.ctv-network-only').forEach((el) => {
+      el.style.display = hasCtvNetwork ? '' : 'none';
+    });
+
+    // 3. Catalog write button (Allowed for Admin, Shop Owner, AND Independent Affiliate KOC)
+    $$('.catalog-write-allowed').forEach((el) => {
+      el.style.display = canWriteCatalog ? '' : 'none';
+    });
+
+    // 4. Tailor labels & copy by persona
+    const btnAddProductLabel = $('#btnAddProductLabel');
+    if (btnAddProductLabel) {
+      btnAddProductLabel.textContent = isIndependentAffiliate ? '+ Thêm Link Affiliate Sàn' : '+ Thêm sản phẩm';
+    }
+    const catalogTitle = $('#catalogPageTitle');
+    const catalogSubtitle = $('#catalogPageSubtitle');
+    if (catalogTitle && catalogSubtitle) {
+      if (isIndependentAffiliate) {
+        catalogTitle.textContent = 'Danh Sách Link Affiliate Cá Nhân';
+        catalogSubtitle.textContent = 'Lưu sản phẩm kèm link affiliate Shopee / TikTok Shop cá nhân của bạn để AI viết bài và rút gọn link đo click.';
+      } else {
+        catalogTitle.textContent = 'Kho Hàng Đa Ngành';
+        catalogSubtitle.textContent = 'Quản lý cơ sở dữ liệu sản phẩm đa lĩnh vực: Công nghệ, Phụ kiện, Gia dụng, Thời trang & FMCG.';
+      }
+    }
+
+    const studioSmartLinkTitle = $('#studioSmartLinkTitle');
+    if (studioSmartLinkTitle) {
+      studioSmartLinkTitle.textContent = isIndependentAffiliate
+        ? 'Link Affiliate Sàn Của Bạn (Shopee / TikTok)'
+        : 'Smart Affiliate Link (UTM Tracking)';
+    }
+
+    const statNetLabel = $('#statNetRevenueLabel');
+    const statNetTrend = $('#statNetRevenueTrend');
+    if (statNetLabel && statNetTrend) {
+      if (isIndependentAffiliate) {
+        statNetLabel.textContent = 'Hoa Hồng Cá Nhân';
+        statNetTrend.textContent = 'Ước tính từ các link Affiliate sàn của bạn';
+      } else if (isShopSolo) {
+        statNetLabel.textContent = 'Doanh Thu Tự Bán';
+        statNetTrend.textContent = '100% doanh thu tự bán (không chia CTV)';
+      } else {
+        statNetLabel.textContent = 'Tiền Thực Thu Chủ Shop';
+        statNetTrend.textContent = 'Doanh thu sau khi trừ hoa hồng CTV';
+      }
+    }
 
     // Restrict role dropdown in Create User form if current user is shop_owner
     const newUserRoleSelect = $('#newUserRole');
@@ -1241,40 +1302,51 @@
       }
     }
 
-    const analyticsSubtitle = $('#view-analytics .page-subtitle');
+    const analyticsSubtitle = $('#analyticsSubtitle') || $('#view-analytics .page-subtitle');
     if (analyticsSubtitle) {
       if (isIndependentAffiliate) {
-        analyticsSubtitle.textContent = 'Không gian làm việc Affiliate Creator — Tự động bóc tách sản phẩm sàn, AI viết bài 4 kênh & đo lường click chuyển đổi.';
+        analyticsSubtitle.textContent = 'Không gian Affiliate / KOC độc lập — Dán link Shopee/TikTok, AI viết bài 4 kênh và theo dõi click chuyển đổi cá nhân.';
       } else if (isCtv) {
         analyticsSubtitle.textContent = `Cổng Cộng Tác Viên (${user.subId}) — Giám sát lượt click & hoa hồng cá nhân theo thời gian thực.`;
+      } else if (isShopSolo) {
+        analyticsSubtitle.textContent = 'Không gian Chủ shop tự bán — Tự động hóa nội dung 4 kênh và theo dõi đơn hàng trực tiếp.';
       } else {
-        analyticsSubtitle.textContent = 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.';
+        analyticsSubtitle.textContent = 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng CTV theo thời gian thực.';
       }
     }
 
     const studioSubInput = $('#studioSubId');
     if (studioSubInput) {
       if (isCtv) {
-        studioSubInput.value = user.subId || 'ctv01_minh';
+        studioSubInput.value = user.subId || user.username || 'ctv01_minh';
         studioSubInput.readOnly = true;
       } else {
         studioSubInput.readOnly = false;
+        if (!studioSubInput.value) studioSubInput.value = user?.username || 'vuonggia';
       }
     }
 
-    // If new user has not completed onboarding persona survey, prompt modal ONLY inside workspace (not on landing or admin)
-    const landing = $('#landingPage');
-    const isLandingShown = landing && landing.style.display !== 'none';
-    if (!isLandingShown && user && user.persona === null && user.role !== 'superadmin') {
-      const modalOnboarding = $('#modalOnboarding');
-      if (modalOnboarding) modalOnboarding.classList.add('open');
-    }
-
-    if (isCtv && (state.currentView === 'settings' || state.currentView === 'users')) {
+    if ((isCtv && (state.currentView === 'settings' || state.currentView === 'users')) || (!hasCtvNetwork && state.currentView === 'users')) {
       switchView('analytics');
-    } else if (!isCtv && state.currentView === 'users') {
+    } else if (hasCtvNetwork && state.currentView === 'users') {
       loadUsersTable();
     }
+  }
+
+  async function logoutUser() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {
+      // Ignore network errors on logout
+    }
+    sessionStorage.removeItem('autobiz_logged_in');
+    state.authUser = null;
+    const uInput = $('#authUsername');
+    const pInput = $('#authPassword');
+    if (uInput) uInput.value = '';
+    if (pInput) pInput.value = '';
+    showLandingPage();
+    showToast('Đã đăng xuất tài khoản.');
   }
 
   async function loginWithPayload(payload) {
@@ -1814,24 +1886,10 @@
       btnCancelRegister.addEventListener('click', () => modalAuthRole.classList.remove('open'));
     }
 
-    // Onboarding Survey Modal bindings
-    const modalOnboarding = $('#modalOnboarding');
-    const btnOpenOnboardingModal = $('#btnOpenOnboardingModal');
-    const btnCloseOnboardingModal = $('#btnCloseOnboardingModal');
-    const cardOnboardingShop = $('#cardOnboardingShop');
-    const cardOnboardingAffiliate = $('#cardOnboardingAffiliate');
-
-    if (btnOpenOnboardingModal && modalOnboarding) {
-      btnOpenOnboardingModal.addEventListener('click', () => modalOnboarding.classList.add('open'));
-    }
-    if (btnCloseOnboardingModal && modalOnboarding) {
-      btnCloseOnboardingModal.addEventListener('click', () => modalOnboarding.classList.remove('open'));
-    }
-    if (cardOnboardingShop) {
-      cardOnboardingShop.addEventListener('click', () => chooseOnboardingPersona('shop_with_affiliates', true));
-    }
-    if (cardOnboardingAffiliate) {
-      cardOnboardingAffiliate.addEventListener('click', () => chooseOnboardingPersona('independent_affiliate', false));
+    // Logout button binding
+    const btnLogout = $('#btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', logoutUser);
     }
 
     // Webhook UI bindings

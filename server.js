@@ -544,39 +544,64 @@ app.get('/r/:code', (req, res) => {
   return res.redirect(302, resolved.targetUrl);
 });
 
-// Multi-Category Product Catalog CRUD
+// Multi-Category Product Catalog CRUD (Multi-tenant & KOC Independent Affiliate supported)
 app.get('/api/products', (req, res) => {
   const { category, search } = req.query;
-  const products = catalogService.listProducts({ category, search });
+  const user = req.authUser || {};
+  const products = catalogService.listProducts({
+    category,
+    search,
+    owner: user.username || null,
+    role: user.role || 'superadmin',
+    persona: user.persona || null
+  });
   res.json({ success: true, total: products.length, products });
 });
 
-app.post('/api/products', authService.requireAdmin, (req, res) => {
+app.post('/api/products', authService.requireCatalogWrite, (req, res) => {
   try {
-    const created = catalogService.createProduct(req.body || {});
+    const owner = req.authUser?.username || 'superadmin';
+    const created = catalogService.createProduct({ ...(req.body || {}), owner });
     res.status(201).json({ success: true, product: created });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-app.put('/api/products/:id', authService.requireAdmin, (req, res) => {
+app.put('/api/products/:id', authService.requireCatalogWrite, (req, res) => {
+  const existing = catalogService.getProductById(req.params.id);
+  if (!existing) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
+  const user = req.authUser || {};
+  const isOwner = existing.owner === user.username || (!existing.owner && user.username === 'admin');
+  if (user.role !== 'superadmin' && !isOwner) {
+    return res.status(403).json({ success: false, error: 'Bạn chỉ có thể chỉnh sửa sản phẩm của chính mình.' });
+  }
   const updated = catalogService.updateProduct(req.params.id, req.body || {});
-  if (!updated) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
   res.json({ success: true, product: updated });
 });
 
-app.delete('/api/products/:id', authService.requireAdmin, (req, res) => {
-  const deleted = catalogService.deleteProduct(req.params.id);
-  if (!deleted) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
+app.delete('/api/products/:id', authService.requireCatalogWrite, (req, res) => {
+  const existing = catalogService.getProductById(req.params.id);
+  if (!existing) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
+  const user = req.authUser || {};
+  const isOwner = existing.owner === user.username || (!existing.owner && user.username === 'admin');
+  if (user.role !== 'superadmin' && !isOwner) {
+    return res.status(403).json({ success: false, error: 'Bạn chỉ có thể xóa sản phẩm của chính mình.' });
+  }
+  catalogService.deleteProduct(req.params.id);
   res.json({ success: true });
 });
 
-// Affiliate Shortlink Management & FinTech Analytics (Scoped for CTV when logged in as CTV)
+// Affiliate Shortlink Management & FinTech Analytics (Multi-tenant scoped by role & owner)
 app.get('/api/affiliate/links', (req, res) => {
-  const subIdScope = req.authUser && req.authUser.role === 'ctv' ? req.authUser.subId : null;
-  const links = affiliateService.listAffiliateLinks({ subId: subIdScope });
-  res.json({ success: true, total: links.length, links, role: req.authUser?.role || 'admin', subIdScope });
+  const user = req.authUser || {};
+  const subIdScope = user.role === 'ctv' ? user.subId : null;
+  const links = affiliateService.listAffiliateLinks({
+    subId: subIdScope,
+    owner: user.username || null,
+    role: user.role || 'superadmin'
+  });
+  res.json({ success: true, total: links.length, links, role: user.role || 'superadmin', subIdScope });
 });
 
 app.post('/api/affiliate/shorten', (req, res) => {
@@ -585,9 +610,10 @@ app.post('/api/affiliate/shorten', (req, res) => {
     if (!baseUrl) {
       return res.status(400).json({ success: false, error: 'Vui lòng cung cấp baseUrl.' });
     }
-    const effectiveSubId = req.authUser && req.authUser.role === 'ctv'
-      ? req.authUser.subId
-      : (subId || 'vuonggia');
+    const user = req.authUser || {};
+    const effectiveSubId = user.role === 'ctv'
+      ? (user.subId || user.username)
+      : (subId || user.username || 'vuonggia');
     const entry = affiliateService.createShortLink({
       baseUrl,
       productId,
@@ -596,7 +622,8 @@ app.post('/api/affiliate/shorten', (req, res) => {
       commissionRate,
       channel,
       campaign,
-      subId: effectiveSubId
+      subId: effectiveSubId,
+      owner: user.username || 'superadmin'
     });
     const host = req.get('host') || `localhost:${PORT}`;
     const protocol = req.protocol || 'http';
@@ -612,14 +639,23 @@ app.post('/api/affiliate/shorten', (req, res) => {
 });
 
 app.get('/api/analytics/summary', (req, res) => {
-  const subIdScope = req.authUser && req.authUser.role === 'ctv' ? req.authUser.subId : null;
-  const baseSummary = affiliateService.getAnalyticsSummary({ subId: subIdScope });
-  const totalProducts = catalogService.listProducts().length;
+  const user = req.authUser || {};
+  const subIdScope = user.role === 'ctv' ? user.subId : null;
+  const baseSummary = affiliateService.getAnalyticsSummary({
+    subId: subIdScope,
+    owner: user.username || null,
+    role: user.role || 'superadmin'
+  });
+  const totalProducts = catalogService.listProducts({
+    owner: user.username || null,
+    role: user.role || 'superadmin',
+    persona: user.persona || null
+  }).length;
   const summary = {
     ...baseSummary,
     totalProducts,
     totalEstimatedCommission: baseSummary.totalCommission,
-    roleScope: req.authUser?.role || 'admin',
+    roleScope: user.role || 'superadmin',
     subIdScope
   };
   res.json({ success: true, summary });
@@ -998,11 +1034,23 @@ app.get('/api/next-slot', async (req, res) => {
   }
 });
 
-// 7. Get All Posts (Queued, Posted, Draft)
+// 7. Get All Posts (Queued, Posted, Draft) - Multi-tenant filtered by owner
 app.get('/api/posts', async (req, res) => {
   try {
     const posts = await getPosts();
-    res.json(posts);
+    const user = req.authUser || {};
+    if (!user.role || user.role === 'superadmin') {
+      return res.json(posts);
+    }
+    const cleanOwner = String(user.username || '').toLowerCase();
+    const filtered = posts.filter((p) => {
+      const pOwner = String(p.owner || '').toLowerCase();
+      if (cleanOwner === 'admin') {
+        return !pOwner || pOwner === 'admin' || pOwner === 'superadmin';
+      }
+      return pOwner === cleanOwner;
+    });
+    res.json(filtered);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1054,6 +1102,7 @@ app.post('/api/posts', async (req, res) => {
 
     const newPost = {
       id: 'post_' + Date.now(),
+      owner: req.authUser?.username || 'superadmin',
       machineCode: (machineCode || 'MÁY').toUpperCase(),
       machineName: machineName || 'Laptop Nhật Bãi',
       content: content || '',
