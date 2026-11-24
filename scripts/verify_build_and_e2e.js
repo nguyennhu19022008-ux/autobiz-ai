@@ -83,6 +83,7 @@ async function runEndToEndVerify() {
     // 1. Kiểm tra HTTP 200 trên toàn bộ các trang và tài nguyên tĩnh
     const staticEndpoints = [
       '/',
+      '/admin',
       '/app',
       '/dashboard',
       '/cockpit',

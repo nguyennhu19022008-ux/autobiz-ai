@@ -58,8 +58,8 @@ app.use(authService.attachAuthUser);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Dedicated routes for Web App Dashboard Cockpit -> Serve new Utilitarian Minimalism UI (index.html)
-app.get(['/app', '/dashboard', '/cockpit'], (req, res) => {
+// Dedicated routes for Web App Dashboard Cockpit & Admin Portal -> Serve index.html
+app.get(['/app', '/dashboard', '/cockpit', '/admin'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

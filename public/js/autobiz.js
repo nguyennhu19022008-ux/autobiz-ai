@@ -1964,9 +1964,20 @@
       });
     }
 
-    // Default Landing Display: Show Landing Page on entry unless explicit dashboard path or demo flag
+    // Default Landing Display & Hidden Admin Portal Routing (/admin)
+    const isAdminPath = ['/admin', '/admin/'].includes(window.location.pathname) || window.location.search.includes('role=admin');
     const isExplicitAppPath = ['/app', '/dashboard', '/cockpit'].includes(window.location.pathname) || window.location.search.includes('mode=demo');
-    if (isExplicitAppPath) {
+
+    if (isAdminPath) {
+      hideLandingPage();
+      const modal = $('#modalAuthRole');
+      if (modal) {
+        modal.classList.add('open');
+        const modalTitle = modal.querySelector('.modal-title');
+        if (modalTitle) modalTitle.textContent = 'Cổng Đăng Nhập Quản Trị Viên (Admin Portal)';
+        showToast('Truy cập Cổng Quản Trị Viên qua /admin. Vui lòng chọn hoặc đăng nhập tài khoản Admin.');
+      }
+    } else if (isExplicitAppPath) {
       hideLandingPage();
     } else {
       showLandingPage();
