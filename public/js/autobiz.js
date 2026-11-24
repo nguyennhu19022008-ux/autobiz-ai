@@ -340,9 +340,9 @@
               <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.openShortlink('${code}')" title="Mở đường link để kiểm tra click thực tế">
                 Mở /r/${code}
               </button>
-              <button class="btn btn-primary btn-sm" onclick="window.AutoBiz.recordOrder('${code}', ${price})" title="Ghi nhận 1 đơn hàng chốt thành công">
+              ${state.authUser?.role === 'ctv' ? '' : `<button class="btn btn-primary btn-sm admin-only" onclick="window.AutoBiz.recordOrder('${code}', ${price})" title="Ghi nhận 1 đơn hàng chốt thành công">
                 + Chốt đơn
-              </button>
+              </button>`}
               <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.copyLink('/r/${code}')" title="Sao chép link rút gọn">
                 Sao chép
               </button>
@@ -1120,9 +1120,13 @@
       form.tiktokToken.value = data.tiktokToken || '';
       form.zaloToken.value = data.zaloToken || '';
       form.shopeePartnerId.value = data.shopeePartnerId || '';
+      if (form.webhookSecret) form.webhookSecret.value = data.webhookSecret || 'autobiz_wh_secret_2026';
+      const webhookUrlInput = $('#settingWebhookUrl');
+      if (webhookUrlInput) webhookUrlInput.value = `${window.location.origin}/api/webhooks/order`;
       if (data.enabledChannels) {
         applyEnabledChannels(data.enabledChannels);
       }
+      loadWebhookLogs();
     } catch (err) {
       console.error('[Settings Error]', err);
       showToast(err.message, true);
@@ -1148,6 +1152,7 @@
       tiktokToken: form.tiktokToken.value.trim(),
       zaloToken: form.zaloToken.value.trim(),
       shopeePartnerId: form.shopeePartnerId.value.trim(),
+      webhookSecret: form.webhookSecret ? form.webhookSecret.value.trim() : 'autobiz_wh_secret_2026',
       enabledChannels
     };
 
@@ -1177,6 +1182,150 @@
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
+    }
+  }
+
+  // ======================== RBAC AUTH (CHỦ SHOP vs CTV) & ORDER WEBHOOK ========================
+  async function loadAuthState() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.success && data.user) {
+        state.authUser = data.user;
+        applyRolePermissions(data.user);
+      }
+    } catch (err) {
+      console.error('[Auth State Error]', err);
+    }
+  }
+
+  function applyRolePermissions(user) {
+    const isCtv = user && user.role === 'ctv';
+    const badge = $('#currentRoleBadge');
+    if (badge) {
+      badge.textContent = isCtv ? `CTV: ${user.subId}` : 'Chủ shop (Admin)';
+      badge.className = isCtv ? 'tag tag-tech' : 'tag tag-accessories';
+    }
+
+    // Hide Admin-only buttons, tabs and actions when logged in as CTV
+    $$('.admin-only').forEach((el) => {
+      el.style.display = isCtv ? 'none' : '';
+    });
+
+    const analyticsSubtitle = $('#view-analytics .page-subtitle');
+    if (analyticsSubtitle) {
+      analyticsSubtitle.textContent = isCtv
+        ? `Cổng Cộng Tác Viên (${user.subId}) — Giám sát lượt click & hoa hồng cá nhân theo thời gian thực.`
+        : 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.';
+    }
+
+    const studioSubInput = $('#studioSubId');
+    if (studioSubInput) {
+      if (isCtv) {
+        studioSubInput.value = user.subId || 'ctv01_minh';
+        studioSubInput.readOnly = true;
+      } else {
+        studioSubInput.readOnly = false;
+      }
+    }
+
+    if (isCtv && state.currentView === 'settings') {
+      switchView('analytics');
+    }
+  }
+
+  async function loginWithPayload(payload) {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Đăng nhập thất bại.');
+      }
+      state.authUser = data.user;
+      applyRolePermissions(data.user);
+      const modal = $('#modalAuthRole');
+      if (modal) modal.classList.remove('active');
+      showToast(`Đã chuyển sang tài khoản: ${data.user.displayName}`);
+      await loadAnalyticsSummary();
+      await loadCatalogProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function loadWebhookLogs() {
+    const listEl = $('#webhookLogsList');
+    if (!listEl) return;
+    try {
+      const res = await fetch('/api/webhooks/logs');
+      if (!res.ok) return;
+      const data = await res.json();
+      const logs = data.logs || [];
+      if (logs.length === 0) {
+        listEl.innerHTML = 'Chưa có đơn hàng tự động nào được ghi nhận qua Webhook.';
+        return;
+      }
+      listEl.innerHTML = logs.slice(0, 8).map((log) => {
+        const badgeClass = log.result === 'confirmed' ? 'tag-posted' : 'tag-queued';
+        const timeStr = log.receivedAt ? new Date(log.receivedAt).toLocaleTimeString('vi-VN') : '';
+        return `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border-color); gap:8px;">
+          <div>
+            <strong>${escapeHtml(log.orderId)}</strong> · <code>${escapeHtml(log.shortCode || log.subId || 'N/A')}</code>
+            <span style="color:var(--text-muted);">(${escapeHtml(log.source || 'pos')})</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="tag ${badgeClass}">${escapeHtml(log.result)}</span>
+            <span>${timeStr}</span>
+          </div>
+        </div>`;
+      }).join('');
+    } catch (err) {
+      console.error('[Webhook Logs Error]', err);
+    }
+  }
+
+  async function handleTestWebhookOrder() {
+    const btn = $('#btnTestWebhookOrder');
+    if (!btn) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>Đang gửi Webhook...</span>';
+    try {
+      const secretInput = $('#settingWebhookSecret');
+      const secret = secretInput ? secretInput.value.trim() : 'autobiz_wh_secret_2026';
+      const orderId = `WH-${Date.now().toString().slice(-6)}`;
+      const res = await fetch('/api/webhooks/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-secret': secret
+        },
+        body: JSON.stringify({
+          orderId,
+          shortCode: 'FA101A',
+          subId: 'ctv01_minh',
+          orderAmount: 14500000,
+          quantity: 1,
+          status: 'completed',
+          source: 'pancake_pos_demo'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Webhook test thất bại (Hãy đảm bảo đã nạp dữ liệu mẫu BGK trước).');
+      }
+      showToast(data.message || `Webhook tự động chốt đơn ${orderId} thành công!`);
+      await loadWebhookLogs();
+      await loadAnalyticsSummary();
+    } catch (err) {
+      showToast(err.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
     }
   }
 
@@ -1276,8 +1425,55 @@
       }
     });
 
-    // Init Studio & Default view
+    // Auth & Role Switcher Modal bindings
+    const modalAuthRole = $('#modalAuthRole');
+    const btnOpenAuthModal = $('#btnOpenAuthModal');
+    const btnCloseAuthModal = $('#btnCloseAuthModal');
+    const btnCancelAuthModal = $('#btnCancelAuthModal');
+    const btnQuickAdmin = $('#btnQuickAdmin');
+    const btnQuickCtvMinh = $('#btnQuickCtvMinh');
+    const formAuthLogin = $('#formAuthLogin');
+
+    if (btnOpenAuthModal && modalAuthRole) {
+      btnOpenAuthModal.addEventListener('click', () => modalAuthRole.classList.add('active'));
+    }
+    if (btnCloseAuthModal && modalAuthRole) {
+      btnCloseAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('active'));
+    }
+    if (btnCancelAuthModal && modalAuthRole) {
+      btnCancelAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('active'));
+    }
+    if (btnQuickAdmin) {
+      btnQuickAdmin.addEventListener('click', () => loginWithPayload({ quickRole: 'admin' }));
+    }
+    if (btnQuickCtvMinh) {
+      btnQuickCtvMinh.addEventListener('click', () => loginWithPayload({ quickRole: 'ctv', subId: 'ctv01_minh' }));
+    }
+    if (formAuthLogin) {
+      formAuthLogin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        loginWithPayload({
+          username: $('#authUsername')?.value || '',
+          password: $('#authPassword')?.value || ''
+        });
+      });
+    }
+
+    // Webhook UI bindings
+    const btnTestWebhookOrder = $('#btnTestWebhookOrder');
+    if (btnTestWebhookOrder) btnTestWebhookOrder.addEventListener('click', handleTestWebhookOrder);
+    const btnCopyWebhookUrl = $('#btnCopyWebhookUrl');
+    if (btnCopyWebhookUrl) {
+      btnCopyWebhookUrl.addEventListener('click', () => {
+        const val = $('#settingWebhookUrl')?.value || `${window.location.origin}/api/webhooks/order`;
+        navigator.clipboard?.writeText(val);
+        showToast('Đã sao chép Webhook URL!');
+      });
+    }
+
+    // Init Studio, Auth & Default view
     initStudio();
+    loadAuthState();
     switchView('analytics');
   });
 

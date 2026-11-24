@@ -16,6 +16,7 @@ const {
 } = require('./services/gemini');
 const catalogService = require('./services/catalog');
 const affiliateService = require('./services/affiliate');
+const authService = require('./services/auth');
 const { dispatchToChannels } = require('./services/adapters');
 const { verifyPageToken } = require('./services/facebook');
 const { sendTestEmail } = require('./services/mailer');
@@ -53,6 +54,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(authService.attachAuthUser);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
@@ -77,10 +79,38 @@ const upload = multer({
 
 // ======================== API ROUTES ========================
 
-// 1. Get current settings
-app.get('/api/settings', async (req, res) => {
+// 0. Authentication & Role-Based Access Control (Admin / CTV Portal)
+app.get('/api/auth/me', (req, res) => {
+  res.json({ success: true, user: req.authUser });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const user = authService.authenticateUser(req.body || {});
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu.' });
+  }
+  const token = authService.signToken(user);
+  res.cookie(authService.SESSION_COOKIE_NAME, token, {
+    maxAge: authService.TOKEN_TTL_MS,
+    httpOnly: true,
+    sameSite: 'Lax',
+    path: '/'
+  });
+  res.json({ success: true, token, user });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(authService.SESSION_COOKIE_NAME, { path: '/' });
+  res.json({ success: true });
+});
+
+// 1. Get current settings (Admin only)
+app.get('/api/settings', authService.requireAdmin, async (req, res) => {
   try {
     const settings = await getSettings();
+    if (!settings.webhookSecret) {
+      settings.webhookSecret = 'autobiz_wh_secret_2026';
+    }
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -118,8 +148,8 @@ app.get('/api/cockpit/status', async (req, res) => {
   }
 });
 
-// 2. Update settings
-app.post('/api/settings', async (req, res) => {
+// 2. Update settings (Admin only)
+app.post('/api/settings', authService.requireAdmin, async (req, res) => {
   try {
     const currentSettings = await getSettings();
     const newSettings = { ...currentSettings, ...req.body };
@@ -377,7 +407,7 @@ app.get('/api/products', (req, res) => {
   res.json({ success: true, total: products.length, products });
 });
 
-app.post('/api/products', (req, res) => {
+app.post('/api/products', authService.requireAdmin, (req, res) => {
   try {
     const created = catalogService.createProduct(req.body || {});
     res.status(201).json({ success: true, product: created });
@@ -386,22 +416,23 @@ app.post('/api/products', (req, res) => {
   }
 });
 
-app.put('/api/products/:id', (req, res) => {
+app.put('/api/products/:id', authService.requireAdmin, (req, res) => {
   const updated = catalogService.updateProduct(req.params.id, req.body || {});
   if (!updated) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
   res.json({ success: true, product: updated });
 });
 
-app.delete('/api/products/:id', (req, res) => {
+app.delete('/api/products/:id', authService.requireAdmin, (req, res) => {
   const deleted = catalogService.deleteProduct(req.params.id);
   if (!deleted) return res.status(404).json({ success: false, error: 'Không tìm thấy sản phẩm.' });
   res.json({ success: true });
 });
 
-// Affiliate Shortlink Management & FinTech Analytics
+// Affiliate Shortlink Management & FinTech Analytics (Scoped for CTV when logged in as CTV)
 app.get('/api/affiliate/links', (req, res) => {
-  const links = affiliateService.listAffiliateLinks();
-  res.json({ success: true, total: links.length, links });
+  const subIdScope = req.authUser && req.authUser.role === 'ctv' ? req.authUser.subId : null;
+  const links = affiliateService.listAffiliateLinks({ subId: subIdScope });
+  res.json({ success: true, total: links.length, links, role: req.authUser?.role || 'admin', subIdScope });
 });
 
 app.post('/api/affiliate/shorten', (req, res) => {
@@ -410,6 +441,9 @@ app.post('/api/affiliate/shorten', (req, res) => {
     if (!baseUrl) {
       return res.status(400).json({ success: false, error: 'Vui lòng cung cấp baseUrl.' });
     }
+    const effectiveSubId = req.authUser && req.authUser.role === 'ctv'
+      ? req.authUser.subId
+      : (subId || 'vuonggia');
     const entry = affiliateService.createShortLink({
       baseUrl,
       productId,
@@ -418,7 +452,7 @@ app.post('/api/affiliate/shorten', (req, res) => {
       commissionRate,
       channel,
       campaign,
-      subId
+      subId: effectiveSubId
     });
     const host = req.get('host') || `localhost:${PORT}`;
     const protocol = req.protocol || 'http';
@@ -434,17 +468,20 @@ app.post('/api/affiliate/shorten', (req, res) => {
 });
 
 app.get('/api/analytics/summary', (req, res) => {
-  const baseSummary = affiliateService.getAnalyticsSummary();
+  const subIdScope = req.authUser && req.authUser.role === 'ctv' ? req.authUser.subId : null;
+  const baseSummary = affiliateService.getAnalyticsSummary({ subId: subIdScope });
   const totalProducts = catalogService.listProducts().length;
   const summary = {
     ...baseSummary,
     totalProducts,
-    totalEstimatedCommission: baseSummary.totalCommission
+    totalEstimatedCommission: baseSummary.totalCommission,
+    roleScope: req.authUser?.role || 'admin',
+    subIdScope
   };
   res.json({ success: true, summary });
 });
 
-app.post('/api/affiliate/record-order', (req, res) => {
+app.post('/api/affiliate/record-order', authService.requireAdmin, (req, res) => {
   try {
     const { shortCode, orderAmount, quantity } = req.body || {};
     if (!shortCode) {
@@ -460,8 +497,35 @@ app.post('/api/affiliate/record-order', (req, res) => {
   }
 });
 
-// 1-Click Demo Seed & Clear for Jury / Video Recording (Works on both Local and Vercel Serverless /tmp)
-app.post('/api/demo/seed', (req, res) => {
+// Automated Order Webhook (Pancake / Sapo / Haravan / Shopee Sync)
+app.post('/api/webhooks/order', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const expectedSecret = process.env.WEBHOOK_SECRET || settings.webhookSecret || 'autobiz_wh_secret_2026';
+    const providedSecret = String(req.headers['x-webhook-secret'] || req.body?.secret || '').trim();
+    if (!providedSecret || providedSecret !== expectedSecret) {
+      return res.status(401).json({
+        success: false,
+        error: 'Webhook Secret không hợp lệ (kiểm tra header x-webhook-secret).'
+      });
+    }
+    const result = affiliateService.processOrderWebhook(req.body || {});
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    return res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/webhooks/logs', authService.requireAdmin, (req, res) => {
+  const logs = affiliateService.listWebhookLogs();
+  res.json({ success: true, total: logs.length, logs });
+});
+
+// 1-Click Demo Seed & Clear for Jury / Video Recording (Admin only)
+app.post('/api/demo/seed', authService.requireAdmin, (req, res) => {
   try {
     const { seedDemoDataset } = require('./scripts/seed_demo_data');
     const result = seedDemoDataset({ includeLinks: true });
@@ -477,7 +541,7 @@ app.post('/api/demo/seed', (req, res) => {
   }
 });
 
-app.post('/api/demo/clear', (req, res) => {
+app.post('/api/demo/clear', authService.requireAdmin, (req, res) => {
   try {
     const { clearDemoDataset } = require('./scripts/seed_demo_data');
     clearDemoDataset();

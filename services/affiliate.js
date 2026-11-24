@@ -120,12 +120,130 @@ function recordOrderForLink(shortCode, { orderAmount, quantity = 1 } = {}) {
   return item;
 }
 
-function listAffiliateLinks() {
-  return readLinks();
+const WEBHOOK_LOGS_FILE = path.join(DATA_DIR, 'webhook_logs.json');
+const SUCCESS_ORDER_STATUSES = new Set(['completed', 'delivered', 'paid', 'success', 'done', 'da_giao']);
+
+function readWebhookLogs() {
+  return readJsonSafe(WEBHOOK_LOGS_FILE, []);
 }
 
-function getAnalyticsSummary() {
+function writeWebhookLogs(logs) {
+  return writeJsonSafe(WEBHOOK_LOGS_FILE, Array.isArray(logs) ? logs.slice(0, 50) : []);
+}
+
+function listWebhookLogs() {
+  return readWebhookLogs();
+}
+
+function processOrderWebhook({ orderId, shortCode, subId, orderAmount, quantity = 1, status = 'completed', source = 'external_pos' } = {}) {
+  const cleanOrderId = String(orderId || `WH-${Date.now()}`).trim();
+  const cleanStatus = String(status || 'completed').trim().toLowerCase();
+  const logs = readWebhookLogs();
+
+  // Idempotency check: never double-count the same orderId
+  const existingConfirmed = logs.find((log) => log.orderId === cleanOrderId && log.result === 'confirmed');
+  if (existingConfirmed) {
+    return {
+      success: true,
+      duplicate: true,
+      message: `Đơn hàng ${cleanOrderId} đã được chốt trước đó (Idempotent).`,
+      log: existingConfirmed
+    };
+  }
+
+  if (!SUCCESS_ORDER_STATUSES.has(cleanStatus)) {
+    const ignoredLog = {
+      id: `wh_${Date.now()}`,
+      orderId: cleanOrderId,
+      shortCode: shortCode || null,
+      subId: subId || null,
+      orderAmount: Number(orderAmount) || 0,
+      quantity: Number(quantity) || 1,
+      status: cleanStatus,
+      source,
+      result: 'ignored_status',
+      message: `Bỏ qua vì trạng thái đơn là "${cleanStatus}" (chưa giao thành công).`,
+      receivedAt: new Date().toISOString()
+    };
+    logs.unshift(ignoredLog);
+    writeWebhookLogs(logs);
+    return { success: true, ignored: true, message: ignoredLog.message, log: ignoredLog };
+  }
+
   const links = readLinks();
+  let targetLink = null;
+  if (shortCode) {
+    targetLink = links.find((l) => l.shortCode.toLowerCase() === String(shortCode).trim().toLowerCase());
+  }
+  if (!targetLink && subId) {
+    targetLink = links.find((l) => String(l.subId || '').toLowerCase() === String(subId).trim().toLowerCase());
+  }
+
+  if (!targetLink) {
+    const failedLog = {
+      id: `wh_${Date.now()}`,
+      orderId: cleanOrderId,
+      shortCode: shortCode || null,
+      subId: subId || null,
+      orderAmount: Number(orderAmount) || 0,
+      quantity: Number(quantity) || 1,
+      status: cleanStatus,
+      source,
+      result: 'link_not_found',
+      message: 'Không tìm thấy link tiếp thị khớp shortCode hoặc subId.',
+      receivedAt: new Date().toISOString()
+    };
+    logs.unshift(failedLog);
+    writeWebhookLogs(logs);
+    return { success: false, error: failedLog.message, log: failedLog };
+  }
+
+  const prevRev = Number(targetLink.confirmedRevenue) || 0;
+  const prevComm = Number(targetLink.confirmedCommission) || 0;
+  const updated = recordOrderForLink(targetLink.shortCode, { orderAmount, quantity });
+  const deltaRev = Math.max(0, (Number(updated.confirmedRevenue) || 0) - prevRev);
+  const deltaComm = Math.max(0, (Number(updated.confirmedCommission) || 0) - prevComm);
+
+  const confirmedLog = {
+    id: `wh_${Date.now()}`,
+    orderId: cleanOrderId,
+    shortCode: updated.shortCode,
+    subId: updated.subId,
+    productName: updated.productName,
+    orderAmount: deltaRev,
+    commissionAmount: deltaComm,
+    quantity: Math.max(1, Number(quantity) || 1),
+    status: cleanStatus,
+    source,
+    result: 'confirmed',
+    message: `Tự động chốt đơn ${cleanOrderId} qua Webhook (${source}) -> +${deltaRev.toLocaleString('vi-VN')} đ cho ${updated.subId}.`,
+    receivedAt: new Date().toISOString()
+  };
+  logs.unshift(confirmedLog);
+  writeWebhookLogs(logs);
+
+  return {
+    success: true,
+    duplicate: false,
+    message: confirmedLog.message,
+    link: updated,
+    log: confirmedLog,
+    summary: getAnalyticsSummary()
+  };
+}
+
+function listAffiliateLinks({ subId } = {}) {
+  const links = readLinks();
+  if (!subId) return links;
+  const cleanSub = String(subId).trim().toLowerCase();
+  return links.filter((l) => String(l.subId || '').trim().toLowerCase() === cleanSub);
+}
+
+function getAnalyticsSummary({ subId } = {}) {
+  const allLinks = readLinks();
+  const links = subId
+    ? allLinks.filter((l) => String(l.subId || '').trim().toLowerCase() === String(subId).trim().toLowerCase())
+    : allLinks;
   const byChannel = {
     facebook: { clicks: 0, links: 0, commission: 0, revenue: 0 },
     tiktok: { clicks: 0, links: 0, commission: 0, revenue: 0 },
@@ -221,5 +339,7 @@ module.exports = {
   recordClickAndResolve,
   recordOrderForLink,
   listAffiliateLinks,
-  getAnalyticsSummary
+  getAnalyticsSummary,
+  processOrderWebhook,
+  listWebhookLogs
 };

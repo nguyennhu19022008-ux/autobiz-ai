@@ -323,7 +323,7 @@ function seedDemoDataset({ includeLinks = true } = {}) {
 }
 
 function clearDemoDataset() {
-  for (const f of ['products.json', 'affiliate_links.json', 'posts.json', 'circular_queue.json', 'model_templates.json']) {
+  for (const f of ['products.json', 'affiliate_links.json', 'posts.json', 'circular_queue.json', 'model_templates.json', 'webhook_logs.json']) {
     writeJsonSafe(f, []);
   }
 }
