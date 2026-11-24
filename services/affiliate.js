@@ -120,15 +120,15 @@ function recordOrderForLink(shortCode, { orderAmount, quantity = 1 } = {}) {
   return item;
 }
 
-const WEBHOOK_LOGS_FILE = path.join(DATA_DIR, 'webhook_logs.json');
+const WEBHOOK_LOGS_FILENAME = 'webhook_logs.json';
 const SUCCESS_ORDER_STATUSES = new Set(['completed', 'delivered', 'paid', 'success', 'done', 'da_giao']);
 
 function readWebhookLogs() {
-  return readJsonSafe(WEBHOOK_LOGS_FILE, []);
+  return readJsonSafe(WEBHOOK_LOGS_FILENAME, []);
 }
 
 function writeWebhookLogs(logs) {
-  return writeJsonSafe(WEBHOOK_LOGS_FILE, Array.isArray(logs) ? logs.slice(0, 50) : []);
+  return writeJsonSafe(WEBHOOK_LOGS_FILENAME, Array.isArray(logs) ? logs.slice(0, 50) : []);
 }
 
 function listWebhookLogs() {
