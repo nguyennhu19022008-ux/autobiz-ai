@@ -1853,8 +1853,31 @@
 
     const openLoginFromLanding = () => {
       const modal = $('#modalAuthRole');
-      if (modal) modal.classList.add('open');
+      if (modal) {
+        modal.classList.add('open');
+        const modalTitle = modal.querySelector('.modal-title');
+        if (modalTitle) modalTitle.textContent = 'Đăng Nhập';
+      }
     };
+
+    const linkSwitchToRegister = $('#linkSwitchToRegister');
+    if (linkSwitchToRegister) {
+      linkSwitchToRegister.addEventListener('click', (e) => {
+        e.preventDefault();
+        const modal = $('#modalAuthRole');
+        if (modal) modal.classList.remove('open');
+        openRegisterSurvey();
+      });
+    }
+
+    const linkSwitchToLogin = $('#linkSwitchToLogin');
+    if (linkSwitchToLogin) {
+      linkSwitchToLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeRegisterSurvey();
+        openLoginFromLanding();
+      });
+    }
 
     if (btnLandingLogin) btnLandingLogin.addEventListener('click', openLoginFromLanding);
     if (btnLandingHeroLogin) btnLandingHeroLogin.addEventListener('click', openLoginFromLanding);
