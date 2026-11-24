@@ -87,7 +87,7 @@ app.get('/api/auth/me', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const user = authService.authenticateUser(req.body || {});
   if (!user) {
-    return res.status(401).json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu.' });
+    return res.status(401).json({ success: false, error: 'Sai tên đăng nhập/email hoặc mật khẩu.' });
   }
   if (user.locked) {
     return res.status(403).json({ success: false, error: 'Tài khoản này đã bị Admin tạm khóa.' });
@@ -100,6 +100,81 @@ app.post('/api/auth/login', (req, res) => {
     path: '/'
   });
   res.json({ success: true, token, user });
+});
+
+// Self-Serve Registration with Email & Password for New Users
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { email, password, displayName } = req.body || {};
+    const created = authService.registerWithEmail({ email, password, displayName });
+    const userPayload = {
+      username: created.username,
+      email: created.email,
+      role: created.role,
+      subId: created.subId,
+      displayName: created.displayName,
+      persona: created.persona,
+      hasAffiliates: true,
+      exp: Date.now() + authService.TOKEN_TTL_MS
+    };
+    const token = authService.signToken(userPayload);
+    res.cookie(authService.SESSION_COOKIE_NAME, token, {
+      maxAge: authService.TOKEN_TTL_MS,
+      httpOnly: true,
+      sameSite: 'Lax',
+      path: '/'
+    });
+    res.status(201).json({
+      success: true,
+      token,
+      user: userPayload,
+      message: `Đăng ký thành công! Chào mừng ${created.displayName} đến với AutoBiz AI.`
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Onboarding Survey: Configure Workspace Stream (Chủ shop có CTV vs CTV Độc lập)
+app.post('/api/auth/onboarding', (req, res) => {
+  try {
+    const username = req.authUser?.username;
+    if (!username) {
+      return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập trước khi thiết lập hồ sơ.' });
+    }
+    const { persona, hasAffiliates } = req.body || {};
+    const updated = authService.setOnboardingPersona(username, { persona, hasAffiliates });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy thông tin tài khoản.' });
+    }
+    const userPayload = {
+      username: updated.username,
+      email: updated.email || null,
+      role: updated.role,
+      subId: updated.subId,
+      displayName: updated.displayName,
+      persona: updated.persona,
+      hasAffiliates: updated.hasAffiliates,
+      exp: Date.now() + authService.TOKEN_TTL_MS
+    };
+    const token = authService.signToken(userPayload);
+    res.cookie(authService.SESSION_COOKIE_NAME, token, {
+      maxAge: authService.TOKEN_TTL_MS,
+      httpOnly: true,
+      sameSite: 'Lax',
+      path: '/'
+    });
+    res.json({
+      success: true,
+      token,
+      user: userPayload,
+      message: updated.persona === 'independent_affiliate'
+        ? 'Đã chuyển sang Không gian làm việc: Affiliate Creator / KOC Độc Lập!'
+        : 'Đã chuyển sang Không gian làm việc: Chủ Shop & Quản Lý Mạng Lưới CTV!'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 app.post('/api/auth/logout', (req, res) => {

@@ -88,7 +88,76 @@ function listUsers(actorRole = 'superadmin') {
   return [];
 }
 
-function createUser({ username, password, role = 'ctv', subId, displayName } = {}) {
+function registerWithEmail({ email, password, displayName } = {}) {
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+    throw new Error('Vui lòng nhập địa chỉ email hợp lệ.');
+  }
+  const cleanPass = String(password || '').trim();
+  if (!cleanPass || cleanPass.length < 4) {
+    throw new Error('Mật khẩu phải có ít nhất 4 ký tự.');
+  }
+
+  const users = readUsers();
+  if (users.some((u) => (u.email && u.email.toLowerCase() === cleanEmail))) {
+    throw new Error('Email này đã được đăng ký. Vui lòng đăng nhập.');
+  }
+
+  // Derive unique username from email prefix
+  let baseUser = cleanEmail.split('@')[0].replace(/[^a-z0-9_.-]/g, '');
+  if (!baseUser || baseUser.length < 3) baseUser = 'user';
+  let candidateUser = baseUser;
+  let counter = 1;
+  while (users.some((u) => u.username.toLowerCase() === candidateUser.toLowerCase())) {
+    candidateUser = `${baseUser}${counter++}`;
+  }
+
+  const newUser = {
+    username: candidateUser,
+    email: cleanEmail,
+    password: cleanPass,
+    displayName: String(displayName || candidateUser).trim(),
+    role: 'shop_owner', // Default role until onboarding survey selects exact persona
+    persona: null,      // Triggers Onboarding Survey
+    subId: candidateUser,
+    active: true,
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(newUser);
+  writeUsers(users);
+  return sanitizeUser(newUser);
+}
+
+function setOnboardingPersona(targetUsername, { persona, hasAffiliates = true } = {}) {
+  const cleanTarget = String(targetUsername || '').trim().toLowerCase();
+  const users = readUsers();
+  const idx = users.findIndex((u) => u.username.toLowerCase() === cleanTarget);
+  if (idx === -1) return null;
+
+  const user = { ...users[idx] };
+  const validPersonas = new Set(['shop_with_affiliates', 'shop_solo', 'independent_affiliate']);
+  const chosenPersona = validPersonas.has(persona) ? persona : 'independent_affiliate';
+
+  user.persona = chosenPersona;
+  user.hasAffiliates = Boolean(hasAffiliates);
+
+  if (chosenPersona === 'independent_affiliate') {
+    user.role = 'ctv';
+    user.subId = user.subId || user.username;
+  } else {
+    user.role = 'shop_owner';
+    user.subId = null;
+  }
+  user.onboardedAt = new Date().toISOString();
+
+  users[idx] = user;
+  writeUsers(users);
+  return sanitizeUser(user);
+}
+
+function createUser({ username, email, password, role = 'ctv', subId, displayName } = {}) {
   const cleanUser = String(username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   if (!cleanUser || cleanUser.length < 3) {
     throw new Error('Tên đăng nhập phải có ít nhất 3 ký tự (chữ, số, _, ., -).');
@@ -105,10 +174,12 @@ function createUser({ username, password, role = 'ctv', subId, displayName } = {
 
   const entry = {
     username: cleanUser,
+    email: email ? String(email).trim().toLowerCase() : null,
     password: cleanPass,
     role: normalizedRole,
     subId: normalizedRole === 'ctv' ? String(subId || cleanUser).trim() : null,
     displayName: String(displayName || cleanUser).trim(),
+    persona: normalizedRole === 'ctv' ? 'independent_affiliate' : 'shop_with_affiliates',
     active: true,
     createdAt: new Date().toISOString()
   };
@@ -239,7 +310,7 @@ function authenticateUser({ username, password, quickRole, subId } = {}) {
   const cleanUser = String(username || '').trim().toLowerCase();
   const cleanPass = String(password || '');
   const found = users.find(
-    (u) => u.username.toLowerCase() === cleanUser && u.password === cleanPass
+    (u) => (u.username.toLowerCase() === cleanUser || (u.email && u.email.toLowerCase() === cleanUser)) && u.password === cleanPass
   );
   if (!found) return null;
   if (found.active === false) {
@@ -248,9 +319,12 @@ function authenticateUser({ username, password, quickRole, subId } = {}) {
 
   return {
     username: found.username,
+    email: found.email || null,
     role: found.role,
     subId: found.role === 'ctv' ? (found.subId || found.username) : null,
     displayName: found.displayName,
+    persona: found.persona || null,
+    hasAffiliates: found.hasAffiliates !== false,
     exp: Date.now() + TOKEN_TTL_MS
   };
 }
@@ -311,6 +385,8 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  registerWithEmail,
+  setOnboardingPersona,
   signToken,
   verifyToken,
   authenticateUser,

@@ -1205,9 +1205,13 @@
     const role = user?.role || 'superadmin';
     const isCtv = role === 'ctv';
     const isSuperAdmin = role === 'superadmin';
+    const isIndependentAffiliate = user?.persona === 'independent_affiliate' || (isCtv && user?.hasAffiliates === false);
     const badge = $('#currentRoleBadge');
     if (badge) {
-      if (isCtv) {
+      if (isIndependentAffiliate) {
+        badge.textContent = 'KOC / Affiliate Sàn';
+        badge.className = 'tag tag-tech';
+      } else if (isCtv) {
         badge.textContent = `CTV: ${user.subId}`;
         badge.className = 'tag tag-tech';
       } else if (isSuperAdmin) {
@@ -1219,7 +1223,7 @@
       }
     }
 
-    // Hide Admin-only buttons, tabs and actions when logged in as CTV
+    // Hide Admin-only buttons, tabs and actions when logged in as CTV / Independent Affiliate
     $$('.admin-only').forEach((el) => {
       el.style.display = isCtv ? 'none' : '';
     });
@@ -1239,9 +1243,13 @@
 
     const analyticsSubtitle = $('#view-analytics .page-subtitle');
     if (analyticsSubtitle) {
-      analyticsSubtitle.textContent = isCtv
-        ? `Cổng Cộng Tác Viên (${user.subId}) — Giám sát lượt click & hoa hồng cá nhân theo thời gian thực.`
-        : 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.';
+      if (isIndependentAffiliate) {
+        analyticsSubtitle.textContent = 'Không gian làm việc Affiliate Creator — Tự động bóc tách sản phẩm sàn, AI viết bài 4 kênh & đo lường click chuyển đổi.';
+      } else if (isCtv) {
+        analyticsSubtitle.textContent = `Cổng Cộng Tác Viên (${user.subId}) — Giám sát lượt click & hoa hồng cá nhân theo thời gian thực.`;
+      } else {
+        analyticsSubtitle.textContent = 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.';
+      }
     }
 
     const studioSubInput = $('#studioSubId');
@@ -1252,6 +1260,12 @@
       } else {
         studioSubInput.readOnly = false;
       }
+    }
+
+    // If new user has not completed onboarding persona survey, prompt modal
+    if (user && user.persona === null) {
+      const modalOnboarding = $('#modalOnboarding');
+      if (modalOnboarding) modalOnboarding.classList.add('open');
     }
 
     if (isCtv && (state.currentView === 'settings' || state.currentView === 'users')) {
@@ -1277,6 +1291,55 @@
       const modal = $('#modalAuthRole');
       if (modal) modal.classList.remove('open');
       showToast(`Đã chuyển sang tài khoản: ${data.user.displayName}`);
+      await loadAnalyticsSummary();
+      await loadCatalogProducts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function registerNewUser(payload) {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Đăng ký tài khoản thất bại.');
+      }
+      state.authUser = data.user;
+      const modalAuth = $('#modalAuthRole');
+      if (modalAuth) modalAuth.classList.remove('open');
+
+      showToast(data.message || 'Đăng ký thành công!');
+      // Prompt 2-Stream Onboarding survey immediately
+      const modalOnboard = $('#modalOnboarding');
+      if (modalOnboard) modalOnboard.classList.add('open');
+      applyRolePermissions(data.user);
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function chooseOnboardingPersona(persona, hasAffiliates) {
+    try {
+      const res = await fetch('/api/auth/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona, hasAffiliates })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Không thể thiết lập hồ sơ.');
+      }
+      state.authUser = data.user;
+      const modalOnboard = $('#modalOnboarding');
+      if (modalOnboard) modalOnboard.classList.remove('open');
+
+      showToast(data.message || 'Đã thiết lập không gian làm việc thành công!');
+      applyRolePermissions(data.user);
       await loadAnalyticsSummary();
       await loadCatalogProducts();
     } catch (err) {
@@ -1502,7 +1565,8 @@
     deletePost,
     changeUserRole,
     toggleUserActive,
-    deleteUserAccount
+    deleteUserAccount,
+    chooseOnboardingPersona
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -1631,6 +1695,63 @@
           password: $('#authPassword')?.value || ''
         });
       });
+    }
+
+    // Auth Tabs & Register Form bindings
+    const tabAuthLoginBtn = $('#tabAuthLoginBtn');
+    const tabAuthRegisterBtn = $('#tabAuthRegisterBtn');
+    const panelAuthLogin = $('#panelAuthLogin');
+    const panelAuthRegister = $('#panelAuthRegister');
+
+    if (tabAuthLoginBtn && tabAuthRegisterBtn && panelAuthLogin && panelAuthRegister) {
+      tabAuthLoginBtn.addEventListener('click', () => {
+        tabAuthLoginBtn.className = 'btn btn-sm btn-primary';
+        tabAuthRegisterBtn.className = 'btn btn-sm btn-secondary';
+        panelAuthLogin.style.display = 'block';
+        panelAuthRegister.style.display = 'none';
+      });
+      tabAuthRegisterBtn.addEventListener('click', () => {
+        tabAuthRegisterBtn.className = 'btn btn-sm btn-primary';
+        tabAuthLoginBtn.className = 'btn btn-sm btn-secondary';
+        panelAuthRegister.style.display = 'block';
+        panelAuthLogin.style.display = 'none';
+      });
+    }
+
+    const formAuthRegister = $('#formAuthRegister');
+    if (formAuthRegister) {
+      formAuthRegister.addEventListener('submit', (e) => {
+        e.preventDefault();
+        registerNewUser({
+          email: $('#regEmail')?.value || '',
+          displayName: $('#regDisplayName')?.value || '',
+          password: $('#regPassword')?.value || ''
+        });
+      });
+    }
+    const btnCancelRegister = $('#btnCancelRegister');
+    if (btnCancelRegister && modalAuthRole) {
+      btnCancelRegister.addEventListener('click', () => modalAuthRole.classList.remove('open'));
+    }
+
+    // Onboarding Survey Modal bindings
+    const modalOnboarding = $('#modalOnboarding');
+    const btnOpenOnboardingModal = $('#btnOpenOnboardingModal');
+    const btnCloseOnboardingModal = $('#btnCloseOnboardingModal');
+    const cardOnboardingShop = $('#cardOnboardingShop');
+    const cardOnboardingAffiliate = $('#cardOnboardingAffiliate');
+
+    if (btnOpenOnboardingModal && modalOnboarding) {
+      btnOpenOnboardingModal.addEventListener('click', () => modalOnboarding.classList.add('open'));
+    }
+    if (btnCloseOnboardingModal && modalOnboarding) {
+      btnCloseOnboardingModal.addEventListener('click', () => modalOnboarding.classList.remove('open'));
+    }
+    if (cardOnboardingShop) {
+      cardOnboardingShop.addEventListener('click', () => chooseOnboardingPersona('shop_with_affiliates', true));
+    }
+    if (cardOnboardingAffiliate) {
+      cardOnboardingAffiliate.addEventListener('click', () => chooseOnboardingPersona('independent_affiliate', false));
     }
 
     // Webhook UI bindings

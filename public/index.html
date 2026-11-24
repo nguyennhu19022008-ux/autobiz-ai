@@ -55,19 +55,29 @@
         </a>
       </div>
 
-      <!-- Role & Account Switcher (RBAC: Chủ shop vs CTV) -->
+      <!-- Role & Account Switcher (RBAC: Chủ shop vs CTV vs KOC Độc lập) -->
       <div id="sidebarAccountBox" style="padding: 10px 14px; border-bottom: 1px solid var(--border-color); background: #FAFAFA;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
-          <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Vai trò hiện tại</span>
-          <span id="currentRoleBadge" class="tag tag-accessories" style="font-size: 10px;">Chủ shop (Admin)</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Vai trò</span>
+          <span id="currentRoleBadge" class="tag tag-accessories" style="font-size: 10px;">Chủ shop</span>
         </div>
-        <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 12px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>Đổi tài khoản / Cổng CTV</span>
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Tài khoản &amp; Đăng ký mới</span>
+          </button>
+          <button type="button" id="btnOpenOnboardingModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>Đổi luồng: Chủ shop / KOC Sàn</span>
+          </button>
+        </div>
       </div>
 
       <!-- Navigation Links -->
@@ -408,7 +418,8 @@
                   <span>Smart Affiliate Link (UTM Tracking)</span>
                 </div>
                 <div class="form-group" style="margin-bottom: 8px;">
-                  <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link gốc sản phẩm (Shopee, Lazada, Website...)" />
+                  <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link sản phẩm của Shop hoặc link Shopee/TikTok Affiliate cá nhân..." />
+                  <span class="form-hint" style="font-size: 11px;">Hỗ trợ cả link gian hàng riêng lẫn link hoa hồng tiếp thị Shopee / TikTok cá nhân (s.shopee.vn, vt.tiktok.com...).</span>
                 </div>
                 <div class="form-row" style="gap: 10px; margin-bottom: 8px;">
                   <div>
@@ -907,44 +918,142 @@
     </div>
   </div>
 
-  <!-- ======================== MODAL: ĐĂNG NHẬP & PHÂN QUYỀN (CHỦ SHOP / CTV) ======================== -->
+  <!-- ======================== MODAL: ĐĂNG NHẬP, ĐĂNG KÝ EMAIL & PHÂN QUYỀN ======================== -->
   <div id="modalAuthRole" class="modal-backdrop">
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 class="modal-title">Phân Quyền Tài Khoản (Chủ Shop &amp; CTV)</h3>
+        <h3 class="modal-title">Tài Khoản &amp; Phân Quyền AutoBiz AI</h3>
         <button type="button" id="btnCloseAuthModal" class="btn btn-secondary btn-icon-only">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          Chọn nhanh 1 trong 3 vai trò để trải nghiệm phân quyền, hoặc đăng nhập bằng tài khoản bạn vừa tạo:
-        </p>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;">
-          <button type="button" id="btnQuickSuperAdmin" class="btn btn-primary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
-            Admin Tổng
-          </button>
-          <button type="button" id="btnQuickAdmin" class="btn btn-secondary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
-            Chủ shop
-          </button>
-          <button type="button" id="btnQuickCtvMinh" class="btn btn-secondary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
-            Cổng CTV
-          </button>
+        <!-- Auth Tabs: Đăng Nhập vs Đăng Ký Người Mới -->
+        <div style="display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+          <button type="button" id="tabAuthLoginBtn" class="btn btn-sm btn-primary" style="flex: 1;">Đăng Nhập</button>
+          <button type="button" id="tabAuthRegisterBtn" class="btn btn-sm btn-secondary" style="flex: 1;">Đăng Ký Người Mới (Email)</button>
         </div>
 
-        <form id="formAuthLogin" style="border-top: 1px solid var(--border-color); padding-top: 14px;">
-          <div class="form-group">
-            <label class="form-label">Tên đăng nhập (`superadmin`, `admin`, `ctv01_minh`, hoặc tài khoản mới tạo)</label>
-            <input type="text" id="authUsername" class="form-input" placeholder="VD: ctv01_minh" required />
+        <!-- Panel 1: Đăng Nhập & Chuyển Nhanh -->
+        <div id="panelAuthLogin">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+            Chọn nhanh 1 trong 3 vai trò để trải nghiệm, hoặc đăng nhập bằng email / username:
+          </p>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
+            <button type="button" id="btnQuickSuperAdmin" class="btn btn-primary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
+              Admin Tổng
+            </button>
+            <button type="button" id="btnQuickAdmin" class="btn btn-secondary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
+              Chủ shop
+            </button>
+            <button type="button" id="btnQuickCtvMinh" class="btn btn-secondary" style="justify-content: center; font-size: 12px; padding: 8px 6px;">
+              Cổng CTV
+            </button>
           </div>
-          <div class="form-group">
-            <label class="form-label">Mật khẩu (Demo: `superadmin2026`, `autobiz2026`, `ctv2026`)</label>
-            <input type="password" id="authPassword" class="form-input" placeholder="••••••" required />
+
+          <form id="formAuthLogin" style="border-top: 1px solid var(--border-color); padding-top: 14px;">
+            <div class="form-group">
+              <label class="form-label">Email hoặc Tên đăng nhập</label>
+              <input type="text" id="authUsername" class="form-input" placeholder="VD: shop@gmail.com hoặc ctv01_minh" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mật khẩu</label>
+              <input type="password" id="authPassword" class="form-input" placeholder="••••••" required />
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" id="btnCancelAuthModal" class="btn btn-secondary">Đóng</button>
+              <button type="submit" class="btn btn-primary">Đăng nhập</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Panel 2: Đăng Ký Tài Khoản Mới (Email + Password) -->
+        <div id="panelAuthRegister" style="display: none;">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Tạo tài khoản nhanh bằng Email. Sau khi đăng ký, hệ thống sẽ gợi ý định hướng phù hợp với bạn:
+          </p>
+          <form id="formAuthRegister">
+            <div class="form-group">
+              <label class="form-label">Địa chỉ Email (*)</label>
+              <input type="email" id="regEmail" class="form-input" placeholder="VD: banhang@gmail.com" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Họ và tên / Tên hiển thị (*)</label>
+              <input type="text" id="regDisplayName" class="form-input" placeholder="VD: Nguyễn Văn A" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mật khẩu (Ít nhất 4 ký tự) (*)</label>
+              <input type="password" id="regPassword" class="form-input" placeholder="••••••" required minlength="4" />
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+              <button type="button" id="btnCancelRegister" class="btn btn-secondary">Hủy</button>
+              <button type="submit" class="btn btn-primary">Tạo Tài Khoản &amp; Bắt Đầu</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== MODAL: KHẢO SÁT ĐỊNH HƯỚNG ONBOARDING (CHỦ SHOP vs CTV ĐỘC LẬP) ======================== -->
+  <div id="modalOnboarding" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Chào Mừng! Bạn Muốn Sử Dụng AutoBiz AI Để Làm Gì?</h3>
+        <button type="button" id="btnCloseOnboardingModal" class="btn btn-secondary btn-icon-only">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          AutoBiz AI thiết kế không gian làm việc chuyên biệt theo nhu cầu thực tế của bạn. Hãy chọn mô hình phù hợp nhất:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Lựa chọn 1: Chủ Shop có/muốn có CTV -->
+          <div id="cardOnboardingShop" class="card" style="margin-bottom: 0; padding: 16px; border: 2px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span class="tag tag-accessories" style="font-size: 11px;">Mô Hình 1</span>
+                  <strong style="font-size: 15px; color: var(--text-main);">Tôi là Chủ Shop / Doanh Nghiệp</strong>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                  Có hàng hóa sẵn. Cần AI tự viết bài đa kênh, quản lý kho hàng, tạo link tiếp thị và tính toán hoa hồng tự động cho đội ngũ CTV bán phụ.
+                </p>
+                <div style="margin-top: 8px; font-size: 11px; color: #166534; font-weight: 600;">
+                  Bao gồm: Kho hàng, Studio AI 4 kênh, Quản lý &amp; Cấp quyền CTV, Đối soát FinTech chốt đơn.
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap; margin-top: 4px;">
+                Chọn Luồng Này
+              </button>
+            </div>
           </div>
-          <div style="display: flex; justify-content: flex-end; gap: 8px;">
-            <button type="button" id="btnCancelAuthModal" class="btn btn-secondary">Đóng</button>
-            <button type="submit" class="btn btn-primary">Đăng nhập</button>
+
+          <!-- Lựa chọn 2: Người làm Affiliate / KOC Độc Lập -->
+          <div id="cardOnboardingAffiliate" class="card" style="margin-bottom: 0; padding: 16px; border: 2px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span class="tag tag-tech" style="font-size: 11px;">Mô Hình 2</span>
+                  <strong style="font-size: 15px; color: var(--text-main);">Tôi là Người Làm Affiliate / KOC Độc Lập</strong>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                  Không có hàng. Tự làm tiếp thị liên kết cho Shopee, TikTok Shop, AccessTrade. Cần bóc tách sản phẩm nhanh bằng Extension, AI viết 4 bài và đo click từng kênh.
+                </p>
+                <div style="margin-top: 8px; font-size: 11px; color: #1E40AF; font-weight: 600;">
+                  Bao gồm: Extension bóc link Shopee/Web, Studio AI 4 kênh, Rút gọn UTM đo click thật, Lọc Bot rác.
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" style="white-space: nowrap; margin-top: 4px;">
+                Chọn Luồng Này
+              </button>
+            </div>
           </div>
-        </form>
+        </div>
+
+        <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 14px;">
+          * Bạn luôn có thể đổi lại luồng trải nghiệm bất kỳ lúc nào từ góc Sidebar tài khoản.
+        </p>
       </div>
     </div>
   </div>
