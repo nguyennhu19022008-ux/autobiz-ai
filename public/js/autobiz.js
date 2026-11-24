@@ -1262,8 +1262,10 @@
       }
     }
 
-    // If new user has not completed onboarding persona survey, prompt modal
-    if (user && user.persona === null) {
+    // If new user has not completed onboarding persona survey, prompt modal ONLY inside workspace (not on landing or admin)
+    const landing = $('#landingPage');
+    const isLandingShown = landing && landing.style.display !== 'none';
+    if (!isLandingShown && user && user.persona === null && user.role !== 'superadmin') {
       const modalOnboarding = $('#modalOnboarding');
       if (modalOnboarding) modalOnboarding.classList.add('open');
     }
