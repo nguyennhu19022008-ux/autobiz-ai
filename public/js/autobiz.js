@@ -1248,7 +1248,7 @@
       state.authUser = data.user;
       applyRolePermissions(data.user);
       const modal = $('#modalAuthRole');
-      if (modal) modal.classList.remove('active');
+      if (modal) modal.classList.remove('open');
       showToast(`Đã chuyển sang tài khoản: ${data.user.displayName}`);
       await loadAnalyticsSummary();
       await loadCatalogProducts();
@@ -1435,13 +1435,13 @@
     const formAuthLogin = $('#formAuthLogin');
 
     if (btnOpenAuthModal && modalAuthRole) {
-      btnOpenAuthModal.addEventListener('click', () => modalAuthRole.classList.add('active'));
+      btnOpenAuthModal.addEventListener('click', () => modalAuthRole.classList.add('open'));
     }
     if (btnCloseAuthModal && modalAuthRole) {
-      btnCloseAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('active'));
+      btnCloseAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('open'));
     }
     if (btnCancelAuthModal && modalAuthRole) {
-      btnCancelAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('active'));
+      btnCancelAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('open'));
     }
     if (btnQuickAdmin) {
       btnQuickAdmin.addEventListener('click', () => loginWithPayload({ quickRole: 'admin' }));
