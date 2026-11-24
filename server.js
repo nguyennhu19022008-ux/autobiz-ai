@@ -317,11 +317,55 @@ app.post('/api/autobiz/affiliate-link', (req, res) => {
 
 // ======================== PHASE 1: MULTI-CATEGORY CATALOG & FINTECH AFFILIATE ENGINE ========================
 
-// Shortlink Redirect & Real-Time Click Tracker (GET /r/:code)
+const CLICK_DEDUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes anti-spam window per IP/Cookie + shortCode
+const recentClickCache = new Map();
+const BOT_USER_AGENT_REGEX = /facebookexternalhit|facebot|zalo|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|googlebot|bingbot|crawler|spider|preview/i;
+
+function isSpamOrBotClick(req, shortCode) {
+  const ua = String(req.get('user-agent') || '');
+  if (BOT_USER_AGENT_REGEX.test(ua)) {
+    return { blocked: true, reason: 'bot_preview' };
+  }
+
+  const codeKey = String(shortCode || '').toUpperCase();
+  const cookieHeader = String(req.headers.cookie || '');
+  const cookieName = `ab_clk_${codeKey}=1`;
+  if (cookieHeader.includes(cookieName)) {
+    return { blocked: true, reason: 'cookie_dedup' };
+  }
+
+  const rawIp = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  const cacheKey = `${rawIp}::${codeKey}`;
+  const now = Date.now();
+  const prevTs = recentClickCache.get(cacheKey);
+  if (prevTs && now - prevTs < CLICK_DEDUP_WINDOW_MS) {
+    return { blocked: true, reason: 'ip_dedup' };
+  }
+
+  if (recentClickCache.size > 2000) {
+    for (const [k, ts] of recentClickCache.entries()) {
+      if (now - ts >= CLICK_DEDUP_WINDOW_MS) recentClickCache.delete(k);
+    }
+  }
+  recentClickCache.set(cacheKey, now);
+  return { blocked: false, codeKey };
+}
+
+// Shortlink Redirect & Real-Time Click Tracker with Anti-Spam Filter (GET /r/:code)
 app.get('/r/:code', (req, res) => {
-  const resolved = affiliateService.recordClickAndResolve(req.params.code);
+  const spamCheck = isSpamOrBotClick(req, req.params.code);
+  const resolved = affiliateService.recordClickAndResolve(req.params.code, {
+    countClick: !spamCheck.blocked
+  });
   if (!resolved || !resolved.targetUrl) {
     return res.status(404).send('<h3>AutoBiz AI: Link tiếp thị liên kết không tồn tại hoặc đã hết hạn.</h3>');
+  }
+  if (!spamCheck.blocked && spamCheck.codeKey) {
+    res.cookie(`ab_clk_${spamCheck.codeKey}`, '1', {
+      maxAge: CLICK_DEDUP_WINDOW_MS,
+      httpOnly: true,
+      sameSite: 'Lax'
+    });
   }
   return res.redirect(302, resolved.targetUrl);
 });

@@ -71,22 +71,27 @@ function createShortLink({
 }
 
 /**
- * Increment click counter on /r/:code and update FinTech commission metrics
+ * Increment click counter on /r/:code and update FinTech commission metrics.
+ * Supports anti-spam / bot filtering via { countClick: false }.
  */
-function recordClickAndResolve(shortCode) {
+function recordClickAndResolve(shortCode, { countClick = true } = {}) {
   const links = readLinks();
   const idx = links.findIndex((l) => l.shortCode.toLowerCase() === String(shortCode).toLowerCase());
   if (idx === -1) return null;
 
   const item = links[idx];
-  item.clicks = (Number(item.clicks) || 0) + 1;
-  item.lastClickedAt = new Date().toISOString();
+  if (countClick) {
+    item.clicks = (Number(item.clicks) || 0) + 1;
+    item.lastClickedAt = new Date().toISOString();
 
-  // Modelled FinTech conversion estimation (5% click-to-order conversion baseline, minimum 1 order at 10 clicks)
-  const price = Number(item.priceRetail) || 250000;
-  const rate = Number(item.commissionRate) || 10;
-  item.estimatedOrders = Math.floor(item.clicks * 0.05);
-  item.estimatedCommission = Math.round(item.clicks * 0.05 * price * (rate / 100));
+    // Modelled FinTech conversion estimation (5% click-to-order conversion baseline)
+    const price = Number(item.priceRetail) || 250000;
+    const rate = Number(item.commissionRate) || 10;
+    item.estimatedOrders = Math.floor(item.clicks * 0.05);
+    item.estimatedCommission = Math.round(item.clicks * 0.05 * price * (rate / 100));
+  } else {
+    item.blockedSpamClicks = (Number(item.blockedSpamClicks) || 0) + 1;
+  }
 
   links[idx] = item;
   writeLinks(links);
