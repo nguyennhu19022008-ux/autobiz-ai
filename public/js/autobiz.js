@@ -1975,7 +1975,16 @@
         modal.classList.add('open');
         const modalTitle = modal.querySelector('.modal-title');
         if (modalTitle) modalTitle.textContent = 'Cổng Đăng Nhập Quản Trị Viên (Admin Portal)';
-        showToast('Truy cập Cổng Quản Trị Viên qua /admin. Vui lòng chọn hoặc đăng nhập tài khoản Admin.');
+        const uInput = $('#authUsername');
+        if (uInput) {
+          uInput.value = 'superadmin';
+          const pInput = $('#authPassword');
+          if (pInput) {
+            pInput.value = 'superadmin2026';
+            pInput.focus();
+          }
+        }
+        showToast('Truy cập Cổng Quản Trị Viên qua /admin. Sẵn sàng đăng nhập tài khoản Admin.');
       }
     } else if (isExplicitAppPath) {
       hideLandingPage();

@@ -54,9 +54,9 @@ function checkStaticPackaging() {
 
   // Kiểm tra query string cache-busting trong index.html
   const indexHtml = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-  assert(indexHtml.includes('/css/style.css?v=20261124_landing'), 'Thiếu cache-busting trên style.css trong index.html');
-  assert(indexHtml.includes('/js/autobiz.js?v=20261124_landing'), 'Thiếu cache-busting trên autobiz.js trong index.html');
-  console.log('- [OK] Đã gắn query string cache-busting (?v=20261124_landing) cho CSS & JS trong index.html.');
+  assert(indexHtml.includes('/css/style.css?v=20261124_v2'), 'Thiếu cache-busting trên style.css trong index.html');
+  assert(indexHtml.includes('/js/autobiz.js?v=20261124_v2'), 'Thiếu cache-busting trên autobiz.js trong index.html');
+  console.log('- [OK] Đã gắn query string cache-busting (?v=20261124_v2) cho CSS & JS trong index.html.');
 
   // Kiểm tra Responsive & Calm Mobile Performance trong style.css
   const styleCss = fs.readFileSync(path.join(ROOT, 'public/css/style.css'), 'utf8');
@@ -87,8 +87,8 @@ async function runEndToEndVerify() {
       '/app',
       '/dashboard',
       '/cockpit',
-      '/css/style.css?v=20261124_landing',
-      '/js/autobiz.js?v=20261124_landing',
+      '/css/style.css?v=20261124_v2',
+      '/js/autobiz.js?v=20261124_v2',
       '/manifest.json',
       '/icons/icon.svg',
       '/api/settings',
