@@ -133,6 +133,8 @@
       loadQueuePosts();
     } else if (viewName === 'settings') {
       loadSettings();
+    } else if (viewName === 'users') {
+      loadUsersTable();
     }
   }
 
@@ -1200,17 +1202,40 @@
   }
 
   function applyRolePermissions(user) {
-    const isCtv = user && user.role === 'ctv';
+    const role = user?.role || 'superadmin';
+    const isCtv = role === 'ctv';
+    const isSuperAdmin = role === 'superadmin';
     const badge = $('#currentRoleBadge');
     if (badge) {
-      badge.textContent = isCtv ? `CTV: ${user.subId}` : 'Chủ shop (Admin)';
-      badge.className = isCtv ? 'tag tag-tech' : 'tag tag-accessories';
+      if (isCtv) {
+        badge.textContent = `CTV: ${user.subId}`;
+        badge.className = 'tag tag-tech';
+      } else if (isSuperAdmin) {
+        badge.textContent = 'Admin Tổng';
+        badge.className = 'tag tag-fashion';
+      } else {
+        badge.textContent = 'Chủ shop';
+        badge.className = 'tag tag-accessories';
+      }
     }
 
     // Hide Admin-only buttons, tabs and actions when logged in as CTV
     $$('.admin-only').forEach((el) => {
       el.style.display = isCtv ? 'none' : '';
     });
+
+    // Restrict role dropdown in Create User form if current user is shop_owner
+    const newUserRoleSelect = $('#newUserRole');
+    if (newUserRoleSelect) {
+      Array.from(newUserRoleSelect.options).forEach((opt) => {
+        if (opt.value !== 'ctv') {
+          opt.disabled = !isSuperAdmin;
+        }
+      });
+      if (!isSuperAdmin) {
+        newUserRoleSelect.value = 'ctv';
+      }
+    }
 
     const analyticsSubtitle = $('#view-analytics .page-subtitle');
     if (analyticsSubtitle) {
@@ -1229,8 +1254,10 @@
       }
     }
 
-    if (isCtv && state.currentView === 'settings') {
+    if (isCtv && (state.currentView === 'settings' || state.currentView === 'users')) {
       switchView('analytics');
+    } else if (!isCtv && state.currentView === 'users') {
+      loadUsersTable();
     }
   }
 
@@ -1329,6 +1356,140 @@
     }
   }
 
+  // ======================== 3-TIER ACCOUNT & ROLE MANAGEMENT (SUPERADMIN / SHOP / CTV) ========================
+  async function loadUsersTable() {
+    const tbody = $('#usersTableBody');
+    const scopeNote = $('#usersScopeNote');
+    if (!tbody) return;
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${escapeHtml(data.error || 'Không có quyền xem danh sách.')}</td></tr>`;
+        return;
+      }
+      const isSuperAdmin = data.actorRole === 'superadmin';
+      if (scopeNote) {
+        scopeNote.textContent = isSuperAdmin
+          ? 'Chế độ Admin Tổng: Quản lý tất cả Chủ shop & CTV'
+          : 'Chế độ Chủ shop: Quản lý danh sách CTV của cửa hàng';
+      }
+      const users = data.users || [];
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Chưa có tài khoản nào.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = users.map((u) => {
+        const isActive = u.active !== false;
+        const roleSelect = isSuperAdmin
+          ? `<select class="form-select" style="padding:4px 8px; font-size:12px;" onchange="window.AutoBiz.changeUserRole('${escapeHtml(u.username)}', this.value)">
+              <option value="ctv" ${u.role === 'ctv' ? 'selected' : ''}>Cộng tác viên (CTV)</option>
+              <option value="shop_owner" ${u.role === 'shop_owner' ? 'selected' : ''}>Chủ shop</option>
+              <option value="superadmin" ${u.role === 'superadmin' ? 'selected' : ''}>Admin Tổng</option>
+            </select>`
+          : `<span class="tag tag-tech">CTV</span>`;
+
+        const statusBadge = isActive
+          ? '<span class="tag tag-posted">Hoạt động</span>'
+          : '<span class="tag tag-failed">Đã khóa</span>';
+
+        return `<tr>
+          <td><strong>${escapeHtml(u.username)}</strong></td>
+          <td>${escapeHtml(u.displayName || u.username)}</td>
+          <td>${roleSelect}</td>
+          <td><code>${escapeHtml(u.subId || '—')}</code></td>
+          <td>${statusBadge}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.AutoBiz.toggleUserActive('${escapeHtml(u.username)}', ${!isActive})">
+                ${isActive ? 'Khóa' : 'Mở'}
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="window.AutoBiz.deleteUserAccount('${escapeHtml(u.username)}')">
+                Xóa
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      console.error('[Load Users Error]', err);
+    }
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    const form = $('#formCreateUser');
+    if (!form) return;
+    const payload = {
+      username: form.username.value.trim(),
+      displayName: form.displayName.value.trim(),
+      password: form.password.value.trim(),
+      role: form.role.value,
+      subId: form.subId.value.trim()
+    };
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tạo tài khoản.');
+      showToast(data.message || 'Đã tạo & cấp quyền thành công!');
+      form.reset();
+      if (form.password) form.password.value = '123456';
+      await loadUsersTable();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function changeUserRole(username, newRole) {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể đổi vai trò.');
+      showToast(data.message || `Đã đổi vai trò ${username} thành ${newRole}.`);
+      await loadUsersTable();
+    } catch (err) {
+      showToast(err.message, true);
+      await loadUsersTable();
+    }
+  }
+
+  async function toggleUserActive(username, nextActive) {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: nextActive })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể cập nhật trạng thái.');
+      showToast(nextActive ? `Đã mở khóa ${username}.` : `Đã tạm khóa ${username}.`);
+      await loadUsersTable();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function deleteUserAccount(username) {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể xóa tài khoản.');
+      showToast(data.message || `Đã xóa tài khoản ${username}.`);
+      await loadUsersTable();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
   // ======================== GLOBAL ATTACHMENTS & INITIALIZATION ========================
   window.AutoBiz = {
     switchView,
@@ -1338,7 +1499,10 @@
     loadProductToStudio,
     deleteProduct,
     publishPostNow,
-    deletePost
+    deletePost,
+    changeUserRole,
+    toggleUserActive,
+    deleteUserAccount
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -1430,6 +1594,7 @@
     const btnOpenAuthModal = $('#btnOpenAuthModal');
     const btnCloseAuthModal = $('#btnCloseAuthModal');
     const btnCancelAuthModal = $('#btnCancelAuthModal');
+    const btnQuickSuperAdmin = $('#btnQuickSuperAdmin');
     const btnQuickAdmin = $('#btnQuickAdmin');
     const btnQuickCtvMinh = $('#btnQuickCtvMinh');
     const formAuthLogin = $('#formAuthLogin');
@@ -1443,9 +1608,18 @@
     if (btnCancelAuthModal && modalAuthRole) {
       btnCancelAuthModal.addEventListener('click', () => modalAuthRole.classList.remove('open'));
     }
-    if (btnQuickAdmin) {
-      btnQuickAdmin.addEventListener('click', () => loginWithPayload({ quickRole: 'admin' }));
+    if (btnQuickSuperAdmin) {
+      btnQuickSuperAdmin.addEventListener('click', () => loginWithPayload({ quickRole: 'superadmin' }));
     }
+    if (btnQuickAdmin) {
+      btnQuickAdmin.addEventListener('click', () => loginWithPayload({ quickRole: 'shop_owner' }));
+    }
+
+    // 3-Tier User Management UI bindings
+    const formCreateUser = $('#formCreateUser');
+    if (formCreateUser) formCreateUser.addEventListener('submit', handleCreateUser);
+    const btnRefreshUsers = $('#btnRefreshUsers');
+    if (btnRefreshUsers) btnRefreshUsers.addEventListener('click', loadUsersTable);
     if (btnQuickCtvMinh) {
       btnQuickCtvMinh.addEventListener('click', () => loginWithPayload({ quickRole: 'ctv', subId: 'ctv01_minh' }));
     }

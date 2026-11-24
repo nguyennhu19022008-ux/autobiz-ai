@@ -89,6 +89,9 @@ app.post('/api/auth/login', (req, res) => {
   if (!user) {
     return res.status(401).json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu.' });
   }
+  if (user.locked) {
+    return res.status(403).json({ success: false, error: 'Tài khoản này đã bị Admin tạm khóa.' });
+  }
   const token = authService.signToken(user);
   res.cookie(authService.SESSION_COOKIE_NAME, token, {
     maxAge: authService.TOKEN_TTL_MS,
@@ -102,6 +105,72 @@ app.post('/api/auth/login', (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie(authService.SESSION_COOKIE_NAME, { path: '/' });
   res.json({ success: true });
+});
+
+// 0.1. 3-Tier Account & Role Management APIs (Admin Tổng -> Chủ shop -> CTV)
+app.get('/api/users', authService.requireAdmin, (req, res) => {
+  const users = authService.listUsers(req.authUser.role);
+  res.json({ success: true, total: users.length, users, actorRole: req.authUser.role });
+});
+
+app.post('/api/users', authService.requireAdmin, (req, res) => {
+  try {
+    const requestedRole = String(req.body?.role || 'ctv').trim();
+    if (req.authUser.role !== 'superadmin' && requestedRole !== 'ctv') {
+      return res.status(403).json({
+        success: false,
+        error: 'Chủ shop chỉ có quyền tạo tài khoản CTV. Chỉ Admin Tổng mới có quyền cấp quyền Chủ shop hoặc Admin Tổng.'
+      });
+    }
+    const created = authService.createUser({ ...req.body, role: requestedRole });
+    res.status(201).json({ success: true, user: created, message: `Đã tạo tài khoản ${created.username} (${created.role}).` });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/users/:username', authService.requireAdmin, (req, res) => {
+  const targetName = String(req.params.username || '').trim().toLowerCase();
+  const existingList = authService.listUsers('superadmin');
+  const targetUser = existingList.find((u) => u.username.toLowerCase() === targetName);
+  if (!targetUser) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+  }
+
+  if (req.authUser.role !== 'superadmin') {
+    if (targetUser.role !== 'ctv' || (req.body?.role && req.body.role !== 'ctv')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Chỉ Admin Tổng mới có quyền điều chỉnh vai trò Chủ shop / Admin hoặc nâng quyền.'
+      });
+    }
+  }
+
+  const updated = authService.updateUser(targetName, req.body || {});
+  res.json({ success: true, user: updated, message: `Đã cập nhật phân quyền cho ${updated.username}.` });
+});
+
+app.delete('/api/users/:username', authService.requireAdmin, (req, res) => {
+  const targetName = String(req.params.username || '').trim().toLowerCase();
+  if (req.authUser && targetName === String(req.authUser.username || '').toLowerCase()) {
+    return res.status(400).json({ success: false, error: 'Không thể tự xóa tài khoản đang đăng nhập.' });
+  }
+  const existingList = authService.listUsers('superadmin');
+  const targetUser = existingList.find((u) => u.username.toLowerCase() === targetName);
+  if (!targetUser) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+  }
+  if (req.authUser.role !== 'superadmin' && targetUser.role !== 'ctv') {
+    return res.status(403).json({
+      success: false,
+      error: 'Chỉ Admin Tổng mới có quyền xóa tài khoản Chủ shop hoặc Admin.'
+    });
+  }
+  const result = authService.deleteUser(targetName);
+  if (!result.deleted) {
+    return res.status(400).json({ success: false, error: result.error });
+  }
+  res.json({ success: true, message: `Đã xóa tài khoản ${targetName}.` });
 });
 
 // 1. Get current settings (Admin only)
