@@ -54,11 +54,12 @@ function checkStaticPackaging() {
 
   // Kiểm tra query string cache-busting trong index.html
   const indexHtml = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-  assert(indexHtml.includes('/css/style.css?v=20261124_v5'), 'Thiếu cache-busting trên style.css trong index.html');
-  assert(indexHtml.includes('/js/autobiz.js?v=20261124_v5'), 'Thiếu cache-busting trên autobiz.js trong index.html');
+  assert(indexHtml.includes('/css/style.css?v=20261125_v6'), 'Thiếu cache-busting trên style.css trong index.html');
+  assert(indexHtml.includes('/js/autobiz.js?v=20261125_v6'), 'Thiếu cache-busting trên autobiz.js trong index.html');
   assert(!indexHtml.includes('id="modalOnboarding"'), 'Vẫn còn sót modal onboarding cũ #modalOnboarding trong index.html');
   assert(indexHtml.includes('id="btnLogout"'), 'Thiếu nút Đăng xuất #btnLogout trong index.html');
-  console.log('- [OK] Đã gắn query string cache-busting (?v=20261124_v5), có nút Đăng xuất và đã gỡ bỏ modal onboarding cũ.');
+  assert(indexHtml.includes('id="modalProfile"'), 'Thiếu modal Hồ sơ & Đổi mật khẩu #modalProfile trong index.html');
+  console.log('- [OK] Đã gắn cache-busting (?v=20261125_v6), có nút Đăng xuất, Hồ sơ/Đổi mật khẩu và đã gỡ modal cũ.');
 
   // Kiểm tra Responsive & Calm Mobile Performance trong style.css
   const styleCss = fs.readFileSync(path.join(ROOT, 'public/css/style.css'), 'utf8');
@@ -89,8 +90,8 @@ async function runEndToEndVerify() {
       '/app',
       '/dashboard',
       '/cockpit',
-      '/css/style.css?v=20261124_v5',
-      '/js/autobiz.js?v=20261124_v5',
+      '/css/style.css?v=20261125_v6',
+      '/js/autobiz.js?v=20261125_v6',
       '/manifest.json',
       '/icons/icon.svg',
       '/api/settings',

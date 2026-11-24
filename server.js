@@ -108,17 +108,63 @@ app.get('/api/db/status', (req, res) => {
 });
 
 app.get('/api/auth/me', (req, res) => {
-  res.json({ success: true, user: req.authUser });
+  const baseUser = req.authUser || null;
+  if (baseUser && baseUser.username) {
+    const fresh = authService.getUserByUsername(baseUser.username);
+    if (fresh) {
+      return res.json({
+        success: true,
+        user: {
+          ...baseUser,
+          displayName: fresh.displayName || baseUser.displayName,
+          hotline: fresh.hotline || '',
+          defaultShopUrl: fresh.defaultShopUrl || '',
+          email: fresh.email || baseUser.email || null
+        }
+      });
+    }
+  }
+  res.json({ success: true, user: baseUser });
 });
 
+// Brute-force Login Rate Limiter (5 failed attempts / 5 minutes per IP + account)
+const loginFailTracker = new Map();
+const LOGIN_RATE_LIMIT_MAX = 5;
+const LOGIN_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+
+function getLoginRateKey(req) {
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+  const ident = String(req.body?.username || '').trim().toLowerCase() || '_anon';
+  return `${ip}::${ident}`;
+}
+
 app.post('/api/auth/login', (req, res) => {
+  const rateKey = getLoginRateKey(req);
+  const now = Date.now();
+  const record = loginFailTracker.get(rateKey);
+  if (record && record.count >= LOGIN_RATE_LIMIT_MAX && (now - record.firstFailAt) < LOGIN_RATE_LIMIT_WINDOW_MS) {
+    const waitMin = Math.ceil((LOGIN_RATE_LIMIT_WINDOW_MS - (now - record.firstFailAt)) / 60000);
+    return res.status(429).json({
+      success: false,
+      error: `Bạn đã nhập sai mật khẩu quá ${LOGIN_RATE_LIMIT_MAX} lần. Vui lòng thử lại sau ${waitMin} phút.`
+    });
+  }
+
   const user = authService.authenticateUser(req.body || {});
   if (!user) {
+    if (!record || (now - record.firstFailAt) >= LOGIN_RATE_LIMIT_WINDOW_MS) {
+      loginFailTracker.set(rateKey, { count: 1, firstFailAt: now });
+    } else {
+      record.count += 1;
+      loginFailTracker.set(rateKey, record);
+    }
     return res.status(401).json({ success: false, error: 'Sai tên đăng nhập/email hoặc mật khẩu.' });
   }
   if (user.locked) {
     return res.status(403).json({ success: false, error: 'Tài khoản này đã bị Admin tạm khóa.' });
   }
+
+  loginFailTracker.delete(rateKey);
   const token = authService.signToken(user);
   res.cookie(authService.SESSION_COOKIE_NAME, token, {
     maxAge: authService.TOKEN_TTL_MS,
@@ -127,6 +173,50 @@ app.post('/api/auth/login', (req, res) => {
     path: '/'
   });
   res.json({ success: true, token, user });
+});
+
+app.post('/api/auth/profile', (req, res) => {
+  try {
+    const username = req.authUser?.username;
+    if (!username) {
+      return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để cập nhật hồ sơ.' });
+    }
+    const updated = authService.updateUserProfile(username, req.body || {});
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+    }
+    const userPayload = {
+      ...req.authUser,
+      displayName: updated.displayName,
+      hotline: updated.hotline || '',
+      defaultShopUrl: updated.defaultShopUrl || '',
+      exp: Date.now() + authService.TOKEN_TTL_MS
+    };
+    const token = authService.signToken(userPayload);
+    res.cookie(authService.SESSION_COOKIE_NAME, token, {
+      maxAge: authService.TOKEN_TTL_MS,
+      httpOnly: true,
+      sameSite: 'Lax',
+      path: '/'
+    });
+    res.json({ success: true, user: userPayload, message: 'Đã cập nhật hồ sơ cá nhân thành công!' });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/auth/change-password', (req, res) => {
+  try {
+    const username = req.authUser?.username;
+    if (!username) {
+      return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để đổi mật khẩu.' });
+    }
+    const { currentPassword, newPassword } = req.body || {};
+    authService.changeUserPassword(username, { currentPassword, newPassword });
+    res.json({ success: true, message: 'Đổi mật khẩu thành công! Mật khẩu mới đã được mã hóa an toàn.' });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
 });
 
 // Self-Serve Registration with Email & Password for New Users

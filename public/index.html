@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Utilitarian Minimalist SaaS Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261124_v5">
+  <link rel="stylesheet" href="/css/style.css?v=20261125_v6">
 </head>
 <body>
 
@@ -92,13 +92,18 @@
         <div id="currentUserName" style="font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           Admin Tổng (Hệ thống)
         </div>
-        <div style="display: flex; gap: 6px;">
-          <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px;">
-            <span>Đổi tài khoản</span>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <button type="button" id="btnOpenProfileModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 6px;">
+            <span>Hồ sơ &amp; Đổi mật khẩu</span>
           </button>
-          <button type="button" id="btnLogout" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px; color: #B91C1C; border-color: #FECACA;">
-            <span>Đăng xuất</span>
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px;">
+              <span>Đổi tài khoản</span>
+            </button>
+            <button type="button" id="btnLogout" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px; color: #B91C1C; border-color: #FECACA;">
+              <span>Đăng xuất</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1050,10 +1055,66 @@
     </div>
   </div>
 
+  <!-- ======================== MODAL: HỒ SƠ CÁ NHÂN & ĐỔI MẬT KHẨU ======================== -->
+  <div id="modalProfile" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Hồ Sơ Cá Nhân &amp; Bảo Mật</h3>
+        <button type="button" id="btnCloseProfileModal" class="btn btn-secondary btn-icon-only">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formUpdateProfile" style="margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;">
+            1. Thông tin hiển thị
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profileDisplayName">Tên hiển thị / Tên Shop</label>
+            <input type="text" id="profileDisplayName" class="form-input" placeholder="VD: Shop Vương Gia hoặc KOC Minh" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profileHotline">Hotline / Chữ ký cuối bài (Tùy chọn)</label>
+            <input type="text" id="profileHotline" class="form-input" placeholder="VD: Zalo tư vấn 09xx.xxx.xxx" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profileDefaultShopUrl">Link gian hàng / Link Bio mặc định (Tùy chọn)</label>
+            <input type="url" id="profileDefaultShopUrl" class="form-input" placeholder="https://shopee.vn/..." />
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">Lưu thông tin</button>
+          </div>
+        </form>
+
+        <form id="formChangePassword">
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;">
+            2. Đổi mật khẩu
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profileCurrentPassword">Mật khẩu hiện tại</label>
+            <input type="password" id="profileCurrentPassword" class="form-input" placeholder="••••••" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="profileNewPassword">Mật khẩu mới</label>
+              <input type="password" id="profileNewPassword" class="form-input" placeholder="Tối thiểu 4 ký tự" minlength="4" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="profileConfirmPassword">Nhập lại mật khẩu mới</label>
+              <input type="password" id="profileConfirmPassword" class="form-input" placeholder="••••••" minlength="4" required />
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" id="btnCancelProfileModal" class="btn btn-secondary btn-sm">Đóng</button>
+            <button type="submit" class="btn btn-primary btn-sm">Cập nhật mật khẩu</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261124_v5"></script>
+  <script src="/js/autobiz.js?v=20261125_v6"></script>
 </body>
 </html>

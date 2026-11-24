@@ -58,13 +58,63 @@ const DEFAULT_USERS = [
   }
 ];
 
+const SCRYPT_PREFIX = 'scrypt$';
+
+function hashPassword(plain) {
+  const raw = String(plain || '');
+  if (raw.startsWith(SCRYPT_PREFIX)) return raw;
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derived = crypto.scryptSync(raw, salt, 64).toString('hex');
+  return `${SCRYPT_PREFIX}${salt}$${derived}`;
+}
+
+function verifyPassword(plain, stored) {
+  const raw = String(plain || '');
+  const saved = String(stored || '');
+  if (!saved) return { valid: false, needsUpgrade: false };
+
+  if (saved.startsWith(SCRYPT_PREFIX)) {
+    const parts = saved.split('$');
+    if (parts.length !== 3) return { valid: false, needsUpgrade: false };
+    const [, salt, hashHex] = parts;
+    try {
+      const derived = crypto.scryptSync(raw, salt, 64);
+      const expected = Buffer.from(hashHex, 'hex');
+      if (derived.length !== expected.length) return { valid: false, needsUpgrade: false };
+      return { valid: crypto.timingSafeEqual(derived, expected), needsUpgrade: false };
+    } catch {
+      return { valid: false, needsUpgrade: false };
+    }
+  }
+
+  // Legacy plaintext fallback -> verify timing-safe & flag for auto-upgrade
+  const a = Buffer.from(raw, 'utf8');
+  const b = Buffer.from(saved, 'utf8');
+  if (a.length !== b.length) return { valid: false, needsUpgrade: false };
+  const valid = crypto.timingSafeEqual(a, b);
+  return { valid, needsUpgrade: valid };
+}
+
 function readUsers() {
   const users = readJsonSafe(USERS_FILENAME, null);
   if (!Array.isArray(users) || users.length === 0) {
-    writeJsonSafe(USERS_FILENAME, DEFAULT_USERS);
-    return [...DEFAULT_USERS];
+    const seeded = DEFAULT_USERS.map((u) => ({ ...u, password: hashPassword(u.password) }));
+    writeJsonSafe(USERS_FILENAME, seeded);
+    return seeded;
   }
-  return users;
+  // Auto-upgrade any legacy plaintext passwords stored in DB to scrypt hashes
+  let upgraded = false;
+  const migrated = users.map((u) => {
+    if (u && typeof u.password === 'string' && u.password && !u.password.startsWith(SCRYPT_PREFIX)) {
+      upgraded = true;
+      return { ...u, password: hashPassword(u.password) };
+    }
+    return u;
+  });
+  if (upgraded) {
+    writeJsonSafe(USERS_FILENAME, migrated);
+  }
+  return migrated;
 }
 
 function writeUsers(users) {
@@ -116,8 +166,10 @@ function registerWithEmail({ email, password, displayName } = {}) {
   const newUser = {
     username: candidateUser,
     email: cleanEmail,
-    password: cleanPass,
+    password: hashPassword(cleanPass),
     displayName: String(displayName || candidateUser).trim(),
+    hotline: '',
+    defaultShopUrl: '',
     role: 'shop_owner', // Default role until onboarding survey selects exact persona
     persona: null,      // Triggers Onboarding Survey
     subId: candidateUser,
@@ -175,10 +227,12 @@ function createUser({ username, email, password, role = 'ctv', subId, displayNam
   const entry = {
     username: cleanUser,
     email: email ? String(email).trim().toLowerCase() : null,
-    password: cleanPass,
+    password: hashPassword(cleanPass),
     role: normalizedRole,
     subId: normalizedRole === 'ctv' ? String(subId || cleanUser).trim() : null,
     displayName: String(displayName || cleanUser).trim(),
+    hotline: '',
+    defaultShopUrl: '',
     persona: normalizedRole === 'ctv' ? 'independent_affiliate' : 'shop_with_affiliates',
     active: true,
     createdAt: new Date().toISOString()
@@ -206,7 +260,7 @@ function updateUser(targetUsername, updates = {}) {
     user.displayName = String(updates.displayName).trim();
   }
   if (updates.password !== undefined && String(updates.password).trim().length >= 4) {
-    user.password = String(updates.password).trim();
+    user.password = hashPassword(String(updates.password).trim());
   }
   if (typeof updates.active === 'boolean') {
     user.active = updates.active;
@@ -309,12 +363,19 @@ function authenticateUser({ username, password, quickRole, subId } = {}) {
 
   const cleanUser = String(username || '').trim().toLowerCase();
   const cleanPass = String(password || '');
-  const found = users.find(
-    (u) => (u.username.toLowerCase() === cleanUser || (u.email && u.email.toLowerCase() === cleanUser)) && u.password === cleanPass
+  const idx = users.findIndex(
+    (u) => u.username.toLowerCase() === cleanUser || (u.email && u.email.toLowerCase() === cleanUser)
   );
-  if (!found) return null;
+  if (idx === -1) return null;
+  const found = users[idx];
+  const check = verifyPassword(cleanPass, found.password);
+  if (!check.valid) return null;
   if (found.active === false) {
     return { locked: true };
+  }
+  if (check.needsUpgrade) {
+    users[idx] = { ...found, password: hashPassword(cleanPass) };
+    writeUsers(users);
   }
 
   return {
@@ -323,10 +384,68 @@ function authenticateUser({ username, password, quickRole, subId } = {}) {
     role: found.role,
     subId: found.role === 'ctv' ? (found.subId || found.username) : null,
     displayName: found.displayName,
+    hotline: found.hotline || '',
+    defaultShopUrl: found.defaultShopUrl || '',
     persona: found.persona || null,
     hasAffiliates: found.hasAffiliates !== false,
     exp: Date.now() + TOKEN_TTL_MS
   };
+}
+
+function getUserByUsername(targetUsername) {
+  const cleanTarget = String(targetUsername || '').trim().toLowerCase();
+  if (!cleanTarget) return null;
+  const users = readUsers();
+  const found = users.find((u) => u.username.toLowerCase() === cleanTarget);
+  return found ? sanitizeUser(found) : null;
+}
+
+function updateUserProfile(targetUsername, { displayName, hotline, defaultShopUrl } = {}) {
+  const cleanTarget = String(targetUsername || '').trim().toLowerCase();
+  const users = readUsers();
+  const idx = users.findIndex((u) => u.username.toLowerCase() === cleanTarget);
+  if (idx === -1) return null;
+
+  const user = { ...users[idx] };
+  if (displayName !== undefined && String(displayName).trim()) {
+    user.displayName = String(displayName).trim().slice(0, 80);
+  }
+  if (hotline !== undefined) {
+    user.hotline = String(hotline).trim().slice(0, 60);
+  }
+  if (defaultShopUrl !== undefined) {
+    user.defaultShopUrl = String(defaultShopUrl).trim().slice(0, 300);
+  }
+  user.updatedAt = new Date().toISOString();
+
+  users[idx] = user;
+  writeUsers(users);
+  return sanitizeUser(user);
+}
+
+function changeUserPassword(targetUsername, { currentPassword, newPassword } = {}) {
+  const cleanTarget = String(targetUsername || '').trim().toLowerCase();
+  const cleanNew = String(newPassword || '').trim();
+  if (cleanNew.length < 4) {
+    throw new Error('Mật khẩu mới phải có ít nhất 4 ký tự.');
+  }
+  const users = readUsers();
+  const idx = users.findIndex((u) => u.username.toLowerCase() === cleanTarget);
+  if (idx === -1) {
+    throw new Error('Không tìm thấy tài khoản.');
+  }
+  const user = users[idx];
+  const check = verifyPassword(String(currentPassword || ''), user.password);
+  if (!check.valid) {
+    throw new Error('Mật khẩu hiện tại không chính xác.');
+  }
+  users[idx] = {
+    ...user,
+    password: hashPassword(cleanNew),
+    updatedAt: new Date().toISOString()
+  };
+  writeUsers(users);
+  return sanitizeUser(users[idx]);
 }
 
 function attachAuthUser(req, res, next) {
@@ -403,6 +522,11 @@ module.exports = {
   deleteUser,
   registerWithEmail,
   setOnboardingPersona,
+  getUserByUsername,
+  updateUserProfile,
+  changeUserPassword,
+  hashPassword,
+  verifyPassword,
   signToken,
   verifyToken,
   authenticateUser,

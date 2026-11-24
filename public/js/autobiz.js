@@ -1886,10 +1886,86 @@
       btnCancelRegister.addEventListener('click', () => modalAuthRole.classList.remove('open'));
     }
 
-    // Logout button binding
+    // Logout & Profile Modal bindings
     const btnLogout = $('#btnLogout');
     if (btnLogout) {
       btnLogout.addEventListener('click', logoutUser);
+    }
+
+    const modalProfile = $('#modalProfile');
+    const btnOpenProfileModal = $('#btnOpenProfileModal');
+    const btnCloseProfileModal = $('#btnCloseProfileModal');
+    const btnCancelProfileModal = $('#btnCancelProfileModal');
+    const formUpdateProfile = $('#formUpdateProfile');
+    const formChangePassword = $('#formChangePassword');
+
+    const openProfileModal = () => {
+      if (!modalProfile) return;
+      const u = state.authUser || {};
+      if ($('#profileDisplayName')) $('#profileDisplayName').value = u.displayName || u.username || '';
+      if ($('#profileHotline')) $('#profileHotline').value = u.hotline || '';
+      if ($('#profileDefaultShopUrl')) $('#profileDefaultShopUrl').value = u.defaultShopUrl || '';
+      if ($('#profileCurrentPassword')) $('#profileCurrentPassword').value = '';
+      if ($('#profileNewPassword')) $('#profileNewPassword').value = '';
+      if ($('#profileConfirmPassword')) $('#profileConfirmPassword').value = '';
+      modalProfile.classList.add('open');
+    };
+
+    if (btnOpenProfileModal) btnOpenProfileModal.addEventListener('click', openProfileModal);
+    if (btnCloseProfileModal && modalProfile) btnCloseProfileModal.addEventListener('click', () => modalProfile.classList.remove('open'));
+    if (btnCancelProfileModal && modalProfile) btnCancelProfileModal.addEventListener('click', () => modalProfile.classList.remove('open'));
+
+    if (formUpdateProfile) {
+      formUpdateProfile.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('/api/auth/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              displayName: $('#profileDisplayName')?.value?.trim() || '',
+              hotline: $('#profileHotline')?.value?.trim() || '',
+              defaultShopUrl: $('#profileDefaultShopUrl')?.value?.trim() || ''
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Không thể cập nhật hồ sơ.');
+          state.authUser = data.user;
+          applyRolePermissions(data.user);
+          showToast(data.message || 'Đã cập nhật hồ sơ!');
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    }
+
+    if (formChangePassword) {
+      formChangePassword.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = $('#profileCurrentPassword')?.value || '';
+        const newPassword = $('#profileNewPassword')?.value || '';
+        const confirmPassword = $('#profileConfirmPassword')?.value || '';
+        if (newPassword !== confirmPassword) {
+          showToast('Mật khẩu nhập lại không khớp.', true);
+          return;
+        }
+        try {
+          const res = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Đổi mật khẩu thất bại.');
+          if ($('#profileCurrentPassword')) $('#profileCurrentPassword').value = '';
+          if ($('#profileNewPassword')) $('#profileNewPassword').value = '';
+          if ($('#profileConfirmPassword')) $('#profileConfirmPassword').value = '';
+          showToast(data.message || 'Đổi mật khẩu thành công!');
+          if (modalProfile) modalProfile.classList.remove('open');
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
     }
 
     // Webhook UI bindings
@@ -2074,16 +2150,18 @@
         modal.classList.add('open');
         const modalTitle = modal.querySelector('.modal-title');
         if (modalTitle) modalTitle.textContent = 'Cổng Đăng Nhập Quản Trị Viên (Admin Portal)';
+        const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname);
         const uInput = $('#authUsername');
+        const pInput = $('#authPassword');
         if (uInput) {
           uInput.value = 'superadmin';
-          const pInput = $('#authPassword');
-          if (pInput) {
-            pInput.value = 'superadmin2026';
-            pInput.focus();
-          }
         }
-        showToast('Truy cập Cổng Quản Trị Viên qua /admin. Sẵn sàng đăng nhập tài khoản Admin.');
+        if (pInput) {
+          // Bảo mật Production: Không điền sẵn mật khẩu Admin trên môi trường công khai
+          pInput.value = isLocalDev ? 'superadmin2026' : '';
+          pInput.focus();
+        }
+        showToast('Truy cập Cổng Quản Trị Viên qua /admin. Vui lòng nhập mật khẩu Admin.');
       }
     } else if (isExplicitAppPath || hasActiveLoginSession) {
       hideLandingPage();
