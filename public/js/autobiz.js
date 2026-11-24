@@ -1289,7 +1289,9 @@
         throw new Error(data.error || 'Đăng nhập thất bại.');
       }
       state.authUser = data.user;
+      sessionStorage.setItem('autobiz_logged_in', '1');
       applyRolePermissions(data.user);
+      hideLandingPage();
       const modal = $('#modalAuthRole');
       if (modal) modal.classList.remove('open');
       showToast(`Đã chuyển sang tài khoản: ${data.user.displayName}`);
@@ -1410,6 +1412,7 @@
         state.authUser = onbJson.user;
       }
 
+      sessionStorage.setItem('autobiz_logged_in', '1');
       closeRegisterSurvey();
       hideLandingPage();
       applyRolePermissions(state.authUser);
@@ -1890,8 +1893,20 @@
       });
     }
     if (btnBackToLanding) {
-      btnBackToLanding.addEventListener('click', showLandingPage);
+      btnBackToLanding.addEventListener('click', () => {
+        sessionStorage.removeItem('autobiz_logged_in');
+        showLandingPage();
+      });
     }
+
+    // Dismiss modal when clicking on backdrop
+    $$('.modal-backdrop').forEach((backdrop) => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          backdrop.classList.remove('open');
+        }
+      });
+    });
 
     // Step-by-Step Questionnaire Form bindings
     const formSurveyStep1 = $('#formSurveyStep1');
@@ -1992,6 +2007,7 @@
     // Default Landing Display & Hidden Admin Portal Routing (/admin)
     const isAdminPath = ['/admin', '/admin/'].includes(window.location.pathname) || window.location.search.includes('role=admin');
     const isExplicitAppPath = ['/app', '/dashboard', '/cockpit'].includes(window.location.pathname) || window.location.search.includes('mode=demo');
+    const hasActiveLoginSession = sessionStorage.getItem('autobiz_logged_in') === '1';
 
     if (isAdminPath) {
       hideLandingPage();
@@ -2011,7 +2027,7 @@
         }
         showToast('Truy cập Cổng Quản Trị Viên qua /admin. Sẵn sàng đăng nhập tài khoản Admin.');
       }
-    } else if (isExplicitAppPath) {
+    } else if (isExplicitAppPath || hasActiveLoginSession) {
       hideLandingPage();
     } else {
       showLandingPage();
