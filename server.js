@@ -27,11 +27,13 @@ const {
 } = require('./services/telegram');
 const { parseStockTableFromImage } = require('./services/tableParser');
 const {
+  isSupabaseEnabled,
   uploadToSupabaseStorage,
   deleteFromSupabaseStorage,
   upsertPostToDb,
   deletePostFromDb
 } = require('./services/supabase');
+const runtime = require('./utils/runtime');
 const { normalizeMachineCode, isValidMachineCode, deduplicateItemsByCode } = require('./utils/dedup');
 const { inspectMedia } = require('./services/mediaFilter');
 const {
@@ -54,6 +56,23 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Hydrate Supabase Postgres store on cold start & flush pending writes before serverless response ends
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/r/')) {
+    await runtime.ensureHydrated();
+    const origJson = res.json.bind(res);
+    res.json = (body) => {
+      runtime.flushRemoteWrites().then(() => origJson(body)).catch(() => origJson(body));
+      return res;
+    };
+    const origRedirect = res.redirect.bind(res);
+    res.redirect = (...args) => {
+      runtime.flushRemoteWrites().then(() => origRedirect(...args)).catch(() => origRedirect(...args));
+      return res;
+    };
+  }
+  next();
+});
 app.use(authService.attachAuthUser);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
@@ -80,6 +99,14 @@ const upload = multer({
 // ======================== API ROUTES ========================
 
 // 0. Authentication & Role-Based Access Control (Admin / CTV Portal)
+app.get('/api/db/status', (req, res) => {
+  res.json({
+    success: true,
+    provider: isSupabaseEnabled() ? 'supabase_postgres' : 'local_json_fallback',
+    connected: isSupabaseEnabled()
+  });
+});
+
 app.get('/api/auth/me', (req, res) => {
   res.json({ success: true, user: req.authUser });
 });

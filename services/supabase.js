@@ -1,17 +1,65 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const runtime = require('../utils/runtime');
 
 // Sử dụng biến môi trường riêng AUTOBIZ_SUPABASE_URL để tách biệt 100% với dự án fb-laptop-autopost
 const supabaseUrl = process.env.AUTOBIZ_SUPABASE_URL || '';
 const supabaseKey = process.env.AUTOBIZ_SUPABASE_KEY || '';
 
 let supabase = null;
-if (supabaseUrl && supabaseKey) {
+if (supabaseUrl && supabaseKey && !runtime.IS_TEST_MODE) {
   supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false }
   });
   console.log('[Supabase] ⚡ Khởi tạo kết nối AutoBiz Supabase Cloud:', supabaseUrl);
+}
+
+function isSupabaseEnabled() {
+  return Boolean(supabase);
+}
+
+const STORE_TABLE = 'autobiz_store';
+
+async function fetchStoreFromDb() {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from(STORE_TABLE)
+    .select('key, data');
+  if (error) {
+    console.warn('[Supabase fetchStore Notice]', error.message);
+    return null;
+  }
+  const result = {};
+  for (const row of (data || [])) {
+    if (row && row.key) {
+      result[row.key] = row.data;
+    }
+  }
+  return result;
+}
+
+async function upsertStoreToDb(key, value) {
+  if (!supabase || !key) return false;
+  const { error } = await supabase
+    .from(STORE_TABLE)
+    .upsert({
+      key: String(key),
+      data: value,
+      updated_at: new Date().toISOString()
+    });
+  if (error) {
+    console.warn(`[Supabase upsertStore Notice] (${key}):`, error.message);
+    return false;
+  }
+  return true;
+}
+
+if (supabase) {
+  runtime.registerRemoteSync({
+    hydrateFn: fetchStoreFromDb,
+    writeFn: upsertStoreToDb
+  });
 }
 
 const BUCKET_NAME = 'autobiz-media';
@@ -85,6 +133,7 @@ async function fetchAllPostsFromDb() {
       if (!error && Array.isArray(data)) {
         return data.map(row => ({
           id: row.id,
+          owner: row.owner || 'superadmin',
           machineCode: row.machine_code,
           machineName: row.machine_name,
           content: row.content,
@@ -135,6 +184,7 @@ async function upsertPostToDb(post) {
     try {
       const row = {
         id: post.id,
+        owner: post.owner || 'superadmin',
         machine_code: post.machineCode,
         machine_name: post.machineName,
         content: post.content,
@@ -215,6 +265,9 @@ async function saveSettingsToDb(settings) {
 
 module.exports = {
   supabase,
+  isSupabaseEnabled,
+  fetchStoreFromDb,
+  upsertStoreToDb,
   uploadToSupabaseStorage,
   deleteFromSupabaseStorage,
   fetchAllPostsFromDb,
