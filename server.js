@@ -416,6 +416,38 @@ app.post('/api/affiliate/record-order', (req, res) => {
   }
 });
 
+// 1-Click Demo Seed & Clear for Jury / Video Recording (Works on both Local and Vercel Serverless /tmp)
+app.post('/api/demo/seed', (req, res) => {
+  try {
+    const { seedDemoDataset } = require('./scripts/seed_demo_data');
+    const result = seedDemoDataset({ includeLinks: true });
+    const baseSummary = affiliateService.getAnalyticsSummary();
+    const totalProducts = catalogService.listProducts().length;
+    res.json({
+      success: true,
+      message: `Đã nạp ${result.productsCount} sản phẩm mẫu (5 ngành) & ${result.linksCount} chiến dịch CTV FinTech!`,
+      summary: { ...baseSummary, totalProducts, totalEstimatedCommission: baseSummary.totalCommission }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/demo/clear', (req, res) => {
+  try {
+    const { clearDemoDataset } = require('./scripts/seed_demo_data');
+    clearDemoDataset();
+    const baseSummary = affiliateService.getAnalyticsSummary();
+    res.json({
+      success: true,
+      message: 'Đã làm sạch toàn bộ dữ liệu demo về trạng thái trống.',
+      summary: { ...baseSummary, totalProducts: 0, totalEstimatedCommission: 0 }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Phase 2: Omni-Channel Dispatch Hub (Facebook + TikTok + Zalo + Shopee)
 app.post('/api/autobiz/dispatch', async (req, res) => {
   try {

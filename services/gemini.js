@@ -21,7 +21,7 @@ const PRODUCT_CATEGORIES = {
 /**
  * Reusable Gemini API caller with automatic fallback across reliable models
  */
-async function callGeminiWithFallback(contents, apiKey, timeout = 35000) {
+async function callGeminiWithFallback(contents, apiKey, timeout = 12000) {
   if (require('../utils/runtime').IS_TEST_MODE) {
     // Bộ test không được tiêu tốn hạn mức Gemini thật -> ép dùng fallback nội bộ
     throw new Error('VG_TEST_MODE: bỏ qua Gemini API, dùng bộ viết bài dự phòng.');
@@ -51,6 +51,9 @@ async function callGeminiWithFallback(contents, apiKey, timeout = 35000) {
       if (status === 429) {
         exhaustedUntil.set(model, Date.now() + EXHAUSTED_COOLDOWN_MS);
         console.warn(`[Gemini API] ${model} hết hạn mức (429). Tạm gác 1 giờ, chuyển model dự phòng...`);
+      } else if (status === 503 || err.code === 'ECONNABORTED') {
+        exhaustedUntil.set(model, Date.now() + 5 * 60 * 1000);
+        console.warn(`[Gemini API] ${model} quá tải/timeout (${status || err.code}). Tạm gác 5 phút, chuyển model dự phòng...`);
       } else {
         console.warn(`[Gemini API] Thử model ${model} không thành công (Status: ${status}): ${String(msg).slice(0, 200)}. Chuyển sang model dự phòng tiếp theo...`);
       }

@@ -176,10 +176,17 @@ function getAnalyticsSummary() {
     subRow.revenue += linkRev;
     subRow.commission += linkComm;
     subRow.netRevenue = Math.max(0, subRow.revenue - subRow.commission);
+    subRow.netMarginPct = subRow.revenue > 0 ? Number(((subRow.netRevenue / subRow.revenue) * 100).toFixed(1)) : 0;
+    subRow.epc = subRow.clicks > 0 ? Math.round(subRow.commission / subRow.clicks) : 0;
   }
 
   const conversionRate = totalClicks > 0 ? Number(((totalOrders / totalClicks) * 100).toFixed(1)) : 0;
   const netShopRevenue = Math.max(0, totalRevenue - totalCommission);
+  const netMarginPct = totalRevenue > 0 ? Number(((netShopRevenue / totalRevenue) * 100).toFixed(1)) : 0;
+  const commissionMarginPct = totalRevenue > 0 ? Number(((totalCommission / totalRevenue) * 100).toFixed(1)) : 0;
+  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  const earningPerClick = totalClicks > 0 ? Math.round(totalCommission / totalClicks) : 0;
+  const revenuePerClick = totalClicks > 0 ? Math.round(totalRevenue / totalClicks) : 0;
   const bySubId = Array.from(subIdMap.values()).sort((a, b) => (b.revenue - a.revenue) || (b.clicks - a.clicks));
 
   return {
@@ -189,6 +196,11 @@ function getAnalyticsSummary() {
     totalCommission,
     totalRevenue,
     netShopRevenue,
+    netMarginPct,
+    commissionMarginPct,
+    avgOrderValue,
+    earningPerClick,
+    revenuePerClick,
     confirmedOrders,
     confirmedRevenue,
     confirmedCommission,

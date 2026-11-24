@@ -182,6 +182,75 @@
       if (statNetRevenue) statNetRevenue.textContent = formatCurrency(summary.netShopRevenue || 0);
       if (statTotalOrders) statTotalOrders.textContent = (summary.totalOrders || 0).toLocaleString('vi-VN');
 
+      // Financial Margin & Efficiency Trends (EPC, Net Margin %, AOV)
+      const statCommissionTrend = $('#statCommissionTrend');
+      const statNetRevenueTrend = $('#statNetRevenueTrend');
+      const statTotalOrdersTrend = $('#statTotalOrdersTrend');
+      if (statCommissionTrend) {
+        statCommissionTrend.textContent = `EPC: ${formatCurrency(summary.earningPerClick || 0)}/click | Tỷ lệ HH: ${Number(summary.commissionMarginPct || 0).toFixed(1)}%`;
+      }
+      if (statNetRevenueTrend) {
+        statNetRevenueTrend.textContent = `Biên thực thu Shop: ${Number(summary.netMarginPct || 0).toFixed(1)}% sau trừ HH`;
+      }
+      if (statTotalOrdersTrend) {
+        statTotalOrdersTrend.textContent = `Giá trị đơn TB (AOV): ${formatCurrency(summary.avgOrderValue || 0)}`;
+      }
+
+      // Bind 1-Click Demo Seed & Clear buttons once
+      const btnSeedDemo = $('#btnSeedDemo');
+      if (btnSeedDemo && !btnSeedDemo.dataset.bound) {
+        btnSeedDemo.dataset.bound = '1';
+        btnSeedDemo.addEventListener('click', async () => {
+          const origHtml = btnSeedDemo.innerHTML;
+          btnSeedDemo.disabled = true;
+          btnSeedDemo.innerHTML = '<span>Đang nạp dữ liệu mẫu...</span>';
+          try {
+            const res = await fetch('/api/demo/seed', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ includeLinks: true })
+            });
+            const data = await res.json();
+            if (data.success) {
+              if (typeof showToast === 'function') showToast(data.message || 'Đã nạp dữ liệu mẫu BGK!', 'success');
+              await loadAnalyticsSummary();
+              if (typeof loadCatalogProducts === 'function') await loadCatalogProducts();
+              if (typeof loadAffiliateLinks === 'function') await loadAffiliateLinks();
+            }
+          } catch (err) {
+            console.error('[Demo Seed Error]', err);
+          } finally {
+            btnSeedDemo.disabled = false;
+            btnSeedDemo.innerHTML = origHtml;
+          }
+        });
+      }
+
+      const btnClearDemo = $('#btnClearDemo');
+      if (btnClearDemo && !btnClearDemo.dataset.bound) {
+        btnClearDemo.dataset.bound = '1';
+        btnClearDemo.addEventListener('click', async () => {
+          const origHtml = btnClearDemo.innerHTML;
+          btnClearDemo.disabled = true;
+          btnClearDemo.innerHTML = '<span>Đang làm sạch...</span>';
+          try {
+            const res = await fetch('/api/demo/clear', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+              if (typeof showToast === 'function') showToast(data.message || 'Đã làm sạch dữ liệu mẫu!', 'info');
+              await loadAnalyticsSummary();
+              if (typeof loadCatalogProducts === 'function') await loadCatalogProducts();
+              if (typeof loadAffiliateLinks === 'function') await loadAffiliateLinks();
+            }
+          } catch (err) {
+            console.error('[Demo Clear Error]', err);
+          } finally {
+            btnClearDemo.disabled = false;
+            btnClearDemo.innerHTML = origHtml;
+          }
+        });
+      }
+
       // Horizontal Bar Chart
       renderChannelChart(summary.byChannel || {});
 

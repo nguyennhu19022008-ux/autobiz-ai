@@ -118,6 +118,24 @@
           <span>Hệ thống trực tuyến</span>
         </div>
         <div>Workspace: <strong>AutoBiz Main</strong></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
+          <a href="/slides" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-decoration: none; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Bộ Slide Dự Thi (/slides)</span>
+          </a>
+          <a href="/autobiz-extension-v2.zip" download class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-decoration: none; font-size: 12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Tải Extension AB (.zip)</span>
+          </a>
+        </div>
       </div>
     </aside>
 
@@ -134,7 +152,20 @@
               <h1 class="page-title">Tổng quan & FinTech</h1>
               <p class="page-subtitle">Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.</p>
             </div>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnSeedDemo" class="btn btn-primary" title="Nạp nhanh 10 sản phẩm đa ngành & 8 chiến dịch CTV mẫu phục vụ thuyết trình BGK">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Nạp dữ liệu mẫu BGK</span>
+              </button>
+              <button id="btnClearDemo" class="btn btn-secondary" title="Xóa dữ liệu mẫu để trở về trạng thái trống ban đầu">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Làm sạch</span>
+              </button>
               <button id="btnRefreshAnalytics" class="btn btn-secondary">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="23 4 23 10 17 10"></polyline>
@@ -177,7 +208,7 @@
               <div class="stat-label">Hoa Hồng Ước Tính</div>
               <div id="statCommission" class="stat-value">0 đ</div>
               <div class="stat-trend">
-                <span>Tính lũy kế hoa hồng CTV</span>
+                <span id="statCommissionTrend">Tính lũy kế hoa hồng CTV</span>
               </div>
             </div>
           </div>
@@ -188,7 +219,7 @@
               <div class="stat-label">Tổng Doanh Thu (GMV)</div>
               <div id="statTotalRevenue" class="stat-value" style="color: #7F1D1D;">0 đ</div>
               <div class="stat-trend">
-                <span>Tổng giá trị đơn hàng qua link</span>
+                <span id="statTotalRevenueTrend">Tổng giá trị đơn hàng qua link</span>
               </div>
             </div>
 
@@ -196,7 +227,7 @@
               <div class="stat-label">Doanh Thu Thực Chốt</div>
               <div id="statConfirmedRevenue" class="stat-value">0 đ</div>
               <div class="stat-trend">
-                <span>Từ các đơn đã xác nhận thanh toán</span>
+                <span id="statConfirmedRevenueTrend">Từ các đơn đã xác nhận thanh toán</span>
               </div>
             </div>
 
@@ -204,7 +235,7 @@
               <div class="stat-label">Tiền Thực Thu Chủ Shop</div>
               <div id="statNetRevenue" class="stat-value" style="color: #166534;">0 đ</div>
               <div class="stat-trend">
-                <span>Doanh thu sau khi trừ hoa hồng CTV</span>
+                <span id="statNetRevenueTrend">Doanh thu sau khi trừ hoa hồng CTV</span>
               </div>
             </div>
 
@@ -212,7 +243,7 @@
               <div class="stat-label">Tổng Đơn Hàng</div>
               <div id="statTotalOrders" class="stat-value">0</div>
               <div class="stat-trend">
-                <span>Đơn chốt thực tế &amp; ước tính</span>
+                <span id="statTotalOrdersTrend">Đơn chốt thực tế &amp; ước tính</span>
               </div>
             </div>
           </div>
