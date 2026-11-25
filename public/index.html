@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Utilitarian Minimalist SaaS Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261125_v7">
+  <link rel="stylesheet" href="/css/style.css?v=20261125_v8">
 </head>
 <body>
 
@@ -96,6 +96,14 @@
           <button type="button" id="btnOpenProfileModal" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 6px;">
             <span>Hồ sơ &amp; Đổi mật khẩu</span>
           </button>
+          <div style="display: flex; gap: 6px;">
+            <a id="btnOpenBioPage" href="/u/admin" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px; text-decoration: none;">
+              <span>Trang Bio</span>
+            </a>
+            <button type="button" id="btnCopyBioLink" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px;">
+              <span>Copy Bio</span>
+            </button>
+          </div>
           <div style="display: flex; gap: 6px;">
             <button type="button" id="btnOpenAuthModal" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 11px; padding: 5px 6px;">
               <span>Đổi tài khoản</span>
@@ -369,6 +377,96 @@
               </table>
             </div>
           </div>
+
+          <!-- Payout Request Card for CTV / KOC -->
+          <div id="cardCtvPayoutRequest" class="card" style="display: none;">
+            <div class="card-header">
+              <div class="card-title">
+                <span>Số Dư Hoa Hồng &amp; Yêu Cầu Rút Tiền (VietQR)</span>
+              </div>
+              <span id="ctvPayoutBalanceBadge" class="tag tag-tech" style="font-size: 12px;">Khả dụng: 0 đ</span>
+            </div>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: var(--text-muted);">
+              <span>Tổng hoa hồng: <strong id="ctvEarnedComm" style="color: var(--text-main);">0 đ</strong></span>
+              <span>Đang chờ duyệt: <strong id="ctvPendingComm" style="color: #B45309;">0 đ</strong></span>
+              <span>Đã thanh toán: <strong id="ctvPaidComm" style="color: #166534;">0 đ</strong></span>
+            </div>
+            <form id="formCreatePayout" style="border-top: 1px solid var(--border-color); padding-top: 14px; margin-bottom: 14px;">
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label class="form-label" for="payoutBankCode">Ngân hàng (*)</label>
+                  <select id="payoutBankCode" class="form-select" required>
+                    <option value="MB">MB Bank (Quân Đội)</option>
+                    <option value="VCB">Vietcombank</option>
+                    <option value="TCB">Techcombank</option>
+                    <option value="ACB">ACB</option>
+                    <option value="ICB">VietinBank</option>
+                    <option value="BIDV">BIDV</option>
+                    <option value="VPB">VPBank</option>
+                    <option value="TPB">TPBank</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="payoutAccountNumber">Số tài khoản (*)</label>
+                  <input type="text" id="payoutAccountNumber" class="form-input" placeholder="VD: 0987654321" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="payoutAccountName">Tên chủ tài khoản (*)</label>
+                  <input type="text" id="payoutAccountName" class="form-input" placeholder="VD: NGUYEN VAN MINH" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="payoutAmount">Số tiền muốn rút (tối thiểu 50.000 đ) (*)</label>
+                  <input type="number" id="payoutAmount" class="form-input" min="50000" step="10000" placeholder="VD: 100000" required />
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                  <button type="submit" id="btnSubmitPayout" class="btn btn-primary" style="width: 100%;">Gửi Yêu Cầu Rút Hoa Hồng</button>
+                </div>
+              </div>
+            </form>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Ngân hàng / STK</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="ctvPayoutHistoryBody">
+                  <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có yêu cầu rút tiền nào.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Payout Approval Card for Shop Owner / Admin (VietQR) -->
+          <div id="cardShopPayoutApproval" class="card ctv-network-only">
+            <div class="card-header">
+              <div class="card-title">
+                <span>Duyệt Yêu Cầu Rút Hoa Hồng CTV (VietQR)</span>
+              </div>
+              <button type="button" id="btnRefreshPayouts" class="btn btn-secondary btn-sm">Làm mới</button>
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>CTV (SubID)</th>
+                    <th>Tài khoản nhận</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Đối soát &amp; Chuyển khoản</th>
+                  </tr>
+                </thead>
+                <tbody id="shopPayoutTableBody">
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Chưa có yêu cầu rút hoa hồng nào từ CTV.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
         <!-- ==========================================================================
@@ -431,8 +529,11 @@
                   <span id="studioSmartLinkTitle">Smart Affiliate Link (UTM Tracking)</span>
                 </div>
                 <div class="form-group" style="margin-bottom: 8px;">
-                  <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link sản phẩm của Shop hoặc link Shopee/TikTok Affiliate cá nhân..." />
-                  <span class="form-hint" style="font-size: 11px;">Hỗ trợ cả link gian hàng riêng lẫn link hoa hồng tiếp thị Shopee / TikTok cá nhân (s.shopee.vn, vt.tiktok.com...).</span>
+                  <div style="display: flex; gap: 6px;">
+                    <input type="url" id="studioBaseUrl" class="form-input" placeholder="Link sản phẩm của Shop hoặc link Shopee/TikTok Affiliate cá nhân..." style="flex: 1;" />
+                    <button type="button" id="btnStudioExtractUrl" class="btn btn-secondary btn-sm" style="white-space: nowrap;">Lấy thông tin</button>
+                  </div>
+                  <span class="form-hint" style="font-size: 11px;">Dán link Shopee / TikTok / Web rồi bấm "Lấy thông tin" để tự điền tên, giá, ảnh và ngành hàng.</span>
                 </div>
                 <div class="form-row" style="gap: 10px; margin-bottom: 8px;">
                   <div>
@@ -941,6 +1042,19 @@
           <div class="card">
             <div class="card-header">
               <div class="card-title">
+                <span>Link Tuyển &amp; Mời CTV Gia Nhập Shop Của Bạn</span>
+              </div>
+              <button type="button" id="btnCopyShopInviteLink" class="btn btn-primary btn-sm">Sao chép Link Mời CTV</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+              Gửi đường dẫn này cho cộng tác viên. Khi họ đăng ký qua link này, tài khoản sẽ tự động gắn vào đúng Shop của bạn và xem được kho hàng của bạn.
+            </p>
+            <input type="text" id="shopInviteLinkInput" class="form-input" readonly value="https://autobiz-ai-seven.vercel.app/join/admin" style="font-family: var(--font-mono); font-size: 12px; background: #F9FAFB;" />
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
                 <span>+ Cấp Tài Khoản &amp; Phân Quyền Mới (Không Cần Sửa Code)</span>
               </div>
             </div>
@@ -1021,6 +1135,13 @@
       </div>
       <form id="formAddProduct">
         <div class="modal-body">
+          <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+            <label class="form-label" for="extractProductUrlInput" style="margin-bottom: 6px;">Dán nhanh Link Shopee / TikTok / Website để tự điền</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="url" id="extractProductUrlInput" class="form-input" placeholder="https://shopee.vn/... hoặc https://s.shopee.vn/..." style="flex: 1;" />
+              <button type="button" id="btnExtractUrlToModal" class="btn btn-primary btn-sm" style="white-space: nowrap;">Lấy thông tin</button>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mã SKU (*)</label>
@@ -1113,6 +1234,9 @@
         
         <!-- Bước 1: Nhập Email và Mật khẩu (Chỉ cần mail và pass) -->
         <div id="surveyStep1">
+          <div id="inviteShopBanner" style="display: none; padding: 10px 12px; margin-bottom: 12px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; font-size: 13px; color: #166534; font-weight: 600;">
+            Bạn đang đăng ký làm Cộng tác viên chính thức cho Shop: <span id="inviteShopNameText"></span>
+          </div>
           <form id="formSurveyStep1">
             <div class="form-group">
               <label class="form-label">Địa chỉ Email (*)</label>
@@ -1232,10 +1356,30 @@
     </div>
   </div>
 
+  <!-- ======================== MODAL: MÃ VIETQR CHUYỂN KHOẢN HOA HỒNG ======================== -->
+  <div id="modalVietQr" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-header">
+        <h3 class="modal-title">Quét Mã VietQR Chuyển Khoản</h3>
+        <button type="button" id="btnCloseVietQrModal" class="btn btn-secondary btn-icon-only">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="vietQrInfoText" style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;"></div>
+        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #FFFFFF; margin-bottom: 14px;">
+          <img id="vietQrImage" src="" alt="Mã VietQR chuyển khoản" style="width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto;" />
+        </div>
+        <div style="display: flex; justify-content: center; gap: 8px;">
+          <button type="button" id="btnCancelVietQr" class="btn btn-secondary btn-sm">Đóng</button>
+          <button type="button" id="btnConfirmVietQrPaid" class="btn btn-primary btn-sm">Xác nhận đã chuyển khoản</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261125_v7"></script>
+  <script src="/js/autobiz.js?v=20261125_v8"></script>
 </body>
 </html>

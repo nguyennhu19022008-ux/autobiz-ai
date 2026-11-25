@@ -17,6 +17,8 @@ const {
 const catalogService = require('./services/catalog');
 const affiliateService = require('./services/affiliate');
 const authService = require('./services/auth');
+const urlExtractor = require('./services/urlExtractor');
+const payoutsService = require('./services/payouts');
 const { dispatchToChannels } = require('./services/adapters');
 const { verifyInstagramConnection } = require('./services/adapters/instagram');
 const { verifyPageToken } = require('./services/facebook');
@@ -59,7 +61,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Hydrate Supabase Postgres store on cold start & flush pending writes before serverless response ends
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/r/')) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/r/') || req.path.startsWith('/u/')) {
     await runtime.ensureHydrated();
     const origJson = res.json.bind(res);
     res.json = (body) => {
@@ -78,9 +80,155 @@ app.use(authService.attachAuthUser);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Dedicated routes for Web App Dashboard Cockpit & Admin Portal -> Serve index.html
-app.get(['/app', '/dashboard', '/cockpit', '/admin'], (req, res) => {
+// Dedicated routes for Web App Dashboard Cockpit, Admin Portal & CTV Invite -> Serve index.html
+app.get(['/app', '/dashboard', '/cockpit', '/admin', '/join/:shopCode'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Public Link Bio Page (/u/:username) — Minimalist Editorial Storefront with Auto /r/:code Tracking
+function escapeHtmlStr(s = '') {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildBioPayload(username, req) {
+  const user = authService.getUserByUsername(username);
+  if (!user) return null;
+  const products = catalogService.listProducts({
+    owner: user.username,
+    role: user.role,
+    persona: user.persona,
+    shopOwner: user.shopOwner || null
+  });
+  const host = req.get('host') || `localhost:${PORT}`;
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const items = products.map((p) => {
+    let buyUrl = p.affiliate_base_url || '#';
+    let shortCode = null;
+    if (p.affiliate_base_url && /^https?:\/\//i.test(p.affiliate_base_url)) {
+      const entry = affiliateService.createShortLink({
+        baseUrl: p.affiliate_base_url,
+        productId: p.id,
+        productName: p.name,
+        priceRetail: p.price_retail,
+        commissionRate: p.commission_rate,
+        channel: 'facebook',
+        campaign: 'bio_link',
+        subId: user.subId || user.username,
+        owner: user.username,
+        shopOwner: user.shopOwner || null
+      });
+      shortCode = entry.shortCode;
+      buyUrl = `${protocol}://${host}/r/${entry.shortCode}`;
+    }
+    return {
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      category: p.category,
+      price_retail: Number(p.price_retail) || 0,
+      image: Array.isArray(p.images) && p.images[0] ? p.images[0] : '',
+      specs: Array.isArray(p.specs) ? p.specs.slice(0, 2) : [],
+      shortCode,
+      buyUrl
+    };
+  });
+  return {
+    profile: {
+      username: user.username,
+      displayName: user.displayName || user.username,
+      hotline: user.hotline || '',
+      defaultShopUrl: user.defaultShopUrl || '',
+      role: user.role,
+      persona: user.persona
+    },
+    total: items.length,
+    items
+  };
+}
+
+app.get('/api/public/bio/:username', (req, res) => {
+  const payload = buildBioPayload(req.params.username, req);
+  if (!payload) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy trang Bio người dùng này.' });
+  }
+  res.json({ success: true, ...payload });
+});
+
+app.get('/u/:username', async (req, res) => {
+  const payload = buildBioPayload(req.params.username, req);
+  await runtime.flushRemoteWrites();
+  if (!payload) {
+    return res.status(404).send(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Không tìm thấy Bio</title></head><body style="font-family:system-ui,sans-serif;background:#FAFAFA;color:#0F172A;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center;"><div><h1 style="font-size:24px;margin-bottom:8px;">Không tìm thấy trang Bio</h1><p style="color:#64748B;">Đường dẫn @${escapeHtmlStr(req.params.username)} chưa tồn tại trên AutoBiz AI.</p><a href="/" style="display:inline-block;margin-top:16px;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Về trang chủ</a></div></body></html>`);
+  }
+  const { profile, items } = payload;
+  const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
+  const cardsHtml = items.length === 0
+    ? `<div style="text-align:center;padding:48px 16px;border:1px solid #E2E8F0;border-radius:10px;background:#FFFFFF;color:#64748B;">Chưa có sản phẩm nào được đăng lên trang Bio này.</div>`
+    : items.map((it) => `
+      <article class="bio-item" data-name="${escapeHtmlStr(it.name.toLowerCase())}" data-cat="${escapeHtmlStr(it.category)}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;">
+        ${it.image ? `<div style="aspect-ratio:16/10;background:#F1F5F9;overflow:hidden;border-bottom:1px solid #E2E8F0;"><img src="${escapeHtmlStr(it.image)}" alt="${escapeHtmlStr(it.name)}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"/></div>` : ''}
+        <div style="padding:16px;display:flex;flex-direction:column;gap:8px;flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#475569;letter-spacing:0.04em;">${escapeHtmlStr(it.sku)}</span>
+            <strong style="font-size:16px;color:#0F172A;">${it.price_retail > 0 ? it.price_retail.toLocaleString('vi-VN') + ' đ' : 'Liên hệ'}</strong>
+          </div>
+          <h2 style="font-size:15px;font-weight:700;line-height:1.4;margin:0;color:#0F172A;">${escapeHtmlStr(it.name)}</h2>
+          ${it.specs.length ? `<p style="font-size:13px;color:#64748B;margin:0;line-height:1.45;">${escapeHtmlStr(it.specs.join(' • '))}</p>` : ''}
+          <div style="margin-top:auto;padding-top:10px;">
+            <a href="${escapeHtmlStr(it.buyUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:10px 14px;background:#111111;color:#FFFFFF;text-decoration:none;border-radius:7px;font-size:13px;font-weight:600;">Mua Ngay / Nhận Ưu Đãi →</a>
+          </div>
+        </div>
+      </article>`).join('');
+
+  res.send(`<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHtmlStr(profile.displayName)} — Link Bio | AutoBiz AI</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:#FAFAFA;color:#0F172A;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:760px;margin:0 auto;padding:28px 18px 56px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .search{width:100%;padding:11px 14px;border:1px solid #CBD5E1;border-radius:8px;font-size:14px;background:#FFFFFF;color:#0F172A;outline:none}
+    .search:focus{border-color:#0F172A}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-bottom:20px;border-bottom:1px solid #E2E8F0;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;border-radius:10px;background:#111111;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;letter-spacing:-0.02em;">${escapeHtmlStr(initials)}</div>
+        <div>
+          <h1 style="margin:0;font-size:22px;font-weight:800;color:#0F172A;">${escapeHtmlStr(profile.displayName)}</h1>
+          <div style="font-size:13px;color:#64748B;margin-top:2px;">@${escapeHtmlStr(profile.username)} • ${items.length} sản phẩm đề xuất</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${profile.hotline ? `<a href="tel:${escapeHtmlStr(profile.hotline.replace(/[^0-9+]/g, ''))}" style="padding:8px 14px;border:1px solid #0F172A;border-radius:7px;color:#0F172A;text-decoration:none;font-size:13px;font-weight:600;background:#FFFFFF;">Hotline: ${escapeHtmlStr(profile.hotline)}</a>` : ''}
+        ${profile.defaultShopUrl ? `<a href="${escapeHtmlStr(profile.defaultShopUrl)}" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:#111111;color:#FFFFFF;border-radius:7px;text-decoration:none;font-size:13px;font-weight:600;">Gian hàng chính</a>` : ''}
+      </div>
+    </header>
+    <div style="margin-bottom:18px;">
+      <input id="bioSearch" class="search" type="search" placeholder="Tìm sản phẩm trên trang của ${escapeHtmlStr(profile.displayName)}..." />
+    </div>
+    <section id="bioGrid" class="grid">${cardsHtml}</section>
+    <footer style="margin-top:36px;padding-top:16px;border-top:1px solid #E2E8F0;text-align:center;font-size:12px;color:#94A3B8;">
+      Powered by <a href="/" style="color:#0F172A;font-weight:600;text-decoration:none;">AutoBiz AI</a>
+    </footer>
+  </main>
+  <script>
+    const inp = document.getElementById('bioSearch');
+    if (inp) inp.addEventListener('input', () => {
+      const q = inp.value.trim().toLowerCase();
+      document.querySelectorAll('.bio-item').forEach((el) => {
+        el.style.display = !q || (el.dataset.name || '').includes(q) ? 'flex' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>`);
 });
 
 // Dedicated routes for 16:9 Pitch Deck Presentation (CV17 - Phase 6)
@@ -220,19 +368,20 @@ app.post('/api/auth/change-password', (req, res) => {
   }
 });
 
-// Self-Serve Registration with Email & Password for New Users
+// Self-Serve Registration with Email & Password (supports /join/:shopCode CTV invite)
 app.post('/api/auth/register', (req, res) => {
   try {
-    const { email, password, displayName } = req.body || {};
-    const created = authService.registerWithEmail({ email, password, displayName });
+    const { email, password, displayName, inviteShopOwner } = req.body || {};
+    const created = authService.registerWithEmail({ email, password, displayName, inviteShopOwner });
     const userPayload = {
       username: created.username,
       email: created.email,
       role: created.role,
       subId: created.subId,
+      shopOwner: created.shopOwner || null,
       displayName: created.displayName,
       persona: created.persona,
-      hasAffiliates: true,
+      hasAffiliates: created.hasAffiliates !== false,
       exp: Date.now() + authService.TOKEN_TTL_MS
     };
     const token = authService.signToken(userPayload);
@@ -302,7 +451,7 @@ app.post('/api/auth/logout', (req, res) => {
 
 // 0.1. 3-Tier Account & Role Management APIs (Admin Tổng -> Chủ shop -> CTV)
 app.get('/api/users', authService.requireAdmin, (req, res) => {
-  const users = authService.listUsers(req.authUser.role);
+  const users = authService.listUsers(req.authUser.role, req.authUser.username);
   res.json({ success: true, total: users.length, users, actorRole: req.authUser.role });
 });
 
@@ -315,7 +464,11 @@ app.post('/api/users', authService.requireAdmin, (req, res) => {
         error: 'Chủ shop chỉ có quyền tạo tài khoản CTV. Chỉ Admin Tổng mới có quyền cấp quyền Chủ shop hoặc Admin Tổng.'
       });
     }
-    const created = authService.createUser({ ...req.body, role: requestedRole });
+    const created = authService.createUser({
+      ...req.body,
+      role: requestedRole,
+      shopOwner: requestedRole === 'ctv' ? (req.body?.shopOwner || req.authUser.username) : null
+    });
     res.status(201).json({ success: true, user: created, message: `Đã tạo tài khoản ${created.username} (${created.role}).` });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
@@ -728,6 +881,17 @@ app.get('/r/:code', (req, res) => {
   return res.redirect(302, resolved.targetUrl);
 });
 
+// Auto-Extract Product Info from Shopee / TikTok / Web URL
+app.post('/api/catalog/extract-url', async (req, res) => {
+  try {
+    const { url } = req.body || {};
+    const extracted = await urlExtractor.extractProductFromUrl(url);
+    res.json({ success: true, extracted });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 // Multi-Category Product Catalog CRUD (Multi-tenant & KOC Independent Affiliate supported)
 app.get('/api/products', (req, res) => {
   const { category, search } = req.query;
@@ -737,7 +901,8 @@ app.get('/api/products', (req, res) => {
     search,
     owner: user.username || null,
     role: user.role || 'superadmin',
-    persona: user.persona || null
+    persona: user.persona || null,
+    shopOwner: user.shopOwner || null
   });
   res.json({ success: true, total: products.length, products });
 });
@@ -807,7 +972,8 @@ app.post('/api/affiliate/shorten', (req, res) => {
       channel,
       campaign,
       subId: effectiveSubId,
-      owner: user.username || 'superadmin'
+      owner: user.username || 'superadmin',
+      shopOwner: user.shopOwner || null
     });
     const host = req.get('host') || `localhost:${PORT}`;
     const protocol = req.protocol || 'http';
@@ -886,6 +1052,43 @@ app.post('/api/webhooks/order', async (req, res) => {
 app.get('/api/webhooks/logs', authService.requireAdmin, (req, res) => {
   const logs = affiliateService.listWebhookLogs();
   res.json({ success: true, total: logs.length, logs });
+});
+
+// Payouts & VietQR Commission Reconciliation APIs
+app.get('/api/payouts', (req, res) => {
+  try {
+    const data = payoutsService.listPayoutsForUser(req.authUser);
+    res.json({ success: true, banks: payoutsService.SUPPORTED_BANKS, minAmount: payoutsService.MIN_PAYOUT_AMOUNT, ...data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/payouts', (req, res) => {
+  try {
+    const created = payoutsService.createPayoutRequest(req.authUser, req.body || {});
+    res.status(201).json({
+      success: true,
+      payout: created,
+      message: `Đã gửi yêu cầu rút ${created.amount.toLocaleString('vi-VN')} đ thành công! Chờ Chủ shop đối soát.`
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.patch('/api/payouts/:id', authService.requireAdmin, (req, res) => {
+  try {
+    const updated = payoutsService.updatePayoutStatus(req.params.id, req.body || {}, req.authUser);
+    if (!updated) return res.status(404).json({ success: false, error: 'Không tìm thấy yêu cầu rút tiền.' });
+    res.json({
+      success: true,
+      payout: updated,
+      message: updated.status === 'paid' ? 'Đã xác nhận thanh toán hoa hồng thành công!' : 'Đã cập nhật trạng thái yêu cầu rút tiền.'
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ success: false, error: error.message });
+  }
 });
 
 // 1-Click Demo Seed & Clear for Jury / Video Recording (Admin only)

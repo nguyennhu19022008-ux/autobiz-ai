@@ -13,17 +13,21 @@ function writeProducts(products) {
 /**
  * List products with optional category, search query, and multi-tenant owner filters
  */
-function listProducts({ category = 'all', search = '', owner = null, role = 'superadmin', persona = null } = {}) {
+function listProducts({ category = 'all', search = '', owner = null, role = 'superadmin', persona = null, shopOwner = null } = {}) {
   let items = readProducts();
 
   if (role && role !== 'superadmin' && owner) {
     const cleanOwner = String(owner).trim().toLowerCase();
+    const cleanShopOwner = String(shopOwner || '').trim().toLowerCase();
     if (role === 'ctv' && persona === 'independent_affiliate') {
       items = items.filter((p) => String(p.owner || '').toLowerCase() === cleanOwner);
     } else if (role === 'ctv') {
-      // CTV thuộc shop xem kho hàng của shop mặc định + sản phẩm cá nhân nếu có
+      // CTV thuộc shop xem kho hàng của đúng Chủ shop đã mời (shopOwner)
       items = items.filter((p) => {
         const pOwner = String(p.owner || '').toLowerCase();
+        if (cleanShopOwner && cleanShopOwner !== 'admin' && cleanShopOwner !== 'superadmin') {
+          return pOwner === cleanShopOwner || pOwner === cleanOwner;
+        }
         return !pOwner || pOwner === 'admin' || pOwner === 'superadmin' || pOwner === cleanOwner;
       });
     } else if (role === 'shop_owner') {

@@ -30,7 +30,8 @@ function createShortLink({
   channel = 'facebook',
   campaign = 'autobiz_2026',
   subId = 'vuonggia',
-  owner = 'superadmin'
+  owner = 'superadmin',
+  shopOwner = null
 }) {
   const links = readLinks();
   const targetUrl = buildAffiliateUrl(baseUrl, channel, campaign, subId);
@@ -54,6 +55,7 @@ function createShortLink({
     campaign,
     subId,
     owner: owner || 'superadmin',
+    shopOwner: shopOwner || null,
     baseUrl,
     targetUrl,
     clicks: 0,
@@ -262,7 +264,8 @@ function filterLinksByScope(links, { subId, owner, role } = {}) {
     return links.filter((l) => {
       const lOwner = String(l.owner || '').trim().toLowerCase();
       const lSub = String(l.subId || '').trim().toLowerCase();
-      return lOwner === cleanOwner || lSub === cleanOwner;
+      const lShop = String(l.shopOwner || '').trim().toLowerCase();
+      return lOwner === cleanOwner || lSub === cleanOwner || lShop === cleanOwner;
     });
   }
 

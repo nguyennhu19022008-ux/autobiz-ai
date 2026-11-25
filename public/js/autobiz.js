@@ -262,6 +262,9 @@
 
       // CTV Revenue Leaderboard
       renderCtvRevenueTable(summary.bySubId || []);
+
+      // Payouts & VietQR Reconciliation
+      loadPayouts();
     } catch (err) {
       console.error('[Analytics Error]', err);
       showToast(err.message, true);
@@ -1242,6 +1245,17 @@
       userNameEl.textContent = user?.displayName || user?.username || 'AutoBiz User';
     }
 
+    // Update Bio Page Link & CTV Invite Link dynamically for current user
+    const cleanU = user?.username || 'admin';
+    const bioBtn = $('#btnOpenBioPage');
+    if (bioBtn) bioBtn.href = `/u/${encodeURIComponent(cleanU)}`;
+    const inviteInput = $('#shopInviteLinkInput');
+    if (inviteInput) inviteInput.value = `${window.location.origin}/join/${encodeURIComponent(cleanU)}`;
+
+    // Toggle CTV Payout Request Card
+    const ctvPayoutCard = $('#cardCtvPayoutRequest');
+    if (ctvPayoutCard) ctvPayoutCard.style.display = isCtv ? '' : 'none';
+
     const badge = $('#currentRoleBadge');
     if (badge) {
       if (isIndependentAffiliate) {
@@ -1450,8 +1464,124 @@
     }
   }
 
+  // ======================== PAYOUTS & VIETQR RECONCILIATION ========================
+  let activeVietQrPayoutId = null;
+
+  async function loadPayouts() {
+    try {
+      const res = await fetch('/api/payouts');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+
+      const list = Array.isArray(data.requests) ? data.requests : [];
+      const balance = data.balance;
+
+      // Render CTV personal balance & history
+      if (balance) {
+        const balBadge = $('#ctvPayoutBalanceBadge');
+        if (balBadge) balBadge.textContent = `Khả dụng: ${formatCurrency(balance.availableBalance)}`;
+        if ($('#ctvEarnedComm')) $('#ctvEarnedComm').textContent = formatCurrency(balance.earnedCommission);
+        if ($('#ctvPendingComm')) $('#ctvPendingComm').textContent = formatCurrency(balance.pendingAmount);
+        if ($('#ctvPaidComm')) $('#ctvPaidComm').textContent = formatCurrency(balance.paidAmount);
+
+        const ctvBody = $('#ctvPayoutHistoryBody');
+        if (ctvBody) {
+          if (list.length === 0) {
+            ctvBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có yêu cầu rút tiền nào.</td></tr>';
+          } else {
+            ctvBody.innerHTML = list.map((p) => {
+              const statusLabel = p.status === 'paid' ? 'Đã thanh toán' : (p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt');
+              const statusClass = p.status === 'paid' ? 'tag-home' : (p.status === 'rejected' ? 'tag-fashion' : 'tag-accessories');
+              return `<tr>
+                <td style="font-size: 12px;">${formatDateTime(p.createdAt)}</td>
+                <td><strong>${escapeHtml(p.bankCode)}</strong> • ${escapeHtml(p.accountNumber)}<div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.accountName)}</div></td>
+                <td><strong>${formatCurrency(p.amount)}</strong></td>
+                <td><span class="tag ${statusClass}">${statusLabel}</span></td>
+              </tr>`;
+            }).join('');
+          }
+        }
+      }
+
+      // Render Shop Owner / Admin approval table
+      const shopBody = $('#shopPayoutTableBody');
+      if (shopBody) {
+        if (list.length === 0) {
+          shopBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Chưa có yêu cầu rút hoa hồng nào từ CTV.</td></tr>';
+        } else {
+          shopBody.innerHTML = list.map((p) => {
+            const statusLabel = p.status === 'paid' ? 'Đã thanh toán' : (p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt');
+            const statusClass = p.status === 'paid' ? 'tag-home' : (p.status === 'rejected' ? 'tag-fashion' : 'tag-accessories');
+            const safeQr = encodeURIComponent(p.vietQrUrl || '');
+            const safeInfo = encodeURIComponent(`${p.ctvDisplayName} (${p.bankCode} - ${p.accountNumber}) • ${formatCurrency(p.amount)}`);
+            return `<tr>
+              <td><strong>${escapeHtml(p.ctvDisplayName)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.subId)}</div></td>
+              <td><strong>${escapeHtml(p.bankCode)}</strong> • ${escapeHtml(p.accountNumber)}<div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.accountName)}</div></td>
+              <td><strong>${formatCurrency(p.amount)}</strong></td>
+              <td><span class="tag ${statusClass}">${statusLabel}</span></td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  ${p.status === 'pending' ? `
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.AutoBiz.openVietQrModal('${p.id}', '${safeQr}', '${safeInfo}')">Xem VietQR</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.AutoBiz.processPayoutStatus('${p.id}', 'paid')">Duyệt</button>
+                    <button type="button" class="btn btn-secondary btn-sm" style="color:#B91C1C;" onclick="window.AutoBiz.processPayoutStatus('${p.id}', 'rejected')">Từ chối</button>
+                  ` : `<span style="font-size:12px;color:var(--text-muted);">${p.processedAt ? formatDateTime(p.processedAt) : '--'}</span>`}
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      console.error('[Payouts Error]', err);
+    }
+  }
+
+  function openVietQrModal(payoutId, encodedQrUrl, encodedInfo) {
+    activeVietQrPayoutId = payoutId;
+    const modal = $('#modalVietQr');
+    const img = $('#vietQrImage');
+    const info = $('#vietQrInfoText');
+    if (img) img.src = decodeURIComponent(encodedQrUrl || '');
+    if (info) info.textContent = decodeURIComponent(encodedInfo || '');
+    if (modal) modal.classList.add('open');
+  }
+
+  async function processPayoutStatus(payoutId, status) {
+    try {
+      const res = await fetch(`/api/payouts/${encodeURIComponent(payoutId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể cập nhật trạng thái.');
+      showToast(data.message || 'Đã cập nhật yêu cầu rút tiền!');
+      const modal = $('#modalVietQr');
+      if (modal) modal.classList.remove('open');
+      loadPayouts();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function extractUrlData(urlStr) {
+    const clean = String(urlStr || '').trim();
+    if (!clean) throw new Error('Vui lòng dán đường dẫn URL sản phẩm trước.');
+    const res = await fetch('/api/catalog/extract-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: clean })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Không thể bóc tách thông tin từ link.');
+    return data.extracted;
+  }
+
   // ======================== LANDING PAGE & ONBOARDING QUESTIONNAIRE ========================
   let pendingSurveyUser = null;
+  let activeInviteShopCode = null;
 
   function showLandingPage() {
     const landing = $('#landingPage');
@@ -1745,6 +1875,8 @@
     chooseOnboardingPersona,
     showLandingPage,
     hideLandingPage,
+    openVietQrModal,
+    processPayoutStatus,
     openRegisterSurvey
   };
 
@@ -1995,6 +2127,124 @@
       });
     }
 
+    // Bio Link Copy, Shop Invite Link Copy, URL Extractor & VietQR Payout bindings
+    const btnCopyBioLink = $('#btnCopyBioLink');
+    if (btnCopyBioLink) {
+      btnCopyBioLink.addEventListener('click', () => {
+        const u = state.authUser?.username || 'admin';
+        const url = `${window.location.origin}/u/${encodeURIComponent(u)}`;
+        navigator.clipboard?.writeText(url);
+        showToast(`Đã sao chép Link Bio: ${url}`);
+      });
+    }
+
+    const btnCopyShopInviteLink = $('#btnCopyShopInviteLink');
+    if (btnCopyShopInviteLink) {
+      btnCopyShopInviteLink.addEventListener('click', () => {
+        const val = $('#shopInviteLinkInput')?.value || `${window.location.origin}/join/${state.authUser?.username || 'admin'}`;
+        navigator.clipboard?.writeText(val);
+        showToast('Đã sao chép Link Mời CTV!');
+      });
+    }
+
+    const btnExtractUrlToModal = $('#btnExtractUrlToModal');
+    if (btnExtractUrlToModal) {
+      btnExtractUrlToModal.addEventListener('click', async () => {
+        const urlVal = $('#extractProductUrlInput')?.value?.trim() || '';
+        const orig = btnExtractUrlToModal.textContent;
+        btnExtractUrlToModal.disabled = true;
+        btnExtractUrlToModal.textContent = 'Đang lấy...';
+        try {
+          const ex = await extractUrlData(urlVal);
+          const form = $('#formAddProduct');
+          if (form) {
+            if (form.sku) form.sku.value = ex.sku || '';
+            if (form.category) form.category.value = ex.category || 'accessories';
+            if (form.name) form.name.value = ex.name || '';
+            if (form.price_retail) form.price_retail.value = ex.price_retail || '';
+            if (form.affiliate_base_url) form.affiliate_base_url.value = ex.affiliate_base_url || urlVal;
+            if (form.specs) form.specs.value = Array.isArray(ex.specs) ? ex.specs.join('\n') : '';
+            if (form.images) form.images.value = Array.isArray(ex.images) ? ex.images.join('\n') : '';
+          }
+          showToast(`Đã tự điền thông tin: ${ex.name}`);
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btnExtractUrlToModal.disabled = false;
+          btnExtractUrlToModal.textContent = orig;
+        }
+      });
+    }
+
+    const btnStudioExtractUrl = $('#btnStudioExtractUrl');
+    if (btnStudioExtractUrl) {
+      btnStudioExtractUrl.addEventListener('click', async () => {
+        const urlVal = $('#studioBaseUrl')?.value?.trim() || '';
+        const orig = btnStudioExtractUrl.textContent;
+        btnStudioExtractUrl.disabled = true;
+        btnStudioExtractUrl.textContent = 'Đang lấy...';
+        try {
+          const ex = await extractUrlData(urlVal);
+          if ($('#studioSku')) $('#studioSku').value = ex.sku || '';
+          if ($('#studioPrice')) $('#studioPrice').value = ex.price_retail || '';
+          if ($('#studioCategory')) $('#studioCategory').value = ex.category || 'auto';
+          if ($('#studioRawText')) {
+            $('#studioRawText').value = `${ex.name}\n${(ex.specs || []).map((s) => '- ' + s).join('\n')}`.trim();
+          }
+          if ($('#studioImageUrls') && Array.isArray(ex.images) && ex.images.length) {
+            $('#studioImageUrls').value = ex.images.join('\n');
+            renderStudioImagePreview();
+          }
+          showToast(`Đã bóc tách từ link: ${ex.name}`);
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btnStudioExtractUrl.disabled = false;
+          btnStudioExtractUrl.textContent = orig;
+        }
+      });
+    }
+
+    const formCreatePayout = $('#formCreatePayout');
+    if (formCreatePayout) {
+      formCreatePayout.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('/api/payouts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bankCode: $('#payoutBankCode')?.value || 'MB',
+              accountNumber: $('#payoutAccountNumber')?.value?.trim() || '',
+              accountName: $('#payoutAccountName')?.value?.trim() || '',
+              amount: Number($('#payoutAmount')?.value) || 0
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Gửi yêu cầu rút tiền thất bại.');
+          showToast(data.message || 'Đã gửi yêu cầu rút hoa hồng!');
+          if ($('#payoutAmount')) $('#payoutAmount').value = '';
+          loadPayouts();
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+    }
+
+    const btnRefreshPayouts = $('#btnRefreshPayouts');
+    if (btnRefreshPayouts) btnRefreshPayouts.addEventListener('click', loadPayouts);
+    const btnCloseVietQrModal = $('#btnCloseVietQrModal');
+    const btnCancelVietQr = $('#btnCancelVietQr');
+    const btnConfirmVietQrPaid = $('#btnConfirmVietQrPaid');
+    const modalVietQr = $('#modalVietQr');
+    if (btnCloseVietQrModal && modalVietQr) btnCloseVietQrModal.addEventListener('click', () => modalVietQr.classList.remove('open'));
+    if (btnCancelVietQr && modalVietQr) btnCancelVietQr.addEventListener('click', () => modalVietQr.classList.remove('open'));
+    if (btnConfirmVietQrPaid) {
+      btnConfirmVietQrPaid.addEventListener('click', () => {
+        if (activeVietQrPayoutId) processPayoutStatus(activeVietQrPayoutId, 'paid');
+      });
+    }
+
     // Settings Hub Sub-Tab Switching & Channel Connection Tests
     $$('.settings-tab-btn').forEach((tabBtn) => {
       tabBtn.addEventListener('click', () => {
@@ -2150,13 +2400,40 @@
     if (btnCancelSurvey) btnCancelSurvey.addEventListener('click', closeRegisterSurvey);
 
     if (formSurveyStep1) {
-      formSurveyStep1.addEventListener('submit', (e) => {
+      formSurveyStep1.addEventListener('submit', async (e) => {
         e.preventDefault();
         pendingSurveyUser = {
           email: $('#surveyEmail')?.value?.trim() || '',
           displayName: $('#surveyDisplayName')?.value?.trim() || '',
           password: $('#surveyPassword')?.value || ''
         };
+
+        // If user arrived via /join/:shopCode, register directly as CTV of that Shop
+        if (activeInviteShopCode) {
+          try {
+            showToast(`Đang đăng ký làm CTV cho Shop @${activeInviteShopCode}...`);
+            const res = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...pendingSurveyUser, inviteShopOwner: activeInviteShopCode })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Đăng ký CTV thất bại.');
+            state.authUser = data.user;
+            sessionStorage.setItem('autobiz_logged_in', '1');
+            activeInviteShopCode = null;
+            closeRegisterSurvey();
+            hideLandingPage();
+            applyRolePermissions(state.authUser);
+            showToast(`Chào mừng CTV ${state.authUser.displayName} gia nhập hệ thống!`);
+            await loadAnalyticsSummary();
+            await loadCatalogProducts();
+          } catch (err) {
+            showToast(err.message, true);
+          }
+          return;
+        }
+
         const step1 = $('#surveyStep1');
         const step2 = $('#surveyStep2');
         const title = $('#surveyModalTitle');
@@ -2231,12 +2508,23 @@
       });
     }
 
-    // Default Landing Display & Hidden Admin Portal Routing (/admin)
+    // Default Landing Display, CTV Invite (/join/:shopCode) & Hidden Admin Portal (/admin)
+    const joinMatch = window.location.pathname.match(/^\/join\/([a-zA-Z0-9_.-]+)/);
     const isAdminPath = ['/admin', '/admin/'].includes(window.location.pathname) || window.location.search.includes('role=admin');
     const isExplicitAppPath = ['/app', '/dashboard', '/cockpit'].includes(window.location.pathname) || window.location.search.includes('mode=demo');
     const hasActiveLoginSession = sessionStorage.getItem('autobiz_logged_in') === '1';
 
-    if (isAdminPath) {
+    if (joinMatch && joinMatch[1]) {
+      activeInviteShopCode = joinMatch[1];
+      showLandingPage();
+      openRegisterSurvey();
+      const banner = $('#inviteShopBanner');
+      const nameSpan = $('#inviteShopNameText');
+      if (banner) banner.style.display = 'block';
+      if (nameSpan) nameSpan.textContent = `@${activeInviteShopCode}`;
+      const title = $('#surveyModalTitle');
+      if (title) title.textContent = `Đăng Ký CTV Cho Shop @${activeInviteShopCode}`;
+    } else if (isAdminPath) {
       hideLandingPage();
       const modal = $('#modalAuthRole');
       if (modal) {

@@ -127,18 +127,28 @@ function sanitizeUser(u) {
   return rest;
 }
 
-function listUsers(actorRole = 'superadmin') {
+function listUsers(actorRole = 'superadmin', actorUsername = '') {
   const users = readUsers();
   if (actorRole === 'superadmin') {
     return users.map(sanitizeUser);
   }
   if (actorRole === 'shop_owner') {
-    return users.filter((u) => u.role === 'ctv').map(sanitizeUser);
+    const cleanActor = String(actorUsername || '').trim().toLowerCase();
+    return users
+      .filter((u) => {
+        if (u.role !== 'ctv') return false;
+        if (!cleanActor || cleanActor === 'admin') {
+          const sOwner = String(u.shopOwner || '').toLowerCase();
+          return !sOwner || sOwner === 'admin' || sOwner === 'superadmin';
+        }
+        return String(u.shopOwner || '').toLowerCase() === cleanActor;
+      })
+      .map(sanitizeUser);
   }
   return [];
 }
 
-function registerWithEmail({ email, password, displayName } = {}) {
+function registerWithEmail({ email, password, displayName, inviteShopOwner } = {}) {
   const cleanEmail = String(email || '').trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!cleanEmail || !emailRegex.test(cleanEmail)) {
@@ -163,6 +173,11 @@ function registerWithEmail({ email, password, displayName } = {}) {
     candidateUser = `${baseUser}${counter++}`;
   }
 
+  const cleanInvite = String(inviteShopOwner || '').trim().toLowerCase();
+  const inviter = cleanInvite
+    ? users.find((u) => u.username.toLowerCase() === cleanInvite && (u.role === 'shop_owner' || u.role === 'superadmin'))
+    : null;
+
   const newUser = {
     username: candidateUser,
     email: cleanEmail,
@@ -170,8 +185,10 @@ function registerWithEmail({ email, password, displayName } = {}) {
     displayName: String(displayName || candidateUser).trim(),
     hotline: '',
     defaultShopUrl: '',
-    role: 'shop_owner', // Default role until onboarding survey selects exact persona
-    persona: null,      // Triggers Onboarding Survey
+    role: inviter ? 'ctv' : 'shop_owner',
+    persona: inviter ? 'shop_ctv' : null,
+    hasAffiliates: !inviter,
+    shopOwner: inviter ? inviter.username : null,
     subId: candidateUser,
     active: true,
     createdAt: new Date().toISOString()
@@ -209,7 +226,7 @@ function setOnboardingPersona(targetUsername, { persona, hasAffiliates = true } 
   return sanitizeUser(user);
 }
 
-function createUser({ username, email, password, role = 'ctv', subId, displayName } = {}) {
+function createUser({ username, email, password, role = 'ctv', subId, displayName, shopOwner = null } = {}) {
   const cleanUser = String(username || '').trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   if (!cleanUser || cleanUser.length < 3) {
     throw new Error('Tên đăng nhập phải có ít nhất 3 ký tự (chữ, số, _, ., -).');
@@ -230,10 +247,11 @@ function createUser({ username, email, password, role = 'ctv', subId, displayNam
     password: hashPassword(cleanPass),
     role: normalizedRole,
     subId: normalizedRole === 'ctv' ? String(subId || cleanUser).trim() : null,
+    shopOwner: normalizedRole === 'ctv' ? (shopOwner || 'admin') : null,
     displayName: String(displayName || cleanUser).trim(),
     hotline: '',
     defaultShopUrl: '',
-    persona: normalizedRole === 'ctv' ? 'independent_affiliate' : 'shop_with_affiliates',
+    persona: normalizedRole === 'ctv' ? 'shop_ctv' : 'shop_with_affiliates',
     active: true,
     createdAt: new Date().toISOString()
   };
@@ -383,6 +401,7 @@ function authenticateUser({ username, password, quickRole, subId } = {}) {
     email: found.email || null,
     role: found.role,
     subId: found.role === 'ctv' ? (found.subId || found.username) : null,
+    shopOwner: found.shopOwner || null,
     displayName: found.displayName,
     hotline: found.hotline || '',
     defaultShopUrl: found.defaultShopUrl || '',
