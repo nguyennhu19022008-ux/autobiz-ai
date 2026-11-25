@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Utilitarian Minimalist SaaS Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261125_v9">
+  <link rel="stylesheet" href="/css/style.css?v=20261125_v10">
 </head>
 <body>
 
@@ -262,10 +262,10 @@
             </div>
 
             <div class="stat-card">
-              <div class="stat-label">Hoa Hồng Ước Tính</div>
+              <div id="statCommissionLabel" class="stat-label">Hoa Hồng Đã Chốt</div>
               <div id="statCommission" class="stat-value">0 đ</div>
               <div class="stat-trend">
-                <span id="statCommissionTrend">Tính lũy kế hoa hồng CTV</span>
+                <span id="statCommissionTrend">Chỉ tính trên đơn hàng đã xác nhận</span>
               </div>
             </div>
           </div>
@@ -755,7 +755,7 @@
             <button type="button" class="channel-tab-btn active settings-tab-btn" data-settings-tab="social">1. Mạng xã hội &amp; API Token</button>
             <button type="button" class="channel-tab-btn settings-tab-btn" data-settings-tab="ai">2. AI &amp; Thương hiệu</button>
             <button type="button" class="channel-tab-btn settings-tab-btn" data-settings-tab="automation">3. Tự động hóa &amp; Lịch đăng</button>
-            <button type="button" class="channel-tab-btn settings-tab-btn admin-only" data-settings-tab="webhook">4. Webhook &amp; Hệ thống</button>
+            <button type="button" class="channel-tab-btn settings-tab-btn" data-settings-tab="webhook">4. Đối soát đơn &amp; Webhook</button>
           </div>
 
           <form id="formSettings">
@@ -966,9 +966,67 @@
               </div>
             </div>
 
-            <!-- TAB 4: WEBHOOK & SYSTEM (Admin / Shop Owner) -->
-            <div class="settings-tab-panel admin-only" data-settings-panel="webhook" style="display: none;">
+            <!-- TAB 4: ORDER ATTRIBUTION, CSV IMPORT & WEBHOOK -->
+            <div class="settings-tab-panel" data-settings-panel="webhook" style="display: none;">
+              <!-- Card 4.1: Strict Financial Mode & Order Attribution Source -->
               <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Cấu Hình Nguồn Xác Nhận Đơn Hàng Thật &amp; Tài Chính</span>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="dispatch-checkbox-label" style="width: 100%; background: #F0FDF4; border-color: #BBF7D0;">
+                    <input type="checkbox" id="settingStrictConfirmedOnly" name="strictConfirmedOnly" checked />
+                    <span><strong>Chỉ tính Doanh thu &amp; Hoa hồng từ đơn đã xác nhận</strong> (Click không mua = 0 đ, tắt số ước tính ảo)</span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingOrderAttributionSource">Nguồn xác nhận đơn hàng chính của bạn</label>
+                    <select id="settingOrderAttributionSource" name="orderAttributionSource" class="form-select">
+                      <option value="pos_webhook">Website riêng / POS (Pancake, Sapo, Haravan, KiotViet — Webhook tự động)</option>
+                      <option value="marketplace_import">Sàn Shopee / TikTok Shop (Import báo cáo .CSV/.XLSX hoặc Partner API)</option>
+                      <option value="manual_inbox">Bán qua Inbox Facebook / Zalo (Chủ shop bấm Chốt đơn thủ công)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingCookieWindowDays">Thời hạn lưu Cookie ghi nhận đơn cho CTV</label>
+                    <select id="settingCookieWindowDays" name="cookieWindowDays" class="form-select">
+                      <option value="7">7 ngày</option>
+                      <option value="14" selected>14 ngày (Khuyên dùng)</option>
+                      <option value="30">30 ngày</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group admin-only" style="margin-bottom: 0;">
+                  <label class="form-label" for="shopTrackingScriptInput">Mã nhúng lưu Cookie <code>sub_id</code> cho Website bán hàng riêng (dán vào thẻ <code>&lt;head&gt;</code>)</label>
+                  <div style="display: flex; gap: 6px;">
+                    <input type="text" id="shopTrackingScriptInput" class="form-input" readonly value='<script src="https://autobiz-ai-seven.vercel.app/ab-track.js?days=14"></script>' style="font-family: var(--font-mono); font-size: 12px; background: #F9FAFB;" />
+                    <button type="button" id="btnCopyTrackScript" class="btn btn-secondary btn-sm">Copy Script</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 4.2: Import Real Order Reports (.CSV / .XLSX) -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Nhập Báo Cáo Đơn Hàng Thực Tế (.CSV / .XLSX từ Shopee, TikTok, POS)</span>
+                  </div>
+                  <a href="/api/orders/import-template" download class="btn btn-secondary btn-sm" style="text-decoration: none;">Tải file mẫu (.csv)</a>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                  Tải lên file báo cáo đơn hàng đã giao thành công xuất từ Shopee Affiliate, TikTok Shop hoặc phần mềm bán hàng. Hệ thống tự khớp theo cột <code>shortCode</code> / <code>subId</code>, chống cộng trùng theo <code>orderId</code> và cập nhật <strong>Doanh thu &amp; Hoa hồng thật</strong>.
+                </p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <input type="file" id="orderImportFile" accept=".csv,.xlsx,.xls" class="form-input" style="flex: 1; min-width: 220px; padding: 7px;" />
+                  <button type="button" id="btnImportOrdersFile" class="btn btn-primary btn-sm">Nhập &amp; Đối Soát Đơn Hàng</button>
+                </div>
+                <div id="orderImportResult" style="margin-top: 10px; font-size: 12px; color: var(--text-muted);"></div>
+              </div>
+
+              <div class="card admin-only">
                 <div class="card-header">
                   <div class="card-title">
                     <span>Webhook Tự Động Chốt Đơn (Pancake / Sapo / Haravan / Shopee)</span>
@@ -999,7 +1057,7 @@
                 </div>
               </div>
 
-              <div class="card">
+              <div class="card admin-only">
                 <div class="card-header">
                   <div class="card-title">
                     <span>Bảo Trì Dữ Liệu Thử Nghiệm</span>
@@ -1380,6 +1438,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261125_v9"></script>
+  <script src="/js/autobiz.js?v=20261125_v10"></script>
 </body>
 </html>

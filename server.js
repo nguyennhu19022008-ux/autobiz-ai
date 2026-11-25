@@ -19,6 +19,7 @@ const affiliateService = require('./services/affiliate');
 const authService = require('./services/auth');
 const urlExtractor = require('./services/urlExtractor');
 const payoutsService = require('./services/payouts');
+const orderImporter = require('./services/orderImporter');
 const { dispatchToChannels } = require('./services/adapters');
 const { verifyInstagramConnection } = require('./services/adapters/instagram');
 const { verifyPageToken } = require('./services/facebook');
@@ -83,6 +84,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 // Dedicated routes for Web App Dashboard Cockpit, Admin Portal & CTV Invite -> Serve index.html
 app.get(['/app', '/dashboard', '/cockpit', '/admin', '/join/:shopCode'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Lightweight First-Party Cookie Attribution Script for Shop Websites (/ab-track.js?days=14)
+app.get('/ab-track.js', (req, res) => {
+  const days = Math.min(90, Math.max(1, Number(req.query.days) || 14));
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.send(`(function(){try{var p=new URLSearchParams(window.location.search);var sub=p.get('sub_id')||p.get('utm_term');var code=p.get('ab_code');var maxAge=${days}*86400;if(sub){document.cookie='ab_sub_id='+encodeURIComponent(sub)+';path=/;max-age='+maxAge+';SameSite=Lax';localStorage.setItem('ab_sub_id',sub);}if(code){document.cookie='ab_short_code='+encodeURIComponent(code)+';path=/;max-age='+maxAge+';SameSite=Lax';localStorage.setItem('ab_short_code',code);}}catch(e){}})();`);
 });
 
 // Public Link Bio Page (/u/:username) — Minimalist Editorial Storefront with Auto /r/:code Tracking
@@ -527,6 +536,9 @@ async function getEffectiveSettingsForUser(authUser) {
   if (!username || username === 'superadmin' || username === 'admin') {
     return {
       ...globalSettings,
+      strictConfirmedOnly: globalSettings.strictConfirmedOnly !== false,
+      orderAttributionSource: globalSettings.orderAttributionSource || 'pos_webhook',
+      cookieWindowDays: Number(globalSettings.cookieWindowDays) || 14,
       webhookSecret: globalSettings.webhookSecret || 'autobiz_wh_secret_2026',
       enabledChannels: Object.assign(
         { facebook: true, instagram: true, tiktok: true, zalo: true, shopee: true },
@@ -544,6 +556,9 @@ async function getEffectiveSettingsForUser(authUser) {
     aiTone: mine.aiTone || 'balanced',
     autoSignature: mine.autoSignature || '',
     autoShortenLinks: mine.autoShortenLinks !== false,
+    strictConfirmedOnly: mine.strictConfirmedOnly !== false,
+    orderAttributionSource: mine.orderAttributionSource || 'marketplace_import',
+    cookieWindowDays: Number(mine.cookieWindowDays) || 14,
     scheduleGapMinutes: Number(mine.scheduleGapMinutes) || 45,
     fanpageId: mine.fanpageId || '',
     facebookPageToken: mine.facebookPageToken || '',
@@ -991,27 +1006,62 @@ app.post('/api/affiliate/shorten', (req, res) => {
   }
 });
 
-app.get('/api/analytics/summary', (req, res) => {
+app.get('/api/analytics/summary', async (req, res) => {
   const user = req.authUser || {};
+  const settings = await getEffectiveSettingsForUser(user);
+  const strictConfirmedOnly = settings.strictConfirmedOnly !== false;
   const subIdScope = user.role === 'ctv' ? user.subId : null;
   const baseSummary = affiliateService.getAnalyticsSummary({
     subId: subIdScope,
     owner: user.username || null,
-    role: user.role || 'superadmin'
+    role: user.role || 'superadmin',
+    strictConfirmedOnly
   });
   const totalProducts = catalogService.listProducts({
     owner: user.username || null,
     role: user.role || 'superadmin',
-    persona: user.persona || null
+    persona: user.persona || null,
+    shopOwner: user.shopOwner || null
   }).length;
   const summary = {
     ...baseSummary,
     totalProducts,
-    totalEstimatedCommission: baseSummary.totalCommission,
+    totalEstimatedCommission: baseSummary.totalEstimatedCommission,
     roleScope: user.role || 'superadmin',
     subIdScope
   };
   res.json({ success: true, summary });
+});
+
+// Download Sample Order Reconciliation CSV Template
+app.get('/api/orders/import-template', (req, res) => {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="autobiz_orders_template.csv"');
+  res.send(orderImporter.getSampleCsvTemplate());
+});
+
+// Import Real Orders from Shopee / TikTok / POS (.CSV or .XLSX)
+app.post('/api/orders/import', upload.single('file'), async (req, res) => {
+  try {
+    let fileBuffer = req.file?.buffer || null;
+    let filename = req.file?.originalname || 'orders.csv';
+    if (!fileBuffer && typeof req.body?.csvText === 'string' && req.body.csvText.trim()) {
+      fileBuffer = Buffer.from(req.body.csvText, 'utf8');
+      filename = 'inline_orders.csv';
+    }
+    if (!fileBuffer) {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn tệp báo cáo .CSV hoặc .XLSX.' });
+    }
+    const source = String(req.body?.source || 'csv_import').trim();
+    const report = await orderImporter.importOrdersFromBuffer(fileBuffer, filename, { source });
+    res.json({
+      success: true,
+      report,
+      message: `Đối soát xong ${report.totalRows} dòng: +${report.importedCount} đơn mới (${report.totalRevenueAdded.toLocaleString('vi-VN')} đ), ${report.duplicateCount} trùng mã, ${report.failedCount} không khớp.`
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
 });
 
 app.post('/api/affiliate/record-order', authService.requireAdmin, (req, res) => {

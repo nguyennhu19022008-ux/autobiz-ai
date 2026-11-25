@@ -292,6 +292,74 @@ async function runSuite() {
       assert.strictEqual(finalBal.balance.availableBalance, 50000);
     })();
 
+    // --- v1.1: STRICT REAL FINANCE, CSV ORDER IMPORT & COOKIE SCRIPT ---
+    await record('TC13', 'Chế độ Tài chính thực: Click không mua -> Doanh thu = 0đ, Hoa hồng = 0đ, Số dư rút = 0đ', async () => {
+      const regKoc = await fetch(`${baseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'koc_strict@autobiz.vn', password: 'password123' })
+      }).then((r) => r.json());
+      const onbKoc = await fetch(`${baseUrl}/api/auth/onboarding`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${regKoc.token}` },
+        body: JSON.stringify({ persona: 'independent_affiliate', hasAffiliates: false })
+      }).then((r) => r.json());
+      const kocTok = onbKoc.token;
+
+      const sl = await fetch(`${baseUrl}/api/affiliate/shorten`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${kocTok}` },
+        body: JSON.stringify({ baseUrl: 'https://shopee.vn/demo-strict', priceRetail: 2000000, commissionRate: 10, channel: 'facebook' })
+      }).then((r) => r.json());
+
+      // Simulate 1 real click without buying
+      await fetch(`${baseUrl}/r/${sl.entry.shortCode}`, { redirect: 'manual', headers: { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)' } });
+
+      const sum = await fetch(`${baseUrl}/api/analytics/summary`, { headers: { Authorization: `Bearer ${kocTok}` } }).then((r) => r.json());
+      assert.strictEqual(sum.summary.totalClicks, 1);
+      assert.strictEqual(sum.summary.totalOrders, 0, 'Click without order must have 0 orders');
+      assert.strictEqual(sum.summary.totalRevenue, 0, 'Click without order must have 0 revenue');
+      assert.strictEqual(sum.summary.totalCommission, 0, 'Click without order must have 0 commission');
+
+      const payBal = await fetch(`${baseUrl}/api/payouts`, { headers: { Authorization: `Bearer ${kocTok}` } }).then((r) => r.json());
+      assert.strictEqual(payBal.balance.availableBalance, 0, 'Payout balance must be 0 when no confirmed order');
+    })();
+
+    await record('TC14', 'Import CSV đơn hàng thật (POST /api/orders/import): Chốt đơn completed, bỏ qua cancelled, chống trùng orderId', async () => {
+      const csvText = [
+        'orderId,shortCode,subId,orderAmount,quantity,status',
+        'CSV-ORD-101,,koc_strict,2000000,1,completed',
+        'CSV-ORD-101,,koc_strict,2000000,1,completed',
+        'CSV-ORD-102,,koc_strict,1000000,1,cancelled'
+      ].join('\n');
+
+      const imp = await fetch(`${baseUrl}/api/orders/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${shopToken}` },
+        body: JSON.stringify({ csvText, source: 'shopee_csv' })
+      }).then((r) => r.json());
+      assert.strictEqual(imp.success, true);
+      assert.strictEqual(imp.report.importedCount, 1);
+      assert.strictEqual(imp.report.duplicateCount, 1);
+      assert.strictEqual(imp.report.ignoredCount, 1);
+      assert.strictEqual(imp.report.totalRevenueAdded, 2000000);
+      assert.strictEqual(imp.report.totalCommissionAdded, 200000);
+    })();
+
+    await record('TC15', 'Tải file mẫu CSV đối soát (GET /api/orders/import-template) trả HTTP 200', async () => {
+      const res = await fetch(`${baseUrl}/api/orders/import-template`);
+      assert.strictEqual(res.status, 200);
+      const body = await res.text();
+      assert(body.includes('orderId,shortCode,subId,orderAmount,quantity,status'));
+    })();
+
+    await record('TC16', 'Script Tracking Cookie cho Website Shop (GET /ab-track.js?days=30) trả HTTP 200 & đúng 30 ngày', async () => {
+      const res = await fetch(`${baseUrl}/ab-track.js?days=30`);
+      assert.strictEqual(res.status, 200);
+      const js = await res.text();
+      assert(js.includes('ab_sub_id') && js.includes('30*86400'));
+    })();
+
     console.log(`\n=== KẾT QUẢ: ${results.filter((r) => r.status === 'PASS').length}/${results.length} TEST CASES PASSED (100%) ===\n`);
   } finally {
     server.close();

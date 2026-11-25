@@ -40,12 +40,12 @@ function getPayoutSummaryForCtv(user) {
   const analytics = affiliateService.getAnalyticsSummary({
     subId,
     owner: username,
-    role: 'ctv'
+    role: 'ctv',
+    strictConfirmedOnly: true
   });
 
-  const earnedCommission = Number(analytics.confirmedCommission) > 0
-    ? Number(analytics.confirmedCommission)
-    : Number(analytics.totalCommission) || 0;
+  // Strict financial integrity: Payout balance ONLY counts real confirmed orders (never click estimates!)
+  const earnedCommission = Number(analytics.confirmedCommission) || 0;
 
   const all = readPayouts();
   const mine = all.filter(

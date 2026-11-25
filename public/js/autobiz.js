@@ -185,18 +185,27 @@
       if (statNetRevenue) statNetRevenue.textContent = formatCurrency(summary.netShopRevenue || 0);
       if (statTotalOrders) statTotalOrders.textContent = (summary.totalOrders || 0).toLocaleString('vi-VN');
 
-      // Financial Margin & Efficiency Trends (EPC, Net Margin %, AOV)
+      // Financial Margin & Efficiency Trends (Strict Confirmed vs Estimated reference)
+      const strictMode = summary.strictConfirmedOnly !== false;
+      const statCommissionLabel = $('#statCommissionLabel');
+      if (statCommissionLabel) {
+        statCommissionLabel.textContent = strictMode ? 'Hoa Hồng Đã Chốt' : 'Hoa Hồng (Gồm Ước Tính)';
+      }
       const statCommissionTrend = $('#statCommissionTrend');
       const statNetRevenueTrend = $('#statNetRevenueTrend');
       const statTotalOrdersTrend = $('#statTotalOrdersTrend');
       if (statCommissionTrend) {
-        statCommissionTrend.textContent = `EPC: ${formatCurrency(summary.earningPerClick || 0)}/click | Tỷ lệ HH: ${Number(summary.commissionMarginPct || 0).toFixed(1)}%`;
+        statCommissionTrend.textContent = strictMode
+          ? `100% đơn thật (${summary.confirmedOrders || 0} đơn) | EPC: ${formatCurrency(summary.earningPerClick || 0)}/click`
+          : `EPC: ${formatCurrency(summary.earningPerClick || 0)}/click | Tỷ lệ HH: ${Number(summary.commissionMarginPct || 0).toFixed(1)}%`;
       }
       if (statNetRevenueTrend) {
         statNetRevenueTrend.textContent = `Biên thực thu Shop: ${Number(summary.netMarginPct || 0).toFixed(1)}% sau trừ HH`;
       }
       if (statTotalOrdersTrend) {
-        statTotalOrdersTrend.textContent = `Giá trị đơn TB (AOV): ${formatCurrency(summary.avgOrderValue || 0)}`;
+        statTotalOrdersTrend.textContent = strictMode
+          ? `Chỉ tính đơn xác nhận | AOV: ${formatCurrency(summary.avgOrderValue || 0)}`
+          : `Giá trị đơn TB (AOV): ${formatCurrency(summary.avgOrderValue || 0)}`;
       }
 
       // Bind 1-Click Demo Seed & Clear buttons once
@@ -258,7 +267,7 @@
       renderChannelChart(summary.byChannel || {});
 
       // Top Links Table
-      renderTopLinksTable(summary.topLinks || []);
+      renderTopLinksTable(summary.topLinks || [], summary.strictConfirmedOnly !== false);
 
       // CTV Revenue Leaderboard
       renderCtvRevenueTable(summary.bySubId || []);
@@ -314,7 +323,7 @@
     container.innerHTML = html;
   }
 
-  function renderTopLinksTable(links) {
+  function renderTopLinksTable(links, strictConfirmedOnly = true) {
     const tbody = $('#topLinksTableBody');
     if (!tbody) return;
 
@@ -330,8 +339,10 @@
       const clicks = Number(l.clicks) || 0;
       const blocked = Number(l.blockedSpamClicks) || 0;
       const price = Number(l.priceRetail) || 250000;
-      const rev = Number(l.confirmedRevenue) > 0 ? Number(l.confirmedRevenue) : Math.round(clicks * 0.05 * price);
-      const comm = Number(l.confirmedCommission) > 0 ? Number(l.confirmedCommission) : (Number(l.estimatedCommission) || 0);
+      const confRev = Number(l.confirmedRevenue) || 0;
+      const confComm = Number(l.confirmedCommission) || 0;
+      const rev = strictConfirmedOnly ? confRev : (confRev > 0 ? confRev : Math.round(clicks * 0.05 * price));
+      const comm = strictConfirmedOnly ? confComm : (confComm > 0 ? confComm : (Number(l.estimatedCommission) || 0));
 
       html += `
         <tr>
@@ -1131,6 +1142,14 @@
       if (form.autoSignature) form.autoSignature.value = data.autoSignature || '';
       if (form.scheduleGapMinutes) form.scheduleGapMinutes.value = data.scheduleGapMinutes || 45;
       if (form.autoShortenLinks) form.autoShortenLinks.checked = data.autoShortenLinks !== false;
+      if (form.strictConfirmedOnly) form.strictConfirmedOnly.checked = data.strictConfirmedOnly !== false;
+      if (form.orderAttributionSource) form.orderAttributionSource.value = data.orderAttributionSource || 'pos_webhook';
+      if (form.cookieWindowDays) form.cookieWindowDays.value = String(data.cookieWindowDays || 14);
+      const trackScriptInput = $('#shopTrackingScriptInput');
+      if (trackScriptInput) {
+        const daysVal = Number(data.cookieWindowDays) || 14;
+        trackScriptInput.value = `<script src="${window.location.origin}/ab-track.js?days=${daysVal}"></script>`;
+      }
       if (form.fanpageId) form.fanpageId.value = data.fanpageId || '';
       if (form.facebookPageToken) form.facebookPageToken.value = data.facebookPageToken || '';
       if (form.instagramAccountId) form.instagramAccountId.value = data.instagramAccountId || '';
@@ -1176,6 +1195,9 @@
       autoSignature: form.autoSignature ? form.autoSignature.value.trim() : '',
       scheduleGapMinutes: form.scheduleGapMinutes ? (Number(form.scheduleGapMinutes.value) || 45) : 45,
       autoShortenLinks: form.autoShortenLinks ? form.autoShortenLinks.checked : true,
+      strictConfirmedOnly: form.strictConfirmedOnly ? form.strictConfirmedOnly.checked : true,
+      orderAttributionSource: form.orderAttributionSource ? form.orderAttributionSource.value : 'pos_webhook',
+      cookieWindowDays: form.cookieWindowDays ? (Number(form.cookieWindowDays.value) || 14) : 14,
       fanpageId: form.fanpageId ? form.fanpageId.value.trim() : '',
       facebookPageToken: form.facebookPageToken ? form.facebookPageToken.value.trim() : '',
       instagramAccountId: form.instagramAccountId ? form.instagramAccountId.value.trim() : '',
@@ -1211,6 +1233,7 @@
       }
 
       showToast(data.message || 'Đã lưu cấu hình thành công!');
+      await loadAnalyticsSummary();
     } catch (err) {
       showToast(err.message, true);
     } finally {
@@ -2311,6 +2334,65 @@
         } finally {
           btnTestInstagram.disabled = false;
           btnTestInstagram.textContent = orig;
+        }
+      });
+    }
+
+    const btnCopyTrackScript = $('#btnCopyTrackScript');
+    if (btnCopyTrackScript) {
+      btnCopyTrackScript.addEventListener('click', () => {
+        const val = $('#shopTrackingScriptInput')?.value || '';
+        navigator.clipboard?.writeText(val);
+        showToast('Đã sao chép mã Tracking Cookie cho Website Shop!');
+      });
+    }
+
+    const cookieDaysSelect = $('#settingCookieWindowDays');
+    if (cookieDaysSelect) {
+      cookieDaysSelect.addEventListener('change', () => {
+        const trackInput = $('#shopTrackingScriptInput');
+        if (trackInput) {
+          trackInput.value = `<script src="${window.location.origin}/ab-track.js?days=${cookieDaysSelect.value}"></script>`;
+        }
+      });
+    }
+
+    const btnImportOrdersFile = $('#btnImportOrdersFile');
+    if (btnImportOrdersFile) {
+      btnImportOrdersFile.addEventListener('click', async () => {
+        const fileInput = $('#orderImportFile');
+        const resultBox = $('#orderImportResult');
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        if (!file) {
+          showToast('Vui lòng chọn file .CSV hoặc .XLSX trước khi nhập.', true);
+          return;
+        }
+        const origText = btnImportOrdersFile.textContent;
+        btnImportOrdersFile.disabled = true;
+        btnImportOrdersFile.textContent = 'Đang đối soát...';
+        try {
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('source', $('#settingOrderAttributionSource')?.value || 'csv_import');
+          const res = await fetch('/api/orders/import', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Đối soát file thất bại.');
+          showToast(data.message);
+          if (resultBox && data.report) {
+            const r = data.report;
+            resultBox.innerHTML = `<div style="padding:10px;border:1px solid #BBF7D0;background:#F0FDF4;border-radius:6px;color:#166534;">
+              <strong>Đối soát hoàn tất (${r.totalRows} dòng):</strong>
+              +${r.importedCount} đơn chốt mới (<strong>${formatCurrency(r.totalRevenueAdded)}</strong>, HH: <strong>${formatCurrency(r.totalCommissionAdded)}</strong>) • ${r.duplicateCount} trùng mã • ${r.ignoredCount} bỏ qua • ${r.failedCount} không khớp.
+            </div>`;
+          }
+          fileInput.value = '';
+          await loadAnalyticsSummary();
+        } catch (err) {
+          showToast(err.message, true);
+          if (resultBox) resultBox.innerHTML = `<span style="color:#B91C1C;">${escapeHtml(err.message)}</span>`;
+        } finally {
+          btnImportOrdersFile.disabled = false;
+          btnImportOrdersFile.textContent = origText;
         }
       });
     }

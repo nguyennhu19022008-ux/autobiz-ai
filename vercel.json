@@ -4,6 +4,7 @@
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/r/(.*)", "destination": "/api/index.js" },
     { "source": "/u/(.*)", "destination": "/api/index.js" },
+    { "source": "/ab-track.js", "destination": "/api/index.js" },
     { "source": "/join/(.*)", "destination": "/index.html" },
     { "source": "/app", "destination": "/index.html" },
     { "source": "/dashboard", "destination": "/index.html" },

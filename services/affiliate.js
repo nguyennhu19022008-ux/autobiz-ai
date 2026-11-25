@@ -276,7 +276,7 @@ function listAffiliateLinks({ subId, owner, role } = {}) {
   return filterLinksByScope(readLinks(), { subId, owner, role });
 }
 
-function getAnalyticsSummary({ subId, owner, role } = {}) {
+function getAnalyticsSummary({ subId, owner, role, strictConfirmedOnly = true } = {}) {
   const links = filterLinksByScope(readLinks(), { subId, owner, role });
   const byChannel = {
     facebook: { clicks: 0, links: 0, commission: 0, revenue: 0 },
@@ -288,9 +288,12 @@ function getAnalyticsSummary({ subId, owner, role } = {}) {
   const subIdMap = new Map();
 
   let totalClicks = 0;
+  let totalBlockedSpamClicks = 0;
   let totalOrders = 0;
   let totalCommission = 0;
   let totalRevenue = 0;
+  let totalEstimatedCommission = 0;
+  let totalEstimatedOrders = 0;
   let confirmedOrders = 0;
   let confirmedRevenue = 0;
   let confirmedCommission = 0;
@@ -298,6 +301,7 @@ function getAnalyticsSummary({ subId, owner, role } = {}) {
   for (const link of links) {
     const ch = byChannel[link.channel] ? link.channel : 'facebook';
     const clicks = Number(link.clicks) || 0;
+    const blocked = Number(link.blockedSpamClicks) || 0;
     const estOrders = Number(link.estimatedOrders) || 0;
     const confOrders = Number(link.confirmedOrders) || 0;
     const estComm = Number(link.estimatedCommission) || 0;
@@ -306,11 +310,15 @@ function getAnalyticsSummary({ subId, owner, role } = {}) {
     const estRev = Math.round(clicks * 0.05 * price);
     const confRev = Number(link.confirmedRevenue) || 0;
 
-    const linkOrders = confOrders > 0 ? confOrders : estOrders;
-    const linkComm = confComm > 0 ? confComm : estComm;
-    const linkRev = confRev > 0 ? confRev : estRev;
+    // Strict financial mode: ONLY count confirmed real orders/revenue/commission!
+    const linkOrders = strictConfirmedOnly ? confOrders : (confOrders > 0 ? confOrders : estOrders);
+    const linkComm = strictConfirmedOnly ? confComm : (confComm > 0 ? confComm : estComm);
+    const linkRev = strictConfirmedOnly ? confRev : (confRev > 0 ? confRev : estRev);
 
     totalClicks += clicks;
+    totalBlockedSpamClicks += blocked;
+    totalEstimatedOrders += estOrders;
+    totalEstimatedCommission += estComm;
     totalOrders += linkOrders;
     totalCommission += linkComm;
     totalRevenue += linkRev;
@@ -348,11 +356,15 @@ function getAnalyticsSummary({ subId, owner, role } = {}) {
   const bySubId = Array.from(subIdMap.values()).sort((a, b) => (b.revenue - a.revenue) || (b.clicks - a.clicks));
 
   return {
+    strictConfirmedOnly: Boolean(strictConfirmedOnly),
     totalLinks: links.length,
     totalClicks,
+    totalBlockedSpamClicks,
     totalOrders,
     totalCommission,
     totalRevenue,
+    totalEstimatedOrders,
+    totalEstimatedCommission,
     netShopRevenue,
     netMarginPct,
     commissionMarginPct,
