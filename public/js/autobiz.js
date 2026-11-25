@@ -328,6 +328,7 @@
       const chName = (l.channel || 'facebook').toUpperCase();
       const code = escapeHtml(l.shortCode || '');
       const clicks = Number(l.clicks) || 0;
+      const blocked = Number(l.blockedSpamClicks) || 0;
       const price = Number(l.priceRetail) || 250000;
       const rev = Number(l.confirmedRevenue) > 0 ? Number(l.confirmedRevenue) : Math.round(clicks * 0.05 * price);
       const comm = Number(l.confirmedCommission) > 0 ? Number(l.confirmedCommission) : (Number(l.estimatedCommission) || 0);
@@ -339,7 +340,10 @@
             <strong>${escapeHtml(l.productName || 'Sản phẩm')}</strong>
           </td>
           <td><span class="tag tag-tech">${chName}</span></td>
-          <td><strong>${clicks.toLocaleString('vi-VN')}</strong></td>
+          <td>
+            <strong>${clicks.toLocaleString('vi-VN')}</strong>
+            ${blocked > 0 ? `<div style="font-size: 11px; color: var(--text-muted);" title="Lượt click trùng thiết bị trong 60s hoặc bot preview đã bị lọc">${blocked.toLocaleString('vi-VN')} lọc spam</div>` : ''}
+          </td>
           <td style="color: #7F1D1D; font-weight: 600;">${formatCurrency(rev)}</td>
           <td>${formatCurrency(comm)}</td>
           <td>

@@ -62,7 +62,10 @@ function extractTitleFromSlug(urlStr) {
       .replace(/[-_]+/g, ' ')
       .trim();
     if (candidate.length >= 4 && !/^\d+$/.test(candidate)) {
-      return candidate.replace(/\b\w/g, (c) => c.toUpperCase());
+      return candidate
+        .split(/\s+/)
+        .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+        .join(' ');
     }
   } catch (_) {}
   return '';

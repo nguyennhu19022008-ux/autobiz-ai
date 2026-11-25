@@ -828,9 +828,10 @@ app.post('/api/autobiz/affiliate-link', (req, res) => {
 
 // ======================== PHASE 1: MULTI-CATEGORY CATALOG & FINTECH AFFILIATE ENGINE ========================
 
-const CLICK_DEDUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes anti-spam window per IP/Cookie + shortCode
+const CLICK_DEDUP_WINDOW_MS = 60 * 1000; // 60 giây chống click đúp trên cùng 1 thiết bị (không chặn người khác chung Wi-Fi)
 const recentClickCache = new Map();
-const BOT_USER_AGENT_REGEX = /facebookexternalhit|facebot|zalo|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|googlebot|bingbot|crawler|spider|preview/i;
+// Chỉ chặn bot preview tự động; KHÔNG chặn người thật mở link bằng trình duyệt trong app Zalo / Facebook Mobile
+const BOT_USER_AGENT_REGEX = /facebookexternalhit|facebot|zalobot|zalo[-_ ]?preview|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|googlebot|bingbot|crawler|spider|headlesschrome|bot\b/i;
 
 function isSpamOrBotClick(req, shortCode) {
   const ua = String(req.get('user-agent') || '');
@@ -846,11 +847,13 @@ function isSpamOrBotClick(req, shortCode) {
   }
 
   const rawIp = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  const cacheKey = `${rawIp}::${codeKey}`;
+  // Gắn kèm chữ ký thiết bị (User-Agent) để 2 thiết bị khác nhau chung 1 mạng Wi-Fi vẫn được đếm độc lập
+  const deviceSig = ua.slice(0, 80);
+  const cacheKey = `${rawIp}::${deviceSig}::${codeKey}`;
   const now = Date.now();
   const prevTs = recentClickCache.get(cacheKey);
   if (prevTs && now - prevTs < CLICK_DEDUP_WINDOW_MS) {
-    return { blocked: true, reason: 'ip_dedup' };
+    return { blocked: true, reason: 'device_dedup' };
   }
 
   if (recentClickCache.size > 2000) {
