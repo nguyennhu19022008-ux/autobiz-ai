@@ -71,6 +71,217 @@
     });
   }
 
+  // ======================== DUAL THEME & MOTION ENGINE ========================
+  function isReducedOrMobileMotion() {
+    return (
+      window.matchMedia &&
+      (window.matchMedia('(max-width: 1024px)').matches ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    );
+  }
+
+  function applyTheme(theme, persist = false) {
+    const nextTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+
+    const metaTheme = $('#metaThemeColor');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', nextTheme === 'dark' ? '#09090B' : '#F9FAFB');
+    }
+
+    if (persist) {
+      try {
+        localStorage.setItem('autobiz_theme', nextTheme);
+      } catch (_) {}
+    }
+
+    $$('.js-theme-toggle').forEach((btn) => {
+      const label = nextTheme === 'dark' ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối';
+      btn.setAttribute('title', label);
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('aria-pressed', String(nextTheme === 'light'));
+    });
+  }
+
+  function initThemeSystem() {
+    let saved = null;
+    try {
+      saved = localStorage.getItem('autobiz_theme');
+    } catch (_) {}
+
+    if (saved === 'light' || saved === 'dark') {
+      applyTheme(saved, false);
+    } else {
+      // Dark Mode is the default FinTech theme; still listen for live OS theme preference changes
+      applyTheme('dark', false);
+      if (window.matchMedia) {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const onSystemChange = (ev) => {
+          try {
+            if (!localStorage.getItem('autobiz_theme')) {
+              applyTheme(ev.matches ? 'dark' : 'light', false);
+            }
+          } catch (_) {}
+        };
+        if (typeof mq.addEventListener === 'function') {
+          mq.addEventListener('change', onSystemChange);
+        }
+      }
+    }
+
+    $$('.js-theme-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next, true);
+      });
+    });
+  }
+
+  // Animated Number Counter (0.6s easeOutExpo with tabular-nums)
+  function animateNumberCounter(el, targetVal, type = 'int', duration = 600) {
+    if (!el) return;
+    const end = Number(targetVal) || 0;
+    if (el._counterRaf) {
+      cancelAnimationFrame(el._counterRaf);
+      el._counterRaf = null;
+    }
+
+    const formatValue = (val) => {
+      if (type === 'currency') return formatCurrency(Math.round(val));
+      if (type === 'percent') return `${Number(val).toFixed(1)}%`;
+      return Math.round(val).toLocaleString('vi-VN');
+    };
+
+    if (isReducedOrMobileMotion() || duration <= 0) {
+      el.textContent = formatValue(end);
+      el.dataset.numVal = String(end);
+      return;
+    }
+
+    const start = 0;
+    const startTime = performance.now();
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = start + (end - start) * eased;
+      el.textContent = formatValue(current);
+
+      if (progress < 1) {
+        el._counterRaf = requestAnimationFrame(step);
+      } else {
+        el.textContent = formatValue(end);
+        el.dataset.numVal = String(end);
+        el._counterRaf = null;
+      }
+    };
+
+    el._counterRaf = requestAnimationFrame(step);
+  }
+
+  // Sliding Background Pill for Sidebar Navigation (layoutId effect)
+  function updateSidebarPill() {
+    const nav = $('#sidebarNav');
+    const pill = $('#sidebarNavPill');
+    if (!nav || !pill) return;
+    const activeItem = nav.querySelector('.nav-item.active');
+    if (!activeItem || activeItem.offsetParent === null) {
+      pill.classList.remove('ready');
+      return;
+    }
+    pill.style.transform = `translateY(${activeItem.offsetTop}px)`;
+    pill.style.height = `${activeItem.offsetHeight}px`;
+    pill.classList.add('ready');
+  }
+
+  // Sliding Background Pill for Studio & Settings Sub-Tabs
+  function updateTabPill(container) {
+    if (!container) return;
+    const pill = container.querySelector('.tab-sliding-pill');
+    const activeBtn = container.querySelector('.channel-tab-btn.active');
+    if (!pill || !activeBtn || activeBtn.offsetParent === null) {
+      if (pill) pill.classList.remove('ready');
+      return;
+    }
+    const left = activeBtn.offsetLeft - 4;
+    const top = activeBtn.offsetTop - 4;
+    pill.style.width = `${activeBtn.offsetWidth}px`;
+    pill.style.height = `${activeBtn.offsetHeight}px`;
+    pill.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+    pill.classList.add('ready');
+  }
+
+  function updateAllTabPills() {
+    $$('.channel-tabs').forEach((c) => updateTabPill(c));
+  }
+
+  // Staggered Entrance helper (50ms stagger, opacity 0->1, y 8px->0)
+  function triggerStaggerEntrance(sectionEl) {
+    if (!sectionEl) return;
+    const items = Array.from(sectionEl.querySelectorAll('.stagger-animate'));
+    if (!items.length) return;
+    if (isReducedOrMobileMotion()) {
+      items.forEach((el) => el.classList.add('stagger-visible'));
+      return;
+    }
+    items.forEach((el) => el.classList.remove('stagger-visible'));
+    void sectionEl.offsetWidth;
+    items.forEach((el) => el.classList.add('stagger-visible'));
+  }
+
+  // Skeleton Shimmer Builders (Synced Dual Theme)
+  function renderTableSkeleton(tbodySelector, colCount, rowCount = 4) {
+    const tbody = $(tbodySelector);
+    if (!tbody) return;
+    const widths = ['68%', '86%', '58%', '74%', '62%', '78%', '54%'];
+    let rowsHtml = '';
+    for (let r = 0; r < rowCount; r++) {
+      rowsHtml += '<tr class="skeleton-row">';
+      for (let c = 0; c < colCount; c++) {
+        const w = widths[(r + c) % widths.length];
+        rowsHtml += `<td><span class="skeleton-block skeleton-line-sm" style="width: ${w};"></span></td>`;
+      }
+      rowsHtml += '</tr>';
+    }
+    tbody.innerHTML = rowsHtml;
+  }
+
+  function showAnalyticsSkeleton() {
+    $$('#view-analytics .stat-card').forEach((card) => card.classList.add('is-loading'));
+
+    const chart = $('#channelChartContainer');
+    if (chart) {
+      let html = '';
+      for (let i = 0; i < 5; i++) {
+        html += `
+          <div class="chart-row">
+            <span class="skeleton-block skeleton-line-sm" style="width: 72px;"></span>
+            <span class="skeleton-block skeleton-bar" style="height: 10px;"></span>
+            <span class="skeleton-block skeleton-line-sm" style="width: 110px; margin-left: auto;"></span>
+          </div>
+        `;
+      }
+      chart.innerHTML = html;
+    }
+
+    renderTableSkeleton('#topLinksTableBody', 7, 4);
+    renderTableSkeleton('#ctvRevenueTableBody', 7, 3);
+  }
+
+  function finishAnalyticsSkeleton() {
+    $$('#view-analytics .stat-card').forEach((card) => {
+      card.classList.remove('is-loading');
+    });
+    const chart = $('#channelChartContainer');
+    if (chart) {
+      chart.classList.remove('content-fade-in');
+      void chart.offsetWidth;
+      chart.classList.add('content-fade-in');
+    }
+  }
+
   // ======================== TOAST SYSTEM ========================
   function showToast(message, isError = false) {
     let container = $('#toastContainer');
@@ -85,16 +296,16 @@
     toast.className = `toast ${isError ? 'toast-error' : ''}`;
     
     const iconSvg = isError
-      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+      ? `<svg class="toast-icon-error" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+      : `<svg class="toast-icon-success" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
 
     toast.innerHTML = `${iconSvg}<span>${escapeHtml(message)}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(8px)';
-      toast.style.transition = 'all 0.2s ease';
+      toast.style.transform = 'translateX(12px)';
+      toast.style.transition = 'all 200ms ease';
       setTimeout(() => toast.remove(), 200);
     }, 3200);
   }
@@ -112,6 +323,9 @@
       }
     });
 
+    // Slide Sidebar Active Pill smoothly
+    requestAnimationFrame(updateSidebarPill);
+
     // Update Sections
     $$('.view-section').forEach((sec) => {
       sec.classList.remove('active');
@@ -120,22 +334,26 @@
     const targetSec = $(`#view-${viewName}`);
     if (targetSec) {
       targetSec.classList.add('active');
+      triggerStaggerEntrance(targetSec);
     }
+
+    // Update sliding pills for Studio / Settings tabs after section becomes visible
+    requestAnimationFrame(updateAllTabPills);
 
     // Close mobile sidebar if open
     closeMobileSidebar();
 
     // Load data specific to view
     if (viewName === 'analytics') {
-      loadAnalyticsSummary();
+      loadAnalyticsSummary(true);
     } else if (viewName === 'catalog') {
-      loadCatalogProducts();
+      loadCatalogProducts(true);
     } else if (viewName === 'queue') {
-      loadQueuePosts();
+      loadQueuePosts(true);
     } else if (viewName === 'settings') {
       loadSettings();
     } else if (viewName === 'users') {
-      loadUsersTable();
+      loadUsersTable(true);
     }
   }
 
@@ -156,34 +374,39 @@
   }
 
   // ======================== PHÂN HỆ 1: TỔNG QUAN & FINTECH ========================
-  async function loadAnalyticsSummary() {
+  async function loadAnalyticsSummary(showSkeleton = false) {
+    const startTs = performance.now();
+    if (showSkeleton) {
+      showAnalyticsSkeleton();
+    }
+
     try {
       const res = await fetch('/api/analytics/summary');
       if (!res.ok) throw new Error('Không thể nạp số liệu thống kê.');
       const data = await res.json();
       const summary = data.summary || {};
 
-      // Big Stats
-      const statClicks = $('#statClicks');
-      const statLinks = $('#statLinks');
-      const statConversion = $('#statConversion');
-      const statCommission = $('#statCommission');
+      // Ensure smooth 180ms minimum Skeleton Shimmer display before fading in real data
+      if (showSkeleton && !isReducedOrMobileMotion()) {
+        const elapsed = performance.now() - startTs;
+        if (elapsed < 180) {
+          await new Promise((r) => setTimeout(r, 180 - elapsed));
+        }
+      }
 
-      if (statClicks) statClicks.textContent = (summary.totalClicks || 0).toLocaleString('vi-VN');
-      if (statLinks) statLinks.textContent = (summary.totalLinks || 0).toLocaleString('vi-VN');
-      if (statConversion) statConversion.textContent = `${Number(summary.conversionRate || 0).toFixed(1)}%`;
-      if (statCommission) statCommission.textContent = formatCurrency(summary.totalCommission || 0);
+      finishAnalyticsSkeleton();
 
-      // Finance & Revenue Stats
-      const statTotalRevenue = $('#statTotalRevenue');
-      const statConfirmedRevenue = $('#statConfirmedRevenue');
-      const statNetRevenue = $('#statNetRevenue');
-      const statTotalOrders = $('#statTotalOrders');
+      // Big Stats with 0.6s Animated Number Counter (tabular-nums)
+      animateNumberCounter($('#statClicks'), summary.totalClicks || 0, 'int', 600);
+      animateNumberCounter($('#statLinks'), summary.totalLinks || 0, 'int', 600);
+      animateNumberCounter($('#statConversion'), Number(summary.conversionRate || 0), 'percent', 600);
+      animateNumberCounter($('#statCommission'), summary.totalCommission || 0, 'currency', 600);
 
-      if (statTotalRevenue) statTotalRevenue.textContent = formatCurrency(summary.totalRevenue || 0);
-      if (statConfirmedRevenue) statConfirmedRevenue.textContent = formatCurrency(summary.confirmedRevenue || 0);
-      if (statNetRevenue) statNetRevenue.textContent = formatCurrency(summary.netShopRevenue || 0);
-      if (statTotalOrders) statTotalOrders.textContent = (summary.totalOrders || 0).toLocaleString('vi-VN');
+      // Finance & Revenue Stats with 0.6s Animated Number Counter
+      animateNumberCounter($('#statTotalRevenue'), summary.totalRevenue || 0, 'currency', 600);
+      animateNumberCounter($('#statConfirmedRevenue'), summary.confirmedRevenue || 0, 'currency', 600);
+      animateNumberCounter($('#statNetRevenue'), summary.netShopRevenue || 0, 'currency', 600);
+      animateNumberCounter($('#statTotalOrders'), summary.totalOrders || 0, 'int', 600);
 
       // Financial Margin & Efficiency Trends (Strict Confirmed vs Estimated reference)
       const strictMode = summary.strictConfirmedOnly !== false;
@@ -275,6 +498,7 @@
       // Payouts & VietQR Reconciliation
       loadPayouts();
     } catch (err) {
+      finishAnalyticsSkeleton();
       console.error('[Analytics Error]', err);
       showToast(err.message, true);
     }
@@ -298,12 +522,13 @@
       if (c > maxClicks) maxClicks = c;
     });
 
+    const animateBar = !isReducedOrMobileMotion();
     let html = '';
     channels.forEach(ch => {
       const data = byChannel[ch.key] || { clicks: 0, commission: 0 };
       const clicks = Number(data.clicks) || 0;
       const commission = Number(data.commission) || 0;
-      const pct = Math.max(4, Math.round((clicks / maxClicks) * 100));
+      const pct = clicks > 0 ? Math.max(5, Math.round((clicks / maxClicks) * 100)) : 2;
 
       html += `
         <div class="chart-row">
@@ -311,7 +536,7 @@
             <span>${escapeHtml(ch.label)}</span>
           </div>
           <div class="chart-bar-bg">
-            <div class="chart-bar-fill" style="width: ${pct}%;"></div>
+            <div class="chart-bar-fill" data-target-width="${pct}%" style="width: ${animateBar ? '0%' : pct + '%'};"></div>
           </div>
           <div class="chart-values">
             <strong>${clicks.toLocaleString('vi-VN')}</strong> clicks • ${formatCurrency(commission)}
@@ -321,6 +546,16 @@
     });
 
     container.innerHTML = html;
+
+    if (animateBar) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          container.querySelectorAll('.chart-bar-fill').forEach((bar) => {
+            bar.style.width = bar.getAttribute('data-target-width') || '0%';
+          });
+        });
+      });
+    }
   }
 
   function renderTopLinksTable(links, strictConfirmedOnly = true) {
@@ -345,18 +580,18 @@
       const comm = strictConfirmedOnly ? confComm : (confComm > 0 ? confComm : (Number(l.estimatedCommission) || 0));
 
       html += `
-        <tr>
+        <tr class="content-fade-in">
           <td><span class="shortcode-badge">/r/${code}</span></td>
           <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(l.productName || '')}">
             <strong>${escapeHtml(l.productName || 'Sản phẩm')}</strong>
           </td>
           <td><span class="tag tag-tech">${chName}</span></td>
           <td>
-            <strong>${clicks.toLocaleString('vi-VN')}</strong>
-            ${blocked > 0 ? `<div style="font-size: 11px; color: var(--text-muted);" title="Lượt click trùng thiết bị trong 60s hoặc bot preview đã bị lọc">${blocked.toLocaleString('vi-VN')} lọc spam</div>` : ''}
+            <strong class="tabular-nums">${clicks.toLocaleString('vi-VN')}</strong>
+            ${blocked > 0 ? `<div style="margin-top: 3px;"><span class="tag tag-spam" style="font-size: 10px; padding: 1px 6px;" title="Lượt click trùng thiết bị trong 60s hoặc bot preview đã bị lọc">${blocked.toLocaleString('vi-VN')} lọc spam</span></div>` : ''}
           </td>
-          <td style="color: #7F1D1D; font-weight: 600;">${formatCurrency(rev)}</td>
-          <td>${formatCurrency(comm)}</td>
+          <td class="tabular-nums" style="font-weight: 600;">${formatCurrency(rev)}</td>
+          <td class="tabular-nums text-emerald" style="font-weight: 600;">${formatCurrency(comm)}</td>
           <td>
             <div style="display: flex; gap: 6px;">
               <button class="btn btn-secondary btn-sm" onclick="window.AutoBiz.openShortlink('${code}')" title="Mở đường link để kiểm tra click thực tế">
@@ -387,14 +622,14 @@
     }
 
     tbody.innerHTML = rows.map((r) => `
-      <tr>
+      <tr class="content-fade-in">
         <td><strong>${escapeHtml(r.subId || 'mac_dinh')}</strong></td>
-        <td>${Number(r.links || 0).toLocaleString('vi-VN')}</td>
-        <td>${Number(r.clicks || 0).toLocaleString('vi-VN')}</td>
-        <td><strong>${Number(r.orders || 0).toLocaleString('vi-VN')}</strong></td>
-        <td style="color: #7F1D1D; font-weight: 600;">${formatCurrency(r.revenue || 0)}</td>
-        <td>${formatCurrency(r.commission || 0)}</td>
-        <td style="color: #166534; font-weight: 600;">${formatCurrency(r.netRevenue || 0)}</td>
+        <td class="tabular-nums">${Number(r.links || 0).toLocaleString('vi-VN')}</td>
+        <td class="tabular-nums">${Number(r.clicks || 0).toLocaleString('vi-VN')}</td>
+        <td class="tabular-nums"><strong>${Number(r.orders || 0).toLocaleString('vi-VN')}</strong></td>
+        <td class="tabular-nums" style="font-weight: 600;">${formatCurrency(r.revenue || 0)}</td>
+        <td class="tabular-nums">${formatCurrency(r.commission || 0)}</td>
+        <td class="tabular-nums text-emerald" style="font-weight: 600;">${formatCurrency(r.netRevenue || 0)}</td>
       </tr>
     `).join('');
   }
@@ -439,11 +674,11 @@
 
   // ======================== PHÂN HỆ 2: STUDIO ĐA KÊNH ========================
   function initStudio() {
-    // Channel Tab Switcher
-    $$('.channel-tab-btn').forEach((btn) => {
+    // Channel Tab Switcher (scoped to Studio tab bar)
+    $$('#studioChannelTabs .channel-tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const targetChannel = btn.getAttribute('data-channel');
-        switchStudioTab(targetChannel);
+        if (targetChannel) switchStudioTab(targetChannel);
       });
     });
 
@@ -509,13 +744,14 @@
     }
 
     // Update tab button styles
-    $$('.channel-tab-btn').forEach((btn) => {
+    $$('#studioChannelTabs .channel-tab-btn').forEach((btn) => {
       if (btn.getAttribute('data-channel') === channelKey) {
         btn.classList.add('active');
       } else {
         btn.classList.remove('active');
       }
     });
+    updateTabPill($('#studioChannelTabs'));
   }
 
   function updateCharCounter() {
@@ -797,7 +1033,11 @@
   }
 
   // ======================== PHÂN HỆ 3: KHO HÀNG ĐA NGÀNH ========================
-  async function loadCatalogProducts() {
+  async function loadCatalogProducts(showSkeleton = false) {
+    const startTs = performance.now();
+    if (showSkeleton) {
+      renderTableSkeleton('#catalogTableBody', 7, 5);
+    }
     try {
       const params = new URLSearchParams();
       if (state.catalogFilter && state.catalogFilter !== 'all') {
@@ -810,6 +1050,11 @@
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error('Không thể nạp danh mục sản phẩm.');
       const data = await res.json();
+
+      if (showSkeleton && !isReducedOrMobileMotion()) {
+        const elapsed = performance.now() - startTs;
+        if (elapsed < 160) await new Promise((r) => setTimeout(r, 160 - elapsed));
+      }
 
       state.catalogProducts = data.products || [];
       renderCatalogTable(state.catalogProducts);
@@ -968,11 +1213,19 @@
   }
 
   // ======================== PHÂN HỆ 4: HÀNG ĐỢI & LỊCH PHÁT ========================
-  async function loadQueuePosts() {
+  async function loadQueuePosts(showSkeleton = false) {
+    const startTs = performance.now();
+    if (showSkeleton) {
+      renderTableSkeleton('#queueTableBody', 5, 4);
+    }
     try {
       const res = await fetch('/api/posts');
       if (!res.ok) throw new Error('Không thể nạp danh sách bài viết.');
       const posts = await res.json();
+      if (showSkeleton && !isReducedOrMobileMotion()) {
+        const elapsed = performance.now() - startTs;
+        if (elapsed < 160) await new Promise((r) => setTimeout(r, 160 - elapsed));
+      }
       state.queuePosts = Array.isArray(posts) ? posts : [];
       renderQueueTable(state.queuePosts);
     } catch (err) {
@@ -1102,7 +1355,7 @@
 
     // 2. Show/hide Studio channel tabs & switch active tab if disabled
     let firstEnabled = null;
-    $$('.channel-tab-btn').forEach((btn) => {
+    $$('#studioChannelTabs .channel-tab-btn').forEach((btn) => {
       const ch = btn.dataset.channel;
       const isOn = map[ch] !== false;
       btn.style.display = isOn ? '' : 'none';
@@ -1111,6 +1364,7 @@
     if (map[state.activeStudioTab] === false && firstEnabled) {
       firstEnabled.click();
     }
+    requestAnimationFrame(() => updateTabPill($('#studioChannelTabs')));
 
     // 3. Show/hide & uncheck Dispatch checkboxes
     $$('.dispatch-channel-cb').forEach((cb) => {
@@ -1399,6 +1653,7 @@
     } else if (hasCtvNetwork && state.currentView === 'users') {
       loadUsersTable();
     }
+    requestAnimationFrame(updateSidebarPill);
   }
 
   async function logoutUser() {
@@ -1519,11 +1774,11 @@
           } else {
             ctvBody.innerHTML = list.map((p) => {
               const statusLabel = p.status === 'paid' ? 'Đã thanh toán' : (p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt');
-              const statusClass = p.status === 'paid' ? 'tag-home' : (p.status === 'rejected' ? 'tag-fashion' : 'tag-accessories');
-              return `<tr>
+              const statusClass = p.status === 'paid' ? 'tag-approved' : (p.status === 'rejected' ? 'tag-failed' : 'tag-pending');
+              return `<tr class="content-fade-in">
                 <td style="font-size: 12px;">${formatDateTime(p.createdAt)}</td>
                 <td><strong>${escapeHtml(p.bankCode)}</strong> • ${escapeHtml(p.accountNumber)}<div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.accountName)}</div></td>
-                <td><strong>${formatCurrency(p.amount)}</strong></td>
+                <td class="tabular-nums"><strong>${formatCurrency(p.amount)}</strong></td>
                 <td><span class="tag ${statusClass}">${statusLabel}</span></td>
               </tr>`;
             }).join('');
@@ -1539,20 +1794,20 @@
         } else {
           shopBody.innerHTML = list.map((p) => {
             const statusLabel = p.status === 'paid' ? 'Đã thanh toán' : (p.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt');
-            const statusClass = p.status === 'paid' ? 'tag-home' : (p.status === 'rejected' ? 'tag-fashion' : 'tag-accessories');
+            const statusClass = p.status === 'paid' ? 'tag-approved' : (p.status === 'rejected' ? 'tag-failed' : 'tag-pending');
             const safeQr = encodeURIComponent(p.vietQrUrl || '');
             const safeInfo = encodeURIComponent(`${p.ctvDisplayName} (${p.bankCode} - ${p.accountNumber}) • ${formatCurrency(p.amount)}`);
-            return `<tr>
+            return `<tr class="content-fade-in">
               <td><strong>${escapeHtml(p.ctvDisplayName)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.subId)}</div></td>
               <td><strong>${escapeHtml(p.bankCode)}</strong> • ${escapeHtml(p.accountNumber)}<div style="font-size:11px;color:var(--text-muted);">${escapeHtml(p.accountName)}</div></td>
-              <td><strong>${formatCurrency(p.amount)}</strong></td>
+              <td class="tabular-nums"><strong>${formatCurrency(p.amount)}</strong></td>
               <td><span class="tag ${statusClass}">${statusLabel}</span></td>
               <td>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                   ${p.status === 'pending' ? `
                     <button type="button" class="btn btn-primary btn-sm" onclick="window.AutoBiz.openVietQrModal('${p.id}', '${safeQr}', '${safeInfo}')">Xem VietQR</button>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.AutoBiz.processPayoutStatus('${p.id}', 'paid')">Duyệt</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="color:#B91C1C;" onclick="window.AutoBiz.processPayoutStatus('${p.id}', 'rejected')">Từ chối</button>
+                    <button type="button" class="btn btn-danger-ghost btn-sm" onclick="window.AutoBiz.processPayoutStatus('${p.id}', 'rejected')">Từ chối</button>
                   ` : `<span style="font-size:12px;color:var(--text-muted);">${p.processedAt ? formatDateTime(p.processedAt) : '--'}</span>`}
                 </div>
               </td>
@@ -1618,6 +1873,12 @@
   function hideLandingPage() {
     const landing = $('#landingPage');
     if (landing) landing.style.display = 'none';
+    requestAnimationFrame(() => {
+      updateSidebarPill();
+      updateAllTabPills();
+      const activeSec = $('.view-section.active');
+      if (activeSec) triggerStaggerEntrance(activeSec);
+    });
   }
 
   function openRegisterSurvey() {
@@ -1753,13 +2014,21 @@
   }
 
   // ======================== 3-TIER ACCOUNT & ROLE MANAGEMENT (SUPERADMIN / SHOP / CTV) ========================
-  async function loadUsersTable() {
+  async function loadUsersTable(showSkeleton = false) {
     const tbody = $('#usersTableBody');
     const scopeNote = $('#usersScopeNote');
     if (!tbody) return;
+    const startTs = performance.now();
+    if (showSkeleton) {
+      renderTableSkeleton('#usersTableBody', 6, 4);
+    }
     try {
       const res = await fetch('/api/users');
       const data = await res.json();
+      if (showSkeleton && !isReducedOrMobileMotion()) {
+        const elapsed = performance.now() - startTs;
+        if (elapsed < 160) await new Promise((r) => setTimeout(r, 160 - elapsed));
+      }
       if (!res.ok || !data.success) {
         tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${escapeHtml(data.error || 'Không có quyền xem danh sách.')}</td></tr>`;
         return;
@@ -1904,10 +2173,24 @@
     hideLandingPage,
     openVietQrModal,
     processPayoutStatus,
-    openRegisterSurvey
+    openRegisterSurvey,
+    applyTheme
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Dual Theme (Dark Mode default + localStorage + System preference)
+    initThemeSystem();
+
+    // Keep sliding pills synced on viewport resize
+    let resizeRaf = null;
+    window.addEventListener('resize', () => {
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        updateSidebarPill();
+        updateAllTabPills();
+      });
+    });
+
     // Nav Items click bindings
     $$('.nav-item').forEach((item) => {
       item.addEventListener('click', (e) => {
@@ -1923,12 +2206,12 @@
     if (btnMobileMenu) btnMobileMenu.addEventListener('click', toggleMobileSidebar);
     if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
-    // Refresh Analytics Button
+    // Refresh Analytics Button (triggers Skeleton Shimmer + Animated Counter)
     const btnRefreshAnalytics = $('#btnRefreshAnalytics');
     if (btnRefreshAnalytics) {
       btnRefreshAnalytics.addEventListener('click', () => {
         showToast('Đang làm mới số liệu FinTech...');
-        loadAnalyticsSummary();
+        loadAnalyticsSummary(true);
       });
     }
 
@@ -2281,6 +2564,7 @@
         $$('.settings-tab-panel').forEach((panel) => {
           panel.style.display = panel.getAttribute('data-settings-panel') === targetTab ? 'block' : 'none';
         });
+        updateTabPill($('#settingsSubTabs'));
       });
     });
 
@@ -2380,16 +2664,16 @@
           showToast(data.message);
           if (resultBox && data.report) {
             const r = data.report;
-            resultBox.innerHTML = `<div style="padding:10px;border:1px solid #BBF7D0;background:#F0FDF4;border-radius:6px;color:#166534;">
+            resultBox.innerHTML = `<div class="callout-emerald">
               <strong>Đối soát hoàn tất (${r.totalRows} dòng):</strong>
               +${r.importedCount} đơn chốt mới (<strong>${formatCurrency(r.totalRevenueAdded)}</strong>, HH: <strong>${formatCurrency(r.totalCommissionAdded)}</strong>) • ${r.duplicateCount} trùng mã • ${r.ignoredCount} bỏ qua • ${r.failedCount} không khớp.
             </div>`;
           }
           fileInput.value = '';
-          await loadAnalyticsSummary();
+          await loadAnalyticsSummary(true);
         } catch (err) {
           showToast(err.message, true);
-          if (resultBox) resultBox.innerHTML = `<span style="color:#B91C1C;">${escapeHtml(err.message)}</span>`;
+          if (resultBox) resultBox.innerHTML = `<span class="text-coral">${escapeHtml(err.message)}</span>`;
         } finally {
           btnImportOrdersFile.disabled = false;
           btnImportOrdersFile.textContent = origText;

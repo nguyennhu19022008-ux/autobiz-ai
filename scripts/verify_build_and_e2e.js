@@ -54,16 +54,17 @@ function checkStaticPackaging() {
 
   // Kiểm tra query string cache-busting trong index.html
   const indexHtml = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-  assert(indexHtml.includes('/css/style.css?v=20261125_v10'), 'Thiếu cache-busting trên style.css trong index.html');
-  assert(indexHtml.includes('/js/autobiz.js?v=20261125_v10'), 'Thiếu cache-busting trên autobiz.js trong index.html');
+  assert(indexHtml.includes('/css/style.css?v=20261125_v11'), 'Thiếu cache-busting trên style.css trong index.html');
+  assert(indexHtml.includes('/js/autobiz.js?v=20261125_v11'), 'Thiếu cache-busting trên autobiz.js trong index.html');
   assert(!indexHtml.includes('id="modalOnboarding"'), 'Vẫn còn sót modal onboarding cũ #modalOnboarding trong index.html');
   assert(indexHtml.includes('id="btnLogout"'), 'Thiếu nút Đăng xuất #btnLogout trong index.html');
   assert(indexHtml.includes('id="modalProfile"'), 'Thiếu modal Hồ sơ & Đổi mật khẩu #modalProfile trong index.html');
+  assert(indexHtml.includes('id="btnThemeToggle"'), 'Thiếu nút chuyển đổi Dual Theme #btnThemeToggle trong index.html');
   assert(indexHtml.includes('settingInstagramAccountId'), 'Thiếu cấu hình Instagram trong Settings');
   assert(indexHtml.includes('btnExtractUrlToModal'), 'Thiếu nút tự bóc tách URL sản phẩm');
   assert(indexHtml.includes('btnCopyBioLink'), 'Thiếu nút Copy Link Bio');
   assert(indexHtml.includes('modalVietQr'), 'Thiếu modal đối soát VietQR');
-  console.log('- [OK] Đã gắn cache-busting (?v=20261125_v8) và đầy đủ các mảnh ghép v1.0 (Extractor, Bio, Invite, VietQR).');
+  console.log('- [OK] Đã gắn cache-busting (?v=20261125_v11) và đầy đủ Dual Theme + các mảnh ghép v1.1.');
 
   // Kiểm tra Responsive & Calm Mobile Performance trong style.css
   const styleCss = fs.readFileSync(path.join(ROOT, 'public/css/style.css'), 'utf8');
@@ -94,8 +95,8 @@ async function runEndToEndVerify() {
       '/app',
       '/dashboard',
       '/cockpit',
-      '/css/style.css?v=20261125_v10',
-      '/js/autobiz.js?v=20261125_v10',
+      '/css/style.css?v=20261125_v11',
+      '/js/autobiz.js?v=20261125_v11',
       '/manifest.json',
       '/icons/icon.svg',
       '/api/settings',
