@@ -277,6 +277,7 @@ function getAnalyticsSummary({ subId, owner, role } = {}) {
   const links = filterLinksByScope(readLinks(), { subId, owner, role });
   const byChannel = {
     facebook: { clicks: 0, links: 0, commission: 0, revenue: 0 },
+    instagram: { clicks: 0, links: 0, commission: 0, revenue: 0 },
     tiktok: { clicks: 0, links: 0, commission: 0, revenue: 0 },
     zalo: { clicks: 0, links: 0, commission: 0, revenue: 0 },
     shopee: { clicks: 0, links: 0, commission: 0, revenue: 0 }

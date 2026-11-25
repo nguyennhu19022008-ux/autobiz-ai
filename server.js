@@ -18,6 +18,7 @@ const catalogService = require('./services/catalog');
 const affiliateService = require('./services/affiliate');
 const authService = require('./services/auth');
 const { dispatchToChannels } = require('./services/adapters');
+const { verifyInstagramConnection } = require('./services/adapters/instagram');
 const { verifyPageToken } = require('./services/facebook');
 const { sendTestEmail } = require('./services/mailer');
 const {
@@ -365,13 +366,56 @@ app.delete('/api/users/:username', authService.requireAdmin, (req, res) => {
   res.json({ success: true, message: `Đã xóa tài khoản ${targetName}.` });
 });
 
-// 1. Get current settings (Admin only)
-app.get('/api/settings', authService.requireAdmin, async (req, res) => {
+// Helper: Per-user settings stored cleanly in Supabase Postgres (via runtime user_settings.json)
+const USER_SETTINGS_FILE = 'user_settings.json';
+async function getEffectiveSettingsForUser(authUser) {
+  const globalSettings = await getSettings();
+  const username = authUser?.username;
+  if (!username || username === 'superadmin' || username === 'admin') {
+    return {
+      ...globalSettings,
+      webhookSecret: globalSettings.webhookSecret || 'autobiz_wh_secret_2026',
+      enabledChannels: Object.assign(
+        { facebook: true, instagram: true, tiktok: true, zalo: true, shopee: true },
+        globalSettings.enabledChannels || {}
+      )
+    };
+  }
+  const allUserSettings = runtime.readJsonSafe(USER_SETTINGS_FILE, {});
+  const mine = (allUserSettings && allUserSettings[username]) || {};
+  return {
+    fanpageName: mine.fanpageName || authUser.displayName || '',
+    hotline: mine.hotline || authUser.hotline || '',
+    email: mine.email || authUser.email || '',
+    geminiApiKey: mine.geminiApiKey || '',
+    aiTone: mine.aiTone || 'balanced',
+    autoSignature: mine.autoSignature || '',
+    autoShortenLinks: mine.autoShortenLinks !== false,
+    scheduleGapMinutes: Number(mine.scheduleGapMinutes) || 45,
+    fanpageId: mine.fanpageId || '',
+    facebookPageToken: mine.facebookPageToken || '',
+    instagramAccountId: mine.instagramAccountId || '',
+    instagramAccessToken: mine.instagramAccessToken || '',
+    tiktokOpenId: mine.tiktokOpenId || '',
+    tiktokToken: mine.tiktokToken || '',
+    zaloOaId: mine.zaloOaId || '',
+    zaloToken: mine.zaloToken || '',
+    shopeePartnerId: mine.shopeePartnerId || '',
+    shopeePartnerKey: mine.shopeePartnerKey || '',
+    telegramBotToken: mine.telegramBotToken || '',
+    telegramChatId: mine.telegramChatId || '',
+    webhookSecret: mine.webhookSecret || 'autobiz_wh_secret_2026',
+    enabledChannels: Object.assign(
+      { facebook: true, instagram: true, tiktok: true, zalo: true, shopee: true },
+      mine.enabledChannels || {}
+    )
+  };
+}
+
+// 1. Get current settings (Per-user for all logged-in accounts)
+app.get('/api/settings', async (req, res) => {
   try {
-    const settings = await getSettings();
-    if (!settings.webhookSecret) {
-      settings.webhookSecret = 'autobiz_wh_secret_2026';
-    }
+    const settings = await getEffectiveSettingsForUser(req.authUser);
     res.json(settings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -409,13 +453,23 @@ app.get('/api/cockpit/status', async (req, res) => {
   }
 });
 
-// 2. Update settings (Admin only)
-app.post('/api/settings', authService.requireAdmin, async (req, res) => {
+// 2. Update settings (Per-user persistence on Supabase Postgres)
+app.post('/api/settings', async (req, res) => {
   try {
-    const currentSettings = await getSettings();
-    const newSettings = { ...currentSettings, ...req.body };
-    await saveSettings(newSettings);
-    res.json({ success: true, settings: newSettings, message: 'Đã lưu cấu hình thành công!' });
+    const username = req.authUser?.username;
+    const isGlobalOwner = !username || username === 'superadmin' || username === 'admin';
+    if (isGlobalOwner) {
+      const currentSettings = await getSettings();
+      const newSettings = { ...currentSettings, ...(req.body || {}) };
+      await saveSettings(newSettings);
+      return res.json({ success: true, settings: newSettings, message: 'Đã lưu cấu hình thành công!' });
+    }
+    const allUserSettings = runtime.readJsonSafe(USER_SETTINGS_FILE, {});
+    const currentMine = (allUserSettings && allUserSettings[username]) || {};
+    const updatedMine = { ...currentMine, ...(req.body || {}), updatedAt: new Date().toISOString() };
+    allUserSettings[username] = updatedMine;
+    runtime.writeJsonSafe(USER_SETTINGS_FILE, allUserSettings);
+    return res.json({ success: true, settings: updatedMine, message: 'Đã lưu cấu hình cá nhân thành công!' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -424,11 +478,24 @@ app.post('/api/settings', authService.requireAdmin, async (req, res) => {
 // 3. Test Facebook Page Connection
 app.post('/api/test-fb', async (req, res) => {
   try {
-    const settings = await getSettings();
+    const settings = await getEffectiveSettingsForUser(req.authUser);
     const pageId = req.body.fanpageId || settings.fanpageId;
     const token = req.body.facebookPageToken || settings.facebookPageToken;
 
     const result = await verifyPageToken(pageId, token);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3.0. Test Instagram Business Connection
+app.post('/api/test-instagram', async (req, res) => {
+  try {
+    const settings = await getEffectiveSettingsForUser(req.authUser);
+    const igAccountId = req.body.instagramAccountId || settings.instagramAccountId;
+    const igAccessToken = req.body.instagramAccessToken || settings.instagramAccessToken;
+    const result = await verifyInstagramConnection(igAccountId, igAccessToken);
     res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -856,7 +923,7 @@ app.post('/api/demo/clear', authService.requireAdmin, (req, res) => {
 // Phase 2: Omni-Channel Dispatch Hub (Facebook + TikTok + Zalo + Shopee)
 app.post('/api/autobiz/dispatch', async (req, res) => {
   try {
-    const settings = await getSettings();
+    const settings = await getEffectiveSettingsForUser(req.authUser);
     const enabledMap = settings.enabledChannels || {};
     const { target_channels, channel_contents, finalContent, mediaFiles, videoUrl, zaloUserId } = req.body || {};
     const filteredChannels = Array.isArray(target_channels)

@@ -16,7 +16,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Utilitarian Minimalist SaaS Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261125_v6">
+  <link rel="stylesheet" href="/css/style.css?v=20261125_v7">
 </head>
 <body>
 
@@ -78,7 +78,7 @@
           <div class="brand-mark">AB</div>
           <div>
             <div class="brand-title">AutoBiz AI</div>
-            <div class="brand-tag">PHASE 3 SAAS</div>
+            <div class="brand-tag">AUTOBIZ CLOUD</div>
           </div>
         </a>
       </div>
@@ -146,8 +146,8 @@
           <span>Hàng Đợi & Lịch Phát</span>
         </button>
 
-        <!-- Phân hệ 5: Kết Nối Kênh & Cài Đặt -->
-        <button class="nav-item admin-only" data-view="settings">
+        <!-- Phân hệ 5: Kết Nối Kênh & Cài Đặt (Mở cho mọi tài khoản) -->
+        <button class="nav-item" data-view="settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
@@ -182,14 +182,6 @@
         </div>
         <div>Workspace: <strong>AutoBiz Main</strong></div>
         <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
-          <a href="/slides" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-decoration: none; font-size: 12px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            <span>Bộ Slide Dự Thi (/slides)</span>
-          </a>
           <a href="/autobiz-extension-v2.zip" download class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-decoration: none; font-size: 12px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -223,19 +215,6 @@
               <p id="analyticsSubtitle" class="page-subtitle">Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng ước tính theo thời gian thực.</p>
             </div>
             <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button id="btnSeedDemo" class="btn btn-primary admin-only" title="Nạp nhanh 10 sản phẩm đa ngành & 8 chiến dịch CTV mẫu phục vụ thuyết trình BGK">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-                <span>Nạp dữ liệu mẫu BGK</span>
-              </button>
-              <button id="btnClearDemo" class="btn btn-secondary admin-only" title="Xóa dữ liệu mẫu để trở về trạng thái trống ban đầu">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                <span>Làm sạch</span>
-              </button>
               <button id="btnRefreshAnalytics" class="btn btn-secondary">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="23 4 23 10 17 10"></polyline>
@@ -262,7 +241,7 @@
               <div class="stat-label">Link Tiếp Thị Đã Tạo</div>
               <div id="statLinks" class="stat-value">0</div>
               <div class="stat-trend" style="color: var(--text-muted);">
-                <span>Bao phủ 4 kênh truyền thông</span>
+                <span>Bao phủ đa nền tảng mạng xã hội</span>
               </div>
             </div>
 
@@ -399,7 +378,7 @@
           <div class="page-header">
             <div>
               <h1 class="page-title">Studio Đa Kênh</h1>
-              <p class="page-subtitle">Sáng tạo, bóc tách và phân phối nội dung tiếp thị đồng thời lên Facebook, TikTok, Zalo OA và Shopee.</p>
+              <p class="page-subtitle">Sáng tạo và phân phối nội dung tiếp thị đồng thời lên Facebook, Instagram, TikTok, Zalo OA và Shopee.</p>
             </div>
           </div>
 
@@ -484,7 +463,7 @@
               <!-- Primary CTA: Generate AI -->
               <button type="button" id="btnGenerateContent" class="btn btn-primary" style="width: 100%; padding: 11px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                <span>Phân tích AI &amp; Sinh 4 Kênh</span>
+                <span>Phân tích AI &amp; Sinh Đa Kênh</span>
               </button>
             </div>
 
@@ -493,16 +472,17 @@
               <div class="card-header">
                 <div class="card-title">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span>2. Biên tập 4 Kênh &amp; Phân phối</span>
+                  <span>2. Biên tập Đa Kênh &amp; Phân phối</span>
                 </div>
                 <button type="button" id="btnCopyStudioContent" class="btn btn-secondary btn-sm">
                   Sao chép nội dung
                 </button>
               </div>
 
-              <!-- 4 Channel Tabs -->
+              <!-- 5 Channel Tabs -->
               <div class="channel-tabs">
                 <button type="button" class="channel-tab-btn active" data-channel="facebook">Facebook</button>
+                <button type="button" class="channel-tab-btn" data-channel="instagram">Instagram</button>
                 <button type="button" class="channel-tab-btn" data-channel="tiktok">TikTok Script</button>
                 <button type="button" class="channel-tab-btn" data-channel="zalo">Zalo OA</button>
                 <button type="button" class="channel-tab-btn" data-channel="shopee">Shopee SEO</button>
@@ -524,6 +504,10 @@
                   <label class="dispatch-checkbox-label">
                     <input type="checkbox" class="dispatch-channel-cb" value="facebook" checked />
                     <span>Facebook Fanpage</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" class="dispatch-channel-cb" value="instagram" checked />
+                    <span>Instagram Business</span>
                   </label>
                   <label class="dispatch-checkbox-label">
                     <input type="checkbox" class="dispatch-channel-cb" value="tiktok" checked />
@@ -655,147 +639,284 @@
         </section>
 
         <!-- ==========================================================================
-             PHÂN HỆ 5: KẾT NỐI KÊNH & CÀI ĐẶT (view-settings)
+             PHÂN HỆ 5: CÀI ĐẶT & KẾT NỐI KÊNH (view-settings — Tabbed SaaS Hub)
              ========================================================================== -->
         <section id="view-settings" class="view-section">
           <div class="page-header">
             <div>
-              <h1 class="page-title">Kết Nối Kênh &amp; Cài Đặt</h1>
-              <p class="page-subtitle">Quản lý kết nối API Gemini, Facebook Fanpage, TikTok Creator, Zalo OA và Shopee Open Platform.</p>
+              <h1 class="page-title">Cài Đặt &amp; Kết Nối Kênh</h1>
+              <p class="page-subtitle">Quản lý API / Token mạng xã hội (Facebook, Instagram, TikTok, Zalo, Shopee, Telegram), cấu hình AI, lịch đăng tự động và Webhook.</p>
             </div>
           </div>
 
+          <!-- Settings Sub-Navigation Tabs -->
+          <div class="channel-tabs" style="margin-bottom: 18px;">
+            <button type="button" class="channel-tab-btn active settings-tab-btn" data-settings-tab="social">1. Mạng xã hội &amp; API Token</button>
+            <button type="button" class="channel-tab-btn settings-tab-btn" data-settings-tab="ai">2. AI &amp; Thương hiệu</button>
+            <button type="button" class="channel-tab-btn settings-tab-btn" data-settings-tab="automation">3. Tự động hóa &amp; Lịch đăng</button>
+            <button type="button" class="channel-tab-btn settings-tab-btn admin-only" data-settings-tab="webhook">4. Webhook &amp; Hệ thống</button>
+          </div>
+
           <form id="formSettings">
-            <!-- Box 1: Core AI & Shop Info -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                  <span>1. Lõi Trí Tuệ Nhân Tạo &amp; Thông Tin Doanh Nghiệp</span>
+            <!-- TAB 1: SOCIAL CHANNELS & API TOKENS -->
+            <div class="settings-tab-panel" data-settings-panel="social">
+              <!-- Channel Toggles -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Bật / Tắt các nền tảng đang sử dụng</span>
+                  </div>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+                  Chọn các mạng xã hội bạn muốn hiển thị trong Studio và cho phép phân phối bài đăng.
+                </p>
+                <div class="dispatch-channels-grid">
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" id="enableChannel_facebook" class="setting-channel-toggle" data-channel="facebook" checked />
+                    <span>Facebook Fanpage</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" id="enableChannel_instagram" class="setting-channel-toggle" data-channel="instagram" checked />
+                    <span>Instagram Business</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" id="enableChannel_tiktok" class="setting-channel-toggle" data-channel="tiktok" checked />
+                    <span>TikTok</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" id="enableChannel_zalo" class="setting-channel-toggle" data-channel="zalo" checked />
+                    <span>Zalo OA</span>
+                  </label>
+                  <label class="dispatch-checkbox-label">
+                    <input type="checkbox" id="enableChannel_shopee" class="setting-channel-toggle" data-channel="shopee" checked />
+                    <span>Shopee</span>
+                  </label>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="settingGeminiApiKey">Gemini AI API Key</label>
-                <input type="password" id="settingGeminiApiKey" name="geminiApiKey" class="form-input" placeholder="AIzaSy..." />
-                <span class="form-hint">Dùng để phân tích thông số, nhận diện sản phẩm đa ngành và sinh văn phong 4 kênh.</span>
+              <!-- Facebook Fanpage -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Facebook Fanpage (Graph API)</span>
+                  </div>
+                  <button type="button" id="btnTestFb" class="btn btn-secondary btn-sm">Kiểm tra Facebook</button>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingFanpageId">Facebook Fanpage ID</label>
+                    <input type="text" id="settingFanpageId" name="fanpageId" class="form-input" placeholder="VD: 1154184381110692" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingFacebookPageToken">Facebook Page Access Token</label>
+                    <input type="password" id="settingFacebookPageToken" name="facebookPageToken" class="form-input" placeholder="EAAZ..." />
+                  </div>
+                </div>
               </div>
 
-              <div class="form-row-3">
-                <div class="form-group">
-                  <label class="form-label" for="settingFanpageName">Tên Shop / Thương hiệu</label>
-                  <input type="text" id="settingFanpageName" name="fanpageName" class="form-input" placeholder="AutoBiz AI Store" />
+              <!-- Instagram Business (NEW) -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Instagram Business (Meta Graph API)</span>
+                    <span class="tag tag-fashion" style="font-size: 10px; margin-left: 6px;">Mới</span>
+                  </div>
+                  <button type="button" id="btnTestInstagram" class="btn btn-secondary btn-sm">Kiểm tra Instagram</button>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="settingHotline">Hotline / Zalo liên hệ</label>
-                  <input type="text" id="settingHotline" name="hotline" class="form-input" placeholder="0876637806" />
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                  Nhập Instagram Business Account ID (liên kết Meta Business Suite) và Access Token có quyền <code>instagram_content_publish</code> để đăng trực tiếp lên Feed.
+                </p>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingInstagramAccountId">Instagram Business Account ID</label>
+                    <input type="text" id="settingInstagramAccountId" name="instagramAccountId" class="form-input" placeholder="VD: 17841400000000000" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingInstagramAccessToken">Instagram Graph Access Token</label>
+                    <input type="password" id="settingInstagramAccessToken" name="instagramAccessToken" class="form-input" placeholder="IGQVJ... hoặc EAAZ..." />
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label" for="settingEmail">Email nhận báo cáo</label>
-                  <input type="email" id="settingEmail" name="email" class="form-input" placeholder="admin@domain.com" />
+              </div>
+
+              <!-- TikTok & Zalo OA -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>TikTok Creator &amp; Zalo Official Account</span>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingTiktokOpenId">TikTok Open ID / Creator ID</label>
+                    <input type="text" id="settingTiktokOpenId" name="tiktokOpenId" class="form-input" placeholder="VD: _000abc..." />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingTiktokToken">TikTok Access Token</label>
+                    <input type="password" id="settingTiktokToken" name="tiktokToken" class="form-input" placeholder="act.xxxx..." />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingZaloOaId">Zalo OA ID</label>
+                    <input type="text" id="settingZaloOaId" name="zaloOaId" class="form-input" placeholder="VD: 192837465..." />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingZaloToken">Zalo OA Access Token</label>
+                    <input type="password" id="settingZaloToken" name="zaloToken" class="form-input" placeholder="zalo_oa_..." />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Shopee & Telegram -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Shopee Affiliate / Open Platform &amp; Telegram Bot</span>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingShopeePartnerId">Shopee Partner / Affiliate App ID</label>
+                    <input type="text" id="settingShopeePartnerId" name="shopeePartnerId" class="form-input" placeholder="shopee_pid_..." />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingShopeePartnerKey">Shopee Partner Secret Key</label>
+                    <input type="password" id="settingShopeePartnerKey" name="shopeePartnerKey" class="form-input" placeholder="••••••" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingTelegramBotToken">Telegram Bot Token (Nhận thông báo / Đẩy bài)</label>
+                    <input type="password" id="settingTelegramBotToken" name="telegramBotToken" class="form-input" placeholder="123456:ABC-DEF..." />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingTelegramChatId">Telegram Chat ID / Channel ID</label>
+                    <input type="text" id="settingTelegramChatId" name="telegramChatId" class="form-input" placeholder="VD: -1001234567890" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Box 2: Social Channels & Platforms -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                  <span>2. Kết Nối Nền Tảng Phân Phối Đa Kênh</span>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="settingFanpageId">Facebook Fanpage ID</label>
-                  <input type="text" id="settingFanpageId" name="fanpageId" class="form-input" placeholder="VD: 1154184381110692" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="settingFacebookPageToken">Facebook Page Access Token</label>
-                  <input type="password" id="settingFacebookPageToken" name="facebookPageToken" class="form-input" placeholder="EAAZ..." />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="settingTiktokToken">TikTok Session / Access Token</label>
-                  <input type="password" id="settingTiktokToken" name="tiktokToken" class="form-input" placeholder="tt_act_..." />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="settingZaloToken">Zalo Official Account Token</label>
-                  <input type="password" id="settingZaloToken" name="zaloToken" class="form-input" placeholder="zalo_oa_..." />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="settingShopeePartnerId">Shopee Partner / Open Platform ID</label>
-                <input type="text" id="settingShopeePartnerId" name="shopeePartnerId" class="form-input" placeholder="shopee_pid_..." />
-              </div>
-
-              <div class="card-header" style="margin-top: 20px;">
-                <div class="card-title">
-                  <span>3. Bật / Tắt Nền Tảng Đang Sử Dụng</span>
-                </div>
-              </div>
-              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">
-                Tắt các ứng dụng bạn không dùng (ví dụ TikTok, Zalo, Shopee) để ẩn khỏi Studio Đa Kênh và bỏ qua khi phân phối bài.
-              </p>
-              <div class="dispatch-channels-grid" style="margin-bottom: 8px;">
-                <label class="dispatch-checkbox-label">
-                  <input type="checkbox" id="enableChannel_facebook" class="setting-channel-toggle" data-channel="facebook" checked />
-                  <span>Facebook Fanpage</span>
-                </label>
-                <label class="dispatch-checkbox-label">
-                  <input type="checkbox" id="enableChannel_tiktok" class="setting-channel-toggle" data-channel="tiktok" checked />
-                  <span>TikTok</span>
-                </label>
-                <label class="dispatch-checkbox-label">
-                  <input type="checkbox" id="enableChannel_zalo" class="setting-channel-toggle" data-channel="zalo" checked />
-                  <span>Zalo OA</span>
-                </label>
-                <label class="dispatch-checkbox-label">
-                  <input type="checkbox" id="enableChannel_shopee" class="setting-channel-toggle" data-channel="shopee" checked />
-                  <span>Shopee</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                  <span>4. Webhook Tự Động Chốt Đơn (Pancake / Sapo / Haravan / Shopee)</span>
-                </div>
-                <button type="button" id="btnTestWebhookOrder" class="btn btn-primary btn-sm">
-                  <span>Bắn Webhook Giả Lập (Test Auto-Order)</span>
-                </button>
-              </div>
-              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                Khi phần mềm quản lý bán hàng hoặc sàn TMĐT gửi thông báo đơn giao thành công (`status: "completed"`) kèm mã `shortCode` hoặc `subId`, hệ thống tự động chốt doanh thu &amp; cộng hoa hồng cho CTV (có chống chốt trùng theo `orderId`).
-              </p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="settingWebhookUrl">Webhook Endpoint URL (POST)</label>
-                  <div style="display: flex; gap: 6px;">
-                    <input type="text" id="settingWebhookUrl" class="form-input" readonly value="https://autobiz-ai-seven.vercel.app/api/webhooks/order" style="font-family: var(--font-mono); font-size: 12px; background: #F9FAFB;" />
-                    <button type="button" id="btnCopyWebhookUrl" class="btn btn-secondary btn-sm">Copy</button>
+            <!-- TAB 2: AI & BRAND SETTINGS -->
+            <div class="settings-tab-panel" data-settings-panel="ai" style="display: none;">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Cấu Hình Lõi AI &amp; Thông Tin Thương Hiệu</span>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="settingWebhookSecret">Webhook Secret Header (`x-webhook-secret`)</label>
-                  <input type="text" id="settingWebhookSecret" name="webhookSecret" class="form-input" value="autobiz_wh_secret_2026" placeholder="autobiz_wh_secret_2026" style="font-family: var(--font-mono); font-size: 12px;" />
+                  <label class="form-label" for="settingGeminiApiKey">Gemini AI API Key (Cá nhân — để trống sẽ dùng mặc định)</label>
+                  <input type="password" id="settingGeminiApiKey" name="geminiApiKey" class="form-input" placeholder="AIzaSy..." />
                 </div>
-              </div>
-              <div id="webhookLogsBox" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                <div style="font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Nhật ký Webhook tự động gần đây:</div>
-                <div id="webhookLogsList" style="font-size: 12px; color: var(--text-muted); max-height: 150px; overflow-y: auto;">Chưa có đơn hàng tự động nào được ghi nhận qua Webhook.</div>
+                <div class="form-row-3">
+                  <div class="form-group">
+                    <label class="form-label" for="settingFanpageName">Tên Shop / Thương hiệu</label>
+                    <input type="text" id="settingFanpageName" name="fanpageName" class="form-input" placeholder="AutoBiz AI Store" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingHotline">Hotline / Zalo liên hệ</label>
+                    <input type="text" id="settingHotline" name="hotline" class="form-input" placeholder="0876637806" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingEmail">Email nhận báo cáo</label>
+                    <input type="email" id="settingEmail" name="email" class="form-input" placeholder="admin@domain.com" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingAiTone">Giọng văn AI mặc định</label>
+                    <select id="settingAiTone" name="aiTone" class="form-select">
+                      <option value="balanced">Cân bằng, dễ đọc (Mặc định)</option>
+                      <option value="review">Review trải nghiệm chân thực (KOC / Lifestyle)</option>
+                      <option value="sales">Chốt đơn nhanh, nhấn mạnh ưu đãi</option>
+                      <option value="professional">Chuyên nghiệp, kỹ thuật chi tiết</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingAutoSignature">Chữ ký tự động gắn cuối bài (Tùy chọn)</label>
+                    <input type="text" id="settingAutoSignature" name="autoSignature" class="form-input" placeholder="VD: Inbox ngay để nhận mã freeship!" />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end;">
+            <!-- TAB 3: AUTOMATION & SCHEDULE -->
+            <div class="settings-tab-panel" data-settings-panel="automation" style="display: none;">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Cấu Hình Tự Động Hóa &amp; Lịch Phát Sóng</span>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingScheduleGap">Khoảng cách giữa các bài trong hàng đợi (phút)</label>
+                    <input type="number" id="settingScheduleGap" name="scheduleGapMinutes" class="form-input" min="5" max="1440" value="45" />
+                    <span class="form-hint">Giúp giãn cách bài đăng tự nhiên, hạn chế bị nền tảng đánh dấu spam.</span>
+                  </div>
+                  <div class="form-group" style="display: flex; align-items: center; padding-top: 22px;">
+                    <label class="dispatch-checkbox-label" style="width: 100%;">
+                      <input type="checkbox" id="settingAutoShortenLinks" name="autoShortenLinks" checked />
+                      <span>Tự động rút gọn link tiếp thị sang /r/:code &amp; đếm click UTM</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: WEBHOOK & SYSTEM (Admin / Shop Owner) -->
+            <div class="settings-tab-panel admin-only" data-settings-panel="webhook" style="display: none;">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Webhook Tự Động Chốt Đơn (Pancake / Sapo / Haravan / Shopee)</span>
+                  </div>
+                  <button type="button" id="btnTestWebhookOrder" class="btn btn-primary btn-sm">
+                    <span>Gửi Webhook Thử Nghiệm</span>
+                  </button>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                  Khi phần mềm bán hàng gửi thông báo đơn giao thành công (<code>status: "completed"</code>) kèm mã <code>shortCode</code> hoặc <code>subId</code>, hệ thống tự động chốt doanh thu &amp; cộng hoa hồng (có chống chốt trùng theo <code>orderId</code>).
+                </p>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="settingWebhookUrl">Webhook Endpoint URL (POST)</label>
+                    <div style="display: flex; gap: 6px;">
+                      <input type="text" id="settingWebhookUrl" class="form-input" readonly value="https://autobiz-ai-seven.vercel.app/api/webhooks/order" style="font-family: var(--font-mono); font-size: 12px; background: #F9FAFB;" />
+                      <button type="button" id="btnCopyWebhookUrl" class="btn btn-secondary btn-sm">Copy</button>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingWebhookSecret">Webhook Secret Header (<code>x-webhook-secret</code>)</label>
+                    <input type="text" id="settingWebhookSecret" name="webhookSecret" class="form-input" value="autobiz_wh_secret_2026" placeholder="autobiz_wh_secret_2026" style="font-family: var(--font-mono); font-size: 12px;" />
+                  </div>
+                </div>
+                <div id="webhookLogsBox" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Nhật ký Webhook tự động gần đây:</div>
+                  <div id="webhookLogsList" style="font-size: 12px; color: var(--text-muted); max-height: 150px; overflow-y: auto;">Chưa có đơn hàng tự động nào được ghi nhận qua Webhook.</div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <span>Bảo Trì Dữ Liệu Thử Nghiệm</span>
+                  </div>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                  Công cụ dành cho quản trị viên để nạp nhanh dữ liệu mẫu kiểm thử hoặc làm sạch dữ liệu tạm.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <button type="button" id="btnSeedDemo" class="btn btn-secondary btn-sm">Khởi tạo dữ liệu thử nghiệm</button>
+                  <button type="button" id="btnClearDemo" class="btn btn-secondary btn-sm" style="color: #B91C1C; border-color: #FECACA;">Xóa dữ liệu tạm</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
               <button type="submit" id="btnSaveSettings" class="btn btn-primary" style="padding: 10px 24px;">
-                Lưu Toàn Bộ Cấu Hình
+                Lưu Toàn Bộ Cài Đặt
               </button>
             </div>
           </form>
@@ -1115,6 +1236,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261125_v6"></script>
+  <script src="/js/autobiz.js?v=20261125_v7"></script>
 </body>
 </html>

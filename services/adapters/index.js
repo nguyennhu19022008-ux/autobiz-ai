@@ -1,10 +1,12 @@
 const { dispatchFacebook } = require('./facebook');
+const { dispatchInstagram } = require('./instagram');
 const { dispatchTikTok } = require('./tiktok');
 const { dispatchZalo } = require('./zalo');
 const { dispatchShopee } = require('./shopee');
 
 const ADAPTERS = {
   facebook: dispatchFacebook,
+  instagram: dispatchInstagram,
   tiktok: dispatchTikTok,
   zalo: dispatchZalo,
   shopee: dispatchShopee
@@ -16,7 +18,7 @@ const ADAPTERS = {
 async function dispatchToChannels(postData, settings = {}) {
   const channels = Array.isArray(postData.target_channels) && postData.target_channels.length > 0
     ? postData.target_channels
-    : ['facebook', 'tiktok', 'zalo', 'shopee'];
+    : ['facebook', 'instagram', 'tiktok', 'zalo', 'shopee'];
 
   const results = [];
   await Promise.all(

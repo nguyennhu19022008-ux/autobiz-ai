@@ -241,6 +241,7 @@ function fallbackGenerateMultiChannel(rawText, userSettings = {}, customPrice = 
 
   const affiliateLinks = {
     facebook: buildAffiliateUrl(options.affiliateUrl, 'facebook', campaign, parsed.code),
+    instagram: buildAffiliateUrl(options.affiliateUrl, 'instagram', campaign, parsed.code),
     tiktok: buildAffiliateUrl(options.affiliateUrl, 'tiktok', campaign, parsed.code),
     zalo: buildAffiliateUrl(options.affiliateUrl, 'zalo', campaign, parsed.code),
     shopee: buildAffiliateUrl(options.affiliateUrl, 'shopee', campaign, parsed.code)
@@ -263,6 +264,21 @@ ${warrantyLine}
 🚚 Giao hàng toàn quốc - Đồng kiểm trước khi thanh toán!${fbLinkBlock}
 📞 Hotline / Zalo: ${hotline} (${shopName})
 #AutoBizAI ${parsed.hashtagCategory} #${cleanTag} #${parsed.code}`;
+
+  // 1.5. INSTAGRAM CAPTION & HASHTAGS
+  const igLinkBlock = affiliateLinks.instagram
+    ? `\n🔗 Link mua hàng / ưu đãi: ${affiliateLinks.instagram} (hoặc bấm Link ở Bio)`
+    : `\n🔗 Nhấn Link ở Bio hoặc DM trực tiếp cho @${cleanTag.toLowerCase()} để nhận ưu đãi ngay!`;
+  const instagram = `✨ ${parsed.name} — Lựa chọn đáng tiền chỉ ${parsed.price}
+
+${specsBullets}
+
+${warrantyLine}${igLinkBlock}
+📩 DM nhanh hoặc Zalo ${hotline} để được tư vấn 1-1.
+
+.
+.
+#InstagramShopping #ReviewSanPham ${parsed.hashtagCategory} #${cleanTag} #${parsed.code} #AutoBizAI`;
 
   // 2. TIKTOK VIDEO SCRIPT
   const tkLinkBlock = affiliateLinks.tiktok ? `Link giỏ hàng/Bio: ${affiliateLinks.tiktok}` : `Bấm ngay vào Giỏ hàng góc trái màn hình hoặc Link ở Bio nhé!`;
@@ -305,7 +321,7 @@ Từ khóa: ${parsed.name}, ${parsed.categoryLabel}, #${cleanTag}`;
   return {
     parsed,
     affiliateLinks,
-    posts: { facebook, tiktok, zalo, shopee }
+    posts: { facebook, instagram, tiktok, zalo, shopee }
   };
 }
 
@@ -369,6 +385,7 @@ THÔNG TIN CỬA HÀNG & CHIẾN DỊCH:
 - Giá bán mong muốn: ${customPrice || 'Tự trích xuất và định dạng hấp dẫn từ dữ liệu gốc'}
 - Link tiếp thị liên kết (Affiliate): ${affiliateUrl ? 'CÓ - Hãy lồng ghép khéo léo các link UTM tương ứng từng kênh bên dưới' : 'KHÔNG CÓ'}
   + Link Facebook: ${fallbackResult.affiliateLinks.facebook || 'Không'}
+  + Link Instagram: ${fallbackResult.affiliateLinks.instagram || 'Không'}
   + Link TikTok: ${fallbackResult.affiliateLinks.tiktok || 'Không'}
   + Link Zalo: ${fallbackResult.affiliateLinks.zalo || 'Không'}
   + Link Shopee: ${fallbackResult.affiliateLinks.shopee || 'Không'}
@@ -377,6 +394,7 @@ QUY TẮC BẮT BUỘC:
 1. TUYỆT ĐỐI XÓA SẠCH từ ngữ nhạy cảm bên sỉ ("giá sỉ", "hoa hồng", "lương CTV", "sỉ ib", SĐT lạ). Chỉ giữ Hotline ${userSettings.hotline || '0876637806'}.
 2. KHÔNG dùng đường kẻ ngang dài ngoằng (────). Trình bày tinh gọn, sắc nét, đúng văn phong từng nền tảng:
    - facebook: Bài bán hàng 400-550 ký tự, có mã #${detectedCode}, giá, 3-4 gạch đầu dòng thông số thực tế đúng ngành hàng (KHÔNG bịa thông số laptop nếu đây là tai nghe/quần áo/gia dụng!), bảo hành/cam kết, hotline, link UTM Facebook (nếu có), hashtags.
+   - instagram: Caption giàu tính lifestyle/thẩm mỹ (250-400 ký tự), câu mở đầu thu hút, điểm nổi bật gọn gàng, CTA "DM hoặc nhấn Link ở Bio", kèm cụm 6-8 hashtag chuẩn Instagram.
    - tiktok: Kịch bản video ngắn 30 giây gồm 3 phần: [0-3s HOOK], [3-20s REVIEW/USP], [20-30s CTA gắn link TikTok/Bio].
    - zalo: Tin nhắn ngắn 4-5 dòng thân thiện để gửi khách/nhóm Zalo OA kèm link UTM Zalo (nếu có).
    - shopee: Mô tả chuẩn SEO giàu từ khóa tìm kiếm, liệt kê thông số và chính sách đổi trả.
@@ -389,6 +407,7 @@ QUY TẮC BẮT BUỘC:
   "specs": ["Thông số/điểm nổi bật 1", "Thông số 2", "Thông số 3"],
   "posts": {
     "facebook": "...",
+    "instagram": "...",
     "tiktok": "...",
     "zalo": "...",
     "shopee": "..."
@@ -418,6 +437,7 @@ QUY TẮC BẮT BUỘC:
 
     const multiPosts = {
       facebook: parsedJson.posts?.facebook || fallbackResult.posts.facebook,
+      instagram: parsedJson.posts?.instagram || fallbackResult.posts.instagram,
       tiktok: parsedJson.posts?.tiktok || fallbackResult.posts.tiktok,
       zalo: parsedJson.posts?.zalo || fallbackResult.posts.zalo,
       shopee: parsedJson.posts?.shopee || fallbackResult.posts.shopee

@@ -12,6 +12,7 @@
     activeStudioTab: 'facebook',
     studioContents: {
       facebook: '',
+      instagram: '',
       tiktok: '',
       zalo: '',
       shopee: ''
@@ -214,7 +215,7 @@
             });
             const data = await res.json();
             if (data.success) {
-              if (typeof showToast === 'function') showToast(data.message || 'Đã nạp dữ liệu mẫu BGK!', 'success');
+              if (typeof showToast === 'function') showToast(data.message || 'Đã khởi tạo dữ liệu thử nghiệm!');
               await loadAnalyticsSummary();
               if (typeof loadCatalogProducts === 'function') await loadCatalogProducts();
               if (typeof loadAffiliateLinks === 'function') await loadAffiliateLinks();
@@ -273,6 +274,7 @@
 
     const channels = [
       { key: 'facebook', label: 'Facebook' },
+      { key: 'instagram', label: 'Instagram' },
       { key: 'tiktok', label: 'TikTok' },
       { key: 'zalo', label: 'Zalo' },
       { key: 'shopee', label: 'Shopee' }
@@ -600,6 +602,7 @@
       // Populate multi-channel state
       if (data.multiChannel) {
         state.studioContents.facebook = data.multiChannel.facebook || '';
+        state.studioContents.instagram = data.multiChannel.instagram || '';
         state.studioContents.tiktok = data.multiChannel.tiktok || '';
         state.studioContents.zalo = data.multiChannel.zalo || '';
         state.studioContents.shopee = data.multiChannel.shopee || '';
@@ -620,7 +623,7 @@
         updateCharCounter();
       }
 
-      showToast('Đã phân tích AI và khởi tạo bài viết 4 kênh!');
+      showToast('Đã phân tích AI và khởi tạo bài viết đa kênh!');
     } catch (err) {
       console.error('[AI Generate Error]', err);
       showToast(err.message, true);
@@ -1068,7 +1071,7 @@
     try {
       savedLocal = JSON.parse(localStorage.getItem('autobiz_enabled_channels') || 'null');
     } catch (_) {}
-    const map = Object.assign({ facebook: true, tiktok: true, zalo: true, shopee: true }, savedLocal || {}, rawMap || {});
+    const map = Object.assign({ facebook: true, instagram: true, tiktok: true, zalo: true, shopee: true }, savedLocal || {}, rawMap || {});
     try {
       localStorage.setItem('autobiz_enabled_channels', JSON.stringify(map));
     } catch (_) {}
@@ -1113,22 +1116,35 @@
       const form = $('#formSettings');
       if (!form) return;
 
-      form.geminiApiKey.value = data.geminiApiKey || '';
-      form.fanpageName.value = data.fanpageName || '';
-      form.hotline.value = data.hotline || '';
-      form.email.value = data.email || '';
-      form.fanpageId.value = data.fanpageId || '';
-      form.facebookPageToken.value = data.facebookPageToken || '';
-      form.tiktokToken.value = data.tiktokToken || '';
-      form.zaloToken.value = data.zaloToken || '';
-      form.shopeePartnerId.value = data.shopeePartnerId || '';
+      if (form.geminiApiKey) form.geminiApiKey.value = data.geminiApiKey || '';
+      if (form.fanpageName) form.fanpageName.value = data.fanpageName || '';
+      if (form.hotline) form.hotline.value = data.hotline || '';
+      if (form.email) form.email.value = data.email || '';
+      if (form.aiTone) form.aiTone.value = data.aiTone || 'balanced';
+      if (form.autoSignature) form.autoSignature.value = data.autoSignature || '';
+      if (form.scheduleGapMinutes) form.scheduleGapMinutes.value = data.scheduleGapMinutes || 45;
+      if (form.autoShortenLinks) form.autoShortenLinks.checked = data.autoShortenLinks !== false;
+      if (form.fanpageId) form.fanpageId.value = data.fanpageId || '';
+      if (form.facebookPageToken) form.facebookPageToken.value = data.facebookPageToken || '';
+      if (form.instagramAccountId) form.instagramAccountId.value = data.instagramAccountId || '';
+      if (form.instagramAccessToken) form.instagramAccessToken.value = data.instagramAccessToken || '';
+      if (form.tiktokOpenId) form.tiktokOpenId.value = data.tiktokOpenId || '';
+      if (form.tiktokToken) form.tiktokToken.value = data.tiktokToken || '';
+      if (form.zaloOaId) form.zaloOaId.value = data.zaloOaId || '';
+      if (form.zaloToken) form.zaloToken.value = data.zaloToken || '';
+      if (form.shopeePartnerId) form.shopeePartnerId.value = data.shopeePartnerId || '';
+      if (form.shopeePartnerKey) form.shopeePartnerKey.value = data.shopeePartnerKey || '';
+      if (form.telegramBotToken) form.telegramBotToken.value = data.telegramBotToken || '';
+      if (form.telegramChatId) form.telegramChatId.value = data.telegramChatId || '';
       if (form.webhookSecret) form.webhookSecret.value = data.webhookSecret || 'autobiz_wh_secret_2026';
       const webhookUrlInput = $('#settingWebhookUrl');
       if (webhookUrlInput) webhookUrlInput.value = `${window.location.origin}/api/webhooks/order`;
       if (data.enabledChannels) {
         applyEnabledChannels(data.enabledChannels);
       }
-      loadWebhookLogs();
+      if (state.authUser?.role !== 'ctv') {
+        loadWebhookLogs();
+      }
     } catch (err) {
       console.error('[Settings Error]', err);
       showToast(err.message, true);
@@ -1145,15 +1161,26 @@
     applyEnabledChannels(enabledChannels);
 
     const payload = {
-      geminiApiKey: form.geminiApiKey.value.trim(),
-      fanpageName: form.fanpageName.value.trim(),
-      hotline: form.hotline.value.trim(),
-      email: form.email.value.trim(),
-      fanpageId: form.fanpageId.value.trim(),
-      facebookPageToken: form.facebookPageToken.value.trim(),
-      tiktokToken: form.tiktokToken.value.trim(),
-      zaloToken: form.zaloToken.value.trim(),
-      shopeePartnerId: form.shopeePartnerId.value.trim(),
+      geminiApiKey: form.geminiApiKey ? form.geminiApiKey.value.trim() : '',
+      fanpageName: form.fanpageName ? form.fanpageName.value.trim() : '',
+      hotline: form.hotline ? form.hotline.value.trim() : '',
+      email: form.email ? form.email.value.trim() : '',
+      aiTone: form.aiTone ? form.aiTone.value : 'balanced',
+      autoSignature: form.autoSignature ? form.autoSignature.value.trim() : '',
+      scheduleGapMinutes: form.scheduleGapMinutes ? (Number(form.scheduleGapMinutes.value) || 45) : 45,
+      autoShortenLinks: form.autoShortenLinks ? form.autoShortenLinks.checked : true,
+      fanpageId: form.fanpageId ? form.fanpageId.value.trim() : '',
+      facebookPageToken: form.facebookPageToken ? form.facebookPageToken.value.trim() : '',
+      instagramAccountId: form.instagramAccountId ? form.instagramAccountId.value.trim() : '',
+      instagramAccessToken: form.instagramAccessToken ? form.instagramAccessToken.value.trim() : '',
+      tiktokOpenId: form.tiktokOpenId ? form.tiktokOpenId.value.trim() : '',
+      tiktokToken: form.tiktokToken ? form.tiktokToken.value.trim() : '',
+      zaloOaId: form.zaloOaId ? form.zaloOaId.value.trim() : '',
+      zaloToken: form.zaloToken ? form.zaloToken.value.trim() : '',
+      shopeePartnerId: form.shopeePartnerId ? form.shopeePartnerId.value.trim() : '',
+      shopeePartnerKey: form.shopeePartnerKey ? form.shopeePartnerKey.value.trim() : '',
+      telegramBotToken: form.telegramBotToken ? form.telegramBotToken.value.trim() : '',
+      telegramChatId: form.telegramChatId ? form.telegramChatId.value.trim() : '',
       webhookSecret: form.webhookSecret ? form.webhookSecret.value.trim() : 'autobiz_wh_secret_2026',
       enabledChannels
     };
@@ -1326,7 +1353,7 @@
       }
     }
 
-    if ((isCtv && (state.currentView === 'settings' || state.currentView === 'users')) || (!hasCtvNetwork && state.currentView === 'users')) {
+    if (!hasCtvNetwork && state.currentView === 'users') {
       switchView('analytics');
     } else if (hasCtvNetwork && state.currentView === 'users') {
       loadUsersTable();
@@ -1555,7 +1582,7 @@
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Webhook test thất bại (Hãy đảm bảo đã nạp dữ liệu mẫu BGK trước).');
+        throw new Error(data.error || 'Webhook test thất bại (Hãy tạo ít nhất 1 link tiếp thị trước).');
       }
       showToast(data.message || `Webhook tự động chốt đơn ${orderId} thành công!`);
       await loadWebhookLogs();
@@ -1964,6 +1991,72 @@
           if (modalProfile) modalProfile.classList.remove('open');
         } catch (err) {
           showToast(err.message, true);
+        }
+      });
+    }
+
+    // Settings Hub Sub-Tab Switching & Channel Connection Tests
+    $$('.settings-tab-btn').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        const targetTab = tabBtn.getAttribute('data-settings-tab');
+        $$('.settings-tab-btn').forEach((b) => b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        $$('.settings-tab-panel').forEach((panel) => {
+          panel.style.display = panel.getAttribute('data-settings-panel') === targetTab ? 'block' : 'none';
+        });
+      });
+    });
+
+    const btnTestFb = $('#btnTestFb');
+    if (btnTestFb) {
+      btnTestFb.addEventListener('click', async () => {
+        const orig = btnTestFb.textContent;
+        btnTestFb.disabled = true;
+        btnTestFb.textContent = 'Đang kiểm tra...';
+        try {
+          const res = await fetch('/api/test-fb', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fanpageId: $('#settingFanpageId')?.value?.trim() || '',
+              facebookPageToken: $('#settingFacebookPageToken')?.value?.trim() || ''
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Kết nối Facebook thất bại.');
+          showToast(data.message || 'Kết nối Facebook Fanpage thành công!');
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btnTestFb.disabled = false;
+          btnTestFb.textContent = orig;
+        }
+      });
+    }
+
+    const btnTestInstagram = $('#btnTestInstagram');
+    if (btnTestInstagram) {
+      btnTestInstagram.addEventListener('click', async () => {
+        const orig = btnTestInstagram.textContent;
+        btnTestInstagram.disabled = true;
+        btnTestInstagram.textContent = 'Đang kiểm tra...';
+        try {
+          const res = await fetch('/api/test-instagram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              instagramAccountId: $('#settingInstagramAccountId')?.value?.trim() || '',
+              instagramAccessToken: $('#settingInstagramAccessToken')?.value?.trim() || ''
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Kết nối Instagram thất bại.');
+          showToast(data.message || 'Kết nối Instagram Business thành công!');
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btnTestInstagram.disabled = false;
+          btnTestInstagram.textContent = orig;
         }
       });
     }
