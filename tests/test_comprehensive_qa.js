@@ -971,21 +971,30 @@ async function runAllTests() {
     await runCase(
       'PROD-02',
       'Production Assets',
-      'Kiểm tra trang chủ & tài nguyên giao diện mới (?v=20261125_v11) trả HTTP 200 (0 lỗi 404)',
-      'index.html chứa Dual Theme & v11; style.css, autobiz.js, manifest.json, icon.svg đều 200 OK',
+      'Kiểm tra trang chủ & tài nguyên giao diện mới (?v=20261126_v12) trả HTTP 200 (0 lỗi 404)',
+      'index.html chứa Dual Theme & v12; style.css, autobiz.js, 5 ảnh Landing, manifest.json, icon.svg đều 200 OK',
       async () => {
         const htmlRes = await fetch(`${PROD_URL}/`);
         assert.strictEqual(htmlRes.status, 200);
         const html = await htmlRes.text();
-        assert(html.includes('style.css?v=20261125_v11') && html.includes('autobiz.js?v=20261125_v11'));
+        assert(html.includes('style.css?v=20261126_v12') && html.includes('autobiz.js?v=20261126_v12'));
         assert(html.includes('data-theme="dark"') && html.includes('btnThemeToggle'));
 
-        const assets = ['/css/style.css?v=20261125_v11', '/js/autobiz.js?v=20261125_v11', '/manifest.json', '/icons/icon.svg'];
+        const assets = [
+          '/css/style.css?v=20261126_v12',
+          '/js/autobiz.js?v=20261126_v12',
+          '/images/landing/dashboard-dark.png',
+          '/images/landing/studio-dark.png',
+          '/images/landing/bio-public.png',
+          '/images/landing/reconcile-dark.png',
+          '/manifest.json',
+          '/icons/icon.svg'
+        ];
         for (const a of assets) {
           const r = await fetch(`${PROD_URL}${a}`);
           assert.strictEqual(r.status, 200, `${a} trả ${r.status}`);
         }
-        return '5/5 tài nguyên trang chủ & Dual Theme v11 trả HTTP 200 OK';
+        return '8/8 tài nguyên trang chủ, ảnh minh họa & Dual Theme v12 trả HTTP 200 OK';
       }
     );
 

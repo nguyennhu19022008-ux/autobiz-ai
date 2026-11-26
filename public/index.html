@@ -29,47 +29,258 @@
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
 
   <!-- Minimalist FinTech & SaaS Dual-Theme Stylesheet -->
-  <link rel="stylesheet" href="/css/style.css?v=20261125_v11">
+  <link rel="stylesheet" href="/css/style.css?v=20261126_v12">
 </head>
 <body>
 
-  <!-- ======================== 1. ENTRY LANDING PAGE (HIỂN THỊ MẶC ĐỊNH CHO NGƯỜI MỚI) ======================== -->
+  <!-- ======================== 1. ENTRY LANDING PAGE (EDITORIAL & BENTO FINTECH) ======================== -->
   <div id="landingPage" class="landing-wrapper">
     <header class="landing-header">
-      <div class="brand-wrapper">
-        <div class="brand-mark">AB</div>
-        <div>
-          <div class="brand-title">AutoBiz AI</div>
-          <div class="brand-tag">v2026.1</div>
+      <div class="landing-header-inner">
+        <div class="brand-wrapper">
+          <div class="brand-mark">AB</div>
+          <div>
+            <div class="brand-title">AutoBiz AI</div>
+            <div class="brand-tag">v2026.1</div>
+          </div>
+        </div>
+
+        <nav class="landing-nav" aria-label="Điều hướng giới thiệu">
+          <a href="#landing-features" class="landing-nav-link">Tính năng cốt lõi</a>
+          <a href="#landing-fintech" class="landing-nav-link">Tài chính thực</a>
+          <a href="#landing-workflow" class="landing-nav-link">Quy trình 4 bước</a>
+          <a href="/slides" class="landing-nav-link">Slide thuyết trình</a>
+        </nav>
+
+        <div class="landing-header-actions">
+          <button type="button" id="btnThemeToggleLanding" class="theme-toggle-btn js-theme-toggle" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Đổi giao diện Sáng / Tối">
+            <svg class="theme-toggle-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+            <svg class="theme-toggle-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+          </button>
+          <button type="button" id="btnLandingLogin" class="btn btn-secondary btn-sm">Đăng nhập</button>
+          <button type="button" id="btnLandingRegister" class="btn btn-primary btn-sm">Đăng ký</button>
         </div>
       </div>
-      <button type="button" id="btnThemeToggleLanding" class="theme-toggle-btn js-theme-toggle" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Đổi giao diện Sáng / Tối">
-        <svg class="theme-toggle-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
-        <svg class="theme-toggle-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
-      </button>
     </header>
 
-    <main class="landing-hero">
-      <div class="landing-pill">
-        <span class="live-dot"></span>
-        <span>Minimalist FinTech · Affiliate SaaS</span>
-      </div>
-      <h1 class="landing-title">
-        AutoBiz AI
-      </h1>
-      <p class="landing-subtitle">
-        Nền tảng quản lý Affiliate, đội ngũ CTV và phân phối nội dung đa kênh với đối soát doanh thu thực tế theo thời gian thực.
-      </p>
+    <main class="landing-main">
+      <!-- HERO: EDITORIAL SPLIT (LEFT COPY / RIGHT REAL APP SHOWCASE) -->
+      <section class="landing-hero-split">
+        <div class="landing-hero-copy">
+          <div class="landing-pill">
+            <span class="live-dot"></span>
+            <span>Minimalist FinTech · Affiliate SaaS · Supabase Cloud</span>
+          </div>
+          <h1 class="landing-title">
+            Tự động hóa tiếp thị 5 kênh &amp; đối soát hoa hồng thực tế.
+          </h1>
+          <p class="landing-subtitle">
+            Nền tảng hợp nhất dành cho Chủ shop, Cộng tác viên và KOC: bóc tách sản phẩm từ link sàn, AI viết bài 5 nền tảng, tạo Trang Bio cá nhân và chỉ tính hoa hồng trên đơn giao thành công.
+          </p>
 
-      <div class="landing-cta-group">
-        <button type="button" id="btnLandingHeroRegister" class="btn btn-primary landing-cta-btn">
-          Đăng Ký Tài Khoản
-        </button>
-        <button type="button" id="btnLandingHeroLogin" class="btn btn-secondary landing-cta-btn">
-          Đăng Nhập
-        </button>
-      </div>
+          <div class="landing-cta-group">
+            <button type="button" id="btnLandingHeroRegister" class="btn btn-primary landing-cta-btn">
+              <span>Đăng Ký Tài Khoản</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+            <button type="button" id="btnLandingHeroLogin" class="btn btn-secondary landing-cta-btn">
+              Đăng Nhập Workspace
+            </button>
+          </div>
+
+          <div class="landing-proof-strip">
+            <div class="landing-proof-item">
+              <div class="landing-proof-num tabular-nums">94%</div>
+              <div class="landing-proof-label">Đồng thuận thị trường (N = 10.920)</div>
+            </div>
+            <div class="landing-proof-item">
+              <div class="landing-proof-num tabular-nums">0 đ</div>
+              <div class="landing-proof-label">Hoa hồng ảo (Click không mua = 0 đ)</div>
+            </div>
+            <div class="landing-proof-item">
+              <div class="landing-proof-num tabular-nums">5 ms</div>
+              <div class="landing-proof-label">Tốc độ tổng hợp 452 CTV</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-hero-visual">
+          <div class="landing-browser-frame">
+            <div class="landing-browser-bar">
+              <div class="landing-browser-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="landing-browser-url">autobiz-ai-seven.vercel.app</div>
+              <span class="tag tag-approved" style="font-size: 10px;">Live</span>
+            </div>
+            <img id="landingHeroPreviewImg" src="/images/landing/dashboard-dark.png" alt="Giao diện Tổng quan FinTech AutoBiz AI theo thời gian thực" class="landing-shot-img" />
+          </div>
+        </div>
+      </section>
+
+      <!-- BENTO FEATURE SHOWCASE (12-COL ASYMMETRIC GRID) -->
+      <section id="landing-features" class="landing-section">
+        <div class="landing-section-head">
+          <div>
+            <div class="landing-eyebrow">01 · HỆ SINH THÁI ĐA KÊNH</div>
+            <h2 class="landing-h2">Mọi công cụ bán hàng &amp; tiếp thị trong một luồng khép kín.</h2>
+          </div>
+          <p class="landing-section-desc">
+            Thay thế 3 phần mềm rời rạc (AI viết bài, lên lịch đăng, rút gọn link đo hoa hồng) với giao diện tối giản chuẩn FinTech.
+          </p>
+        </div>
+
+        <div class="landing-bento-grid">
+          <div class="landing-bento-pane span-7">
+            <div class="landing-pane-meta">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <span>STUDIO AI 5 KÊNH &amp; BÓC TÁCH URL 1 CHẠM</span>
+            </div>
+            <h3 class="landing-h3">Dán link Shopee/TikTok, AI tự viết chuẩn văn phong 5 nền tảng.</h3>
+            <p class="landing-p">
+              Tự động nhận diện tên sản phẩm, giá bán và 5 ngành hàng. Gemini AI sinh đồng thời bài đăng Facebook, Instagram Business, kịch bản TikTok, Zalo OA và Shopee SEO — kèm công tắc bật/tắt kênh không dùng.
+            </p>
+            <div class="landing-shot-box">
+              <img src="/images/landing/studio-dark.png" alt="Studio Đa Kênh 5 nền tảng AutoBiz AI" class="landing-shot-img" loading="lazy" />
+            </div>
+          </div>
+
+          <div class="landing-bento-pane span-5">
+            <div class="landing-pane-meta">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              <span>TRANG LINK BIO &amp; LINK MỜI CTV</span>
+            </div>
+            <h3 class="landing-h3">Xuất bản trang Bio <code>/u/:username</code> tự động gắn tracking.</h3>
+            <p class="landing-p">
+              Mỗi Chủ shop và CTV sở hữu ngay trang trưng bày sản phẩm chuyên nghiệp. Mọi lượt bấm Mua Ngay tự động đi qua <code>/r/:code</code> để ghi nhận UTM và SubID.
+            </p>
+            <div class="landing-shot-box">
+              <img src="/images/landing/bio-public.png" alt="Trang Link Bio công khai AutoBiz AI" class="landing-shot-img" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPECIALTY: STRICT REAL FINANCE & ANTI-FRAUD (EDITORIAL SPLIT REVERSED) -->
+      <section id="landing-fintech" class="landing-section">
+        <div class="landing-split-reconcile">
+          <div class="landing-reconcile-visual">
+            <div class="landing-shot-box">
+              <img src="/images/landing/reconcile-dark.png" alt="Đối soát đơn hàng thật CSV, Webhook và Cookie Tracking" class="landing-shot-img" loading="lazy" />
+            </div>
+          </div>
+
+          <div class="landing-reconcile-copy">
+            <div class="landing-eyebrow">02 · ĐIỂM ĐẶC BIỆT CỐT LÕI</div>
+            <h2 class="landing-h2">Chế độ Tài chính Thực: Xóa bỏ hoàn toàn hoa hồng ảo.</h2>
+            <p class="landing-p" style="margin-bottom: 18px;">
+              Khác với các công cụ chỉ đếm lượt click, AutoBiz AI tách bạch lưu lượng truy cập và doanh thu thực chốt để bảo vệ dòng tiền cho Chủ shop.
+            </p>
+
+            <div class="landing-feature-rows">
+              <div class="landing-feature-row">
+                <div class="landing-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div>
+                  <div class="landing-feature-title">Click không mua = 0 đ</div>
+                  <div class="landing-feature-sub">Chỉ cộng GMV, Thực thu và Hoa hồng khi có đơn hàng xác nhận <code>completed</code>, chống cộng trùng theo <code>orderId</code>.</div>
+                </div>
+              </div>
+
+              <div class="landing-feature-row">
+                <div class="landing-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div>
+                  <div class="landing-feature-title">Lọc Bot Preview &amp; Chống Click Đúp 60 giây</div>
+                  <div class="landing-feature-sub">Loại bỏ bot quét link của MXH nhưng vẫn đếm chuẩn các thiết bị thật dùng chung Wi-Fi hoặc trình duyệt trong Zalo.</div>
+                </div>
+              </div>
+
+              <div class="landing-feature-row">
+                <div class="landing-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+                <div>
+                  <div class="landing-feature-title">3 Nguồn Xác Nhận Đơn &amp; Mã Nhúng Cookie</div>
+                  <div class="landing-feature-sub">Hỗ trợ Webhook POS (Pancake, Sapo, Haravan), Import báo cáo <code>.CSV/.XLSX</code> từ Shopee/TikTok và script <code>/ab-track.js</code>.</div>
+                </div>
+              </div>
+
+              <div class="landing-feature-row">
+                <div class="landing-feature-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </div>
+                <div>
+                  <div class="landing-feature-title">Thanh Toán Hoa Hồng Bằng VietQR Chuẩn Napas</div>
+                  <div class="landing-feature-sub">CTV gửi yêu cầu rút trong số dư khả dụng; Chủ shop quét mã VietQR tự sinh để chuyển khoản trực tiếp không qua trung gian.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WORKFLOW 4 STEPS & 3 PERSONAS (HORIZONTAL LOGIC MAPPING) -->
+      <section id="landing-workflow" class="landing-section">
+        <div class="landing-section-head">
+          <div>
+            <div class="landing-eyebrow">03 · QUY TRÌNH &amp; PHÂN QUYỀN 3 CẤP</div>
+            <h2 class="landing-h2">Khởi chạy trong 3 phút cho mọi mô hình kinh doanh.</h2>
+          </div>
+          <p class="landing-section-desc">
+            Dữ liệu được cô lập hoàn toàn theo từng tài khoản trên Supabase Postgres với mã hóa mật khẩu chuẩn <code>scrypt</code>.
+          </p>
+        </div>
+
+        <div class="landing-steps-grid">
+          <div class="landing-step-col">
+            <div class="landing-step-num tabular-nums">01</div>
+            <div class="landing-step-title">Chọn vai trò &amp; Nạp sản phẩm</div>
+            <div class="landing-step-desc">Đăng ký làm Chủ shop (có/không CTV) hoặc KOC độc lập. Dán URL Shopee/TikTok để tự động điền kho hàng.</div>
+          </div>
+          <div class="landing-step-col">
+            <div class="landing-step-num tabular-nums">02</div>
+            <div class="landing-step-title">AI viết 5 kênh &amp; Tạo /r/:code</div>
+            <div class="landing-step-desc">Sinh nội dung riêng cho từng mạng xã hội, xuất bản Trang Bio <code>/u/:username</code> và chia sẻ link ngắn gắn SubID.</div>
+          </div>
+          <div class="landing-step-col">
+            <div class="landing-step-num tabular-nums">03</div>
+            <div class="landing-step-title">Đo click &amp; Chốt đơn thật</div>
+            <div class="landing-step-desc">Theo dõi lượt click thật từng kênh, đồng bộ đơn giao thành công từ Webhook POS hoặc file báo cáo CSV/XLSX.</div>
+          </div>
+          <div class="landing-step-col">
+            <div class="landing-step-num tabular-nums">04</div>
+            <div class="landing-step-title">Đối soát &amp; Duyệt VietQR</div>
+            <div class="landing-step-desc">Hệ thống tách bạch GMV, Hoa hồng CTV và Tiền thực thu Chủ shop; duyệt rút tiền qua mã VietQR trong 1 chạm.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOTTOM CTA -->
+      <section class="landing-bottom-cta">
+        <div>
+          <h2 class="landing-h2" style="margin-bottom: 6px;">Sẵn sàng trải nghiệm AutoBiz AI ngay bây giờ?</h2>
+          <p class="landing-p" style="margin-bottom: 0;">Đăng ký tài khoản mới hoặc đăng nhập để mở Workspace quản trị thời gian thực.</p>
+        </div>
+        <div class="landing-cta-group" style="margin-bottom: 0;">
+          <button type="button" id="btnLandingBottomRegister" class="btn btn-primary landing-cta-btn">Tạo Tài Khoản Miễn Phí</button>
+          <a href="/slides" class="btn btn-secondary landing-cta-btn" style="text-decoration: none;">Xem Slide Thuyết Trình</a>
+        </div>
+      </section>
     </main>
+
+    <footer class="landing-footer">
+      <div class="landing-footer-inner">
+        <span>AutoBiz AI · Hệ Sinh Thái Tiếp Thị Đa Kênh &amp; FinTech Affiliate (LV03)</span>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <a href="/u/admin" class="landing-nav-link">Demo Link Bio</a>
+          <a href="/slides" class="landing-nav-link">Pitch Deck (/slides)</a>
+          <span style="color: var(--text-muted);">Design by VUONGGIA</span>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <!-- ======================== MOBILE HEADER ======================== -->
@@ -1493,6 +1704,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Controller -->
-  <script src="/js/autobiz.js?v=20261125_v11"></script>
+  <script src="/js/autobiz.js?v=20261126_v12"></script>
 </body>
 </html>

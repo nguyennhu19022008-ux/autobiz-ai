@@ -89,6 +89,13 @@
       metaTheme.setAttribute('content', nextTheme === 'dark' ? '#09090B' : '#F9FAFB');
     }
 
+    const heroPreviewImg = $('#landingHeroPreviewImg');
+    if (heroPreviewImg) {
+      heroPreviewImg.src = nextTheme === 'dark'
+        ? '/images/landing/dashboard-dark.png'
+        : '/images/landing/dashboard-light.png';
+    }
+
     if (persist) {
       try {
         localStorage.setItem('autobiz_theme', nextTheme);
@@ -2698,6 +2705,7 @@
     const btnLandingHeroLogin = $('#btnLandingHeroLogin');
     const btnLandingRegister = $('#btnLandingRegister');
     const btnLandingHeroRegister = $('#btnLandingHeroRegister');
+    const btnLandingBottomRegister = $('#btnLandingBottomRegister');
     const btnBypassToWorkspace = $('#btnBypassToWorkspace');
     const btnBackToLanding = $('#btnBackToLanding');
 
@@ -2733,6 +2741,7 @@
     if (btnLandingHeroLogin) btnLandingHeroLogin.addEventListener('click', openLoginFromLanding);
     if (btnLandingRegister) btnLandingRegister.addEventListener('click', openRegisterSurvey);
     if (btnLandingHeroRegister) btnLandingHeroRegister.addEventListener('click', openRegisterSurvey);
+    if (btnLandingBottomRegister) btnLandingBottomRegister.addEventListener('click', openRegisterSurvey);
     if (btnBypassToWorkspace) {
       btnBypassToWorkspace.addEventListener('click', () => {
         hideLandingPage();
