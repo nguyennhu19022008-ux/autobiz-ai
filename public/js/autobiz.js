@@ -836,7 +836,7 @@
     const originalBtnText = btnGenerate ? btnGenerate.innerHTML : '';
     if (btnGenerate) {
       btnGenerate.disabled = true;
-      btnGenerate.innerHTML = `<svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"></circle></svg> Đang phân tích AI & tạo 4 kênh...`;
+      btnGenerate.innerHTML = `<svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"></circle></svg> Đang phân tích AI & tạo 5 kênh...`;
     }
 
     try {
@@ -1634,11 +1634,11 @@
     const analyticsSubtitle = $('#analyticsSubtitle') || $('#view-analytics .page-subtitle');
     if (analyticsSubtitle) {
       if (isIndependentAffiliate) {
-        analyticsSubtitle.textContent = 'Không gian Affiliate / KOC độc lập — Dán link Shopee/TikTok, AI viết bài 4 kênh và theo dõi click chuyển đổi cá nhân.';
+        analyticsSubtitle.textContent = 'Không gian Affiliate / KOC độc lập — Dán link Shopee/TikTok, AI viết bài 5 kênh và theo dõi click chuyển đổi cá nhân.';
       } else if (isCtv) {
         analyticsSubtitle.textContent = `Cổng Cộng Tác Viên (${user.subId}) — Giám sát lượt click & hoa hồng cá nhân theo thời gian thực.`;
       } else if (isShopSolo) {
-        analyticsSubtitle.textContent = 'Không gian Chủ shop tự bán — Tự động hóa nội dung 4 kênh và theo dõi đơn hàng trực tiếp.';
+        analyticsSubtitle.textContent = 'Không gian Chủ shop tự bán — Tự động hóa nội dung 5 kênh và theo dõi đơn hàng trực tiếp.';
       } else {
         analyticsSubtitle.textContent = 'Giám sát số liệu tiếp thị liên kết, lượt click UTM và hoa hồng CTV theo thời gian thực.';
       }
@@ -1874,12 +1874,16 @@
 
   function showLandingPage() {
     const landing = $('#landingPage');
+    const appLayout = $('.app-layout');
     if (landing) landing.style.display = 'flex';
+    if (appLayout) appLayout.style.display = 'none';
   }
 
   function hideLandingPage() {
     const landing = $('#landingPage');
+    const appLayout = $('.app-layout');
     if (landing) landing.style.display = 'none';
+    if (appLayout) appLayout.style.display = 'flex';
     requestAnimationFrame(() => {
       updateSidebarPill();
       updateAllTabPills();

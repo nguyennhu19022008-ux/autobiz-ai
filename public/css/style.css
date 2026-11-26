@@ -1597,18 +1597,19 @@ code {
 }
 
 .landing-title {
-  font-size: clamp(32px, 3.8vw, 52px);
+  font-size: clamp(30px, 3.3vw, 46px);
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.035em;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
   color: var(--text-main);
+  text-wrap: balance;
   margin-bottom: 18px;
 }
 
 .landing-subtitle {
   font-size: clamp(15px, 1.15vw, 17px);
-  color: var(--text-muted);
-  line-height: 1.65;
+  color: var(--text-secondary);
+  line-height: 1.68;
   margin-bottom: 28px;
   max-width: 560px;
 }
@@ -1647,9 +1648,9 @@ code {
 }
 
 .landing-proof-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.4;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 /* Browser & Screenshot Frames (Crisp 1px, Zero Milky Overlay) */
@@ -1724,16 +1725,16 @@ code {
 
 /* Sections & Headings */
 .landing-section {
-  padding: 64px 0;
+  padding: 84px 0;
   border-bottom: 1px solid var(--border-color);
 }
 
 .landing-section-head {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  gap: 32px;
+  gap: 36px;
   align-items: end;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .landing-eyebrow {
@@ -1743,37 +1744,38 @@ code {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--semantic-emerald);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .landing-h2 {
   font-size: clamp(24px, 2.5vw, 34px);
   font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.028em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
   color: var(--text-main);
+  text-wrap: balance;
 }
 
 .landing-h3 {
   font-size: 19px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
   letter-spacing: -0.015em;
   color: var(--text-main);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .landing-p {
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--text-muted);
-  margin-bottom: 18px;
+  font-size: 15px;
+  line-height: 1.68;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
 }
 
 .landing-section-desc {
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.68;
+  color: var(--text-secondary);
 }
 
 /* Bento Grid (Asymmetric 12-Col, 1px Hairline Border) */
@@ -1830,8 +1832,8 @@ code {
 
 .landing-feature-row {
   display: flex;
-  gap: 14px;
-  padding: 15px 0;
+  gap: 16px;
+  padding: 20px 0;
   border-bottom: 1px solid var(--border-color);
   align-items: flex-start;
 }
@@ -1851,16 +1853,16 @@ code {
 }
 
 .landing-feature-title {
-  font-size: 14.5px;
+  font-size: 15.5px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 
 .landing-feature-sub {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--text-secondary);
 }
 
 /* Horizontal 4-Step Logic Mapping */
@@ -1872,7 +1874,7 @@ code {
 }
 
 .landing-step-col {
-  padding: 24px 22px;
+  padding: 30px 26px;
   border-right: 1px solid var(--border-color);
 }
 .landing-step-col:first-child {
@@ -1888,20 +1890,20 @@ code {
   font-size: 13px;
   font-weight: 700;
   color: var(--semantic-emerald);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .landing-step-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .landing-step-desc {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--text-secondary);
 }
 
 /* Bottom CTA & Footer */
