@@ -336,7 +336,7 @@ app.post('/api/auth/login', (req, res) => {
 app.post('/api/auth/profile', (req, res) => {
   try {
     const username = req.authUser?.username;
-    if (!username) {
+    if (!username || req.authUser?.isDefaultWorkspace) {
       return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để cập nhật hồ sơ.' });
     }
     const updated = authService.updateUserProfile(username, req.body || {});
@@ -366,7 +366,7 @@ app.post('/api/auth/profile', (req, res) => {
 app.post('/api/auth/change-password', (req, res) => {
   try {
     const username = req.authUser?.username;
-    if (!username) {
+    if (!username || req.authUser?.isDefaultWorkspace) {
       return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để đổi mật khẩu.' });
     }
     const { currentPassword, newPassword } = req.body || {};
@@ -460,11 +460,17 @@ app.post('/api/auth/logout', (req, res) => {
 
 // 0.1. 3-Tier Account & Role Management APIs (Admin Tổng -> Chủ shop -> CTV)
 app.get('/api/users', authService.requireAdmin, (req, res) => {
+  if (req.authUser?.isDefaultWorkspace) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập tài khoản Quản trị / Chủ shop.' });
+  }
   const users = authService.listUsers(req.authUser.role, req.authUser.username);
   res.json({ success: true, total: users.length, users, actorRole: req.authUser.role });
 });
 
 app.post('/api/users', authService.requireAdmin, (req, res) => {
+  if (req.authUser?.isDefaultWorkspace) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập tài khoản Quản trị / Chủ shop.' });
+  }
   try {
     const requestedRole = String(req.body?.role || 'ctv').trim();
     if (req.authUser.role !== 'superadmin' && requestedRole !== 'ctv') {
@@ -485,6 +491,9 @@ app.post('/api/users', authService.requireAdmin, (req, res) => {
 });
 
 app.patch('/api/users/:username', authService.requireAdmin, (req, res) => {
+  if (req.authUser?.isDefaultWorkspace) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập tài khoản Quản trị / Chủ shop.' });
+  }
   const targetName = String(req.params.username || '').trim().toLowerCase();
   const existingList = authService.listUsers('superadmin');
   const targetUser = existingList.find((u) => u.username.toLowerCase() === targetName);
@@ -506,6 +515,9 @@ app.patch('/api/users/:username', authService.requireAdmin, (req, res) => {
 });
 
 app.delete('/api/users/:username', authService.requireAdmin, (req, res) => {
+  if (req.authUser?.isDefaultWorkspace) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập tài khoản Quản trị / Chủ shop.' });
+  }
   const targetName = String(req.params.username || '').trim().toLowerCase();
   if (req.authUser && targetName === String(req.authUser.username || '').toLowerCase()) {
     return res.status(400).json({ success: false, error: 'Không thể tự xóa tài khoản đang đăng nhập.' });
