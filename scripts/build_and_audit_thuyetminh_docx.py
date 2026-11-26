@@ -319,13 +319,13 @@ def build_document():
 
     # ==================== PAGE 3: II. TÓM TẮT DỰ ÁN + HÌNH 1 ====================
     add_h1(doc, 'II. TÓM TẮT DỰ ÁN')
-    add_dash(doc, 'Ý tưởng chính:', 'Xây dựng nền tảng AutoBiz AI kết nối hai phía giữa hộ kinh doanh nhỏ (B2B) và cộng tác viên học sinh, sinh viên không cần vốn (B2C) qua tự động hóa nội dung đa kênh và đối soát dòng tiền Affiliate minh bạch.')
+    add_dash(doc, 'Ý tưởng chính:', 'Xây dựng nền tảng AutoBiz AI kết nối hai phía giữa hộ kinh doanh nhỏ (B2B) và cộng tác viên học sinh, sinh viên không cần vốn (B2C) qua tự động hóa nội dung 5 kênh và đối soát dòng tiền Affiliate thực tế.')
     add_dash(doc, '04 lớp giá trị khác biệt:', '')
-    add_plus(doc, 'Thu thập 1 chạm:', 'Extension AB tự lấy tên, giá, nhận diện 5 ngành hàng và tối đa 6 ảnh từ sàn TMĐT.')
-    add_plus(doc, 'Gemini AI 4 kênh:', 'Sinh song song bài Facebook, TikTok Script, Zalo OA, Shopee SEO kèm công tắc Bật/Tắt từng kênh.')
-    add_plus(doc, 'Đăng thật & Tracking:', 'Đăng qua Facebook Graph API v21.0 và bọc link /r/:code gắn UTM + mã CTV (SubID).')
-    add_plus(doc, 'FinTech đối soát:', 'Tách bạch Tổng doanh thu (GMV), Hoa hồng CTV và Tiền thực thu Chủ shop trong 5 mili-giây.')
-    add_dash(doc, 'Kết quả bước đầu:', 'Sản phẩm đã hoạt động live tại https://autobiz-ai-seven.vercel.app, thử nghiệm thật trên Fanpage Laptop Vương Gia (ID: 1154184381110692) và khảo sát N = 10.920 người (94% đồng thuận).')
+    add_plus(doc, 'Thu thập 1 chạm & Bio:', 'Tự bóc tách sản phẩm từ URL Shopee/TikTok, Extension AB lấy tối đa 6 ảnh và tự sinh trang Link Bio /u/:username.')
+    add_plus(doc, 'Gemini AI 5 kênh:', 'Sinh song song bài Facebook, Instagram Business, TikTok Script, Zalo OA, Shopee SEO kèm công tắc Bật/Tắt từng kênh.')
+    add_plus(doc, 'Đăng thật & Tracking:', 'Đăng qua Facebook/Instagram Graph API, bọc link /r/:code gắn UTM + SubID, lọc bot preview & chống spam click 60 giây.')
+    add_plus(doc, 'FinTech đối soát thực:', 'Chế độ Tài chính thực (click không mua = 0đ), đối soát đơn thật qua Webhook POS, Import CSV/XLSX, Cookie /ab-track.js và thanh toán hoa hồng bằng mã VietQR chuẩn Napas trong 5 mili-giây.')
+    add_dash(doc, 'Kết quả bước đầu:', 'Sản phẩm vận hành live trên Vercel + Supabase Postgres tại https://autobiz-ai-seven.vercel.app (giao diện Minimalist FinTech Sáng/Tối), thử nghiệm trên Fanpage Laptop Vương Gia (ID: 1154184381110692), vượt qua 71/71 bài kiểm thử tự động và khảo sát N = 10.920 người (94% đồng thuận).')
 
     add_figure(doc, 'fig1_ecosystem_qr.png', 'Hình 1: Sơ đồ hệ sinh thái hai phía, luồng dòng tiền AutoBiz AI và mã QR truy cập WebApp Live.')
 
@@ -352,11 +352,11 @@ def build_document():
     bmc.cell(2, 2).merge(bmc.cell(2, 4))
 
     fill_cell(bmc.cell(0, 0), 'ĐỐI TÁC CHÍNH\n- Hộ kinh doanh, shop lẻ 5 ngành hàng.\n- Google Gemini, Vercel, Supabase, Meta API.\n- Trường THPT Nguyễn Du.', top_mar=35, line_sp=1.0)
-    fill_cell(bmc.cell(0, 1), 'HOẠT ĐỘNG CHÍNH\n- Phát triển WebApp, Extension AB.\n- Sinh nội dung 4 kênh & đối soát /r/:code.', top_mar=35, line_sp=1.0)
-    fill_cell(bmc.cell(1, 1), 'TÀI NGUYÊN CHÍNH\n- Mã nguồn Node.js & Chrome MV3.\n- Khảo sát N = 10.920 & Fanpage Laptop Vương Gia.', top_mar=35, line_sp=1.0)
-    fill_cell(bmc.cell(0, 2), 'GIẢI PHÁP GIÁ TRỊ\n- Tự động hóa quy trình lấy ảnh → viết bài 4 kênh → đăng Fanpage → tính tiền.\n- Tiết kiệm 80% chi phí so với mua rời 3 công cụ.', top_mar=35, line_sp=1.0)
-    fill_cell(bmc.cell(0, 3), 'QUAN HỆ KHÁCH HÀNG\n- Tự phục vụ trên Web.\n- Dùng thử 30 ngày / 50 bài miễn phí.', top_mar=35, line_sp=1.0)
-    fill_cell(bmc.cell(1, 3), 'KÊNH PHÂN PHỐI\n- WebApp Vercel Live & Extension.\n- Facebook, TikTok, Zalo, Shopee.', top_mar=35, line_sp=1.0)
+    fill_cell(bmc.cell(0, 1), 'HOẠT ĐỘNG CHÍNH\n- Phát triển WebApp, Extension AB.\n- AI 5 kênh, Bio /u/, đối soát CSV & VietQR.', top_mar=35, line_sp=1.0)
+    fill_cell(bmc.cell(1, 1), 'TÀI NGUYÊN CHÍNH\n- Node.js, Supabase Postgres & Chrome MV3.\n- Khảo sát N = 10.920 & 71/71 QA Test.', top_mar=35, line_sp=1.0)
+    fill_cell(bmc.cell(0, 2), 'GIẢI PHÁP GIÁ TRỊ\n- Tự động hóa quy trình lấy ảnh → viết bài 5 kênh → đăng bài → đối soát đơn thật & VietQR.\n- Tiết kiệm 80% chi phí so với mua rời 3 công cụ.', top_mar=35, line_sp=1.0)
+    fill_cell(bmc.cell(0, 3), 'QUAN HỆ KHÁCH HÀNG\n- Tự phục vụ trên Web (Sáng/Tối).\n- Dùng thử 30 ngày / 50 bài miễn phí.', top_mar=35, line_sp=1.0)
+    fill_cell(bmc.cell(1, 3), 'KÊNH PHÂN PHỐI\n- WebApp Vercel Live & Trang Bio /u/.\n- FB, Instagram, TikTok, Zalo, Shopee.', top_mar=35, line_sp=1.0)
     fill_cell(bmc.cell(0, 4), 'PHÂN KHÚC KHÁCH HÀNG\n- B2B: Chủ shop nhỏ thiếu nhân sự.\n- B2C: Học sinh, sinh viên làm CTV không vốn.', top_mar=35, line_sp=1.0)
     fill_cell(bmc.cell(2, 0), 'CẤU TRÚC CHI PHÍ (NĂM 1: 220 TRIỆU)\n- Cloud Serverless: 36 triệu | Gemini API: 44 triệu.\n- R&D, vận hành & hỗ trợ cộng đồng: 140 triệu.', top_mar=35, line_sp=1.0)
     fill_cell(bmc.cell(2, 2), 'DÒNG DOANH THU (NĂM 1: 520 TRIỆU → NĂM 3: 9,03 TỶ)\n- Doanh thu kép: SaaS (Pro 199k, Team 499k/tháng) + Chia sẻ phí Affiliate.\n- Điểm hòa vốn tháng 5 (~110 shop); Biên lãi ròng đạt 57,7% → 64%.', top_mar=35, line_sp=1.0)
@@ -366,19 +366,19 @@ def build_document():
     # ==================== PAGE 5+: B. MÔ TẢ CHI TIẾT SẢN PHẨM, DỊCH VỤ ====================
     add_h2(doc, 'B. MÔ TẢ CHI TIẾT SẢN PHẨM, DỊCH VỤ')
     add_p(doc, '1. Tính cần thiết và kiểm chứng thực tế', bold=True, space_before=4, space_after=2)
-    add_dash(doc, 'Hiện trạng sản phẩm thật:', 'Hệ thống đã hoàn chỉnh 05 phân hệ trên WebApp (Tổng quan FinTech, Studio Đa Kênh, Kho Hàng, Hàng Đợi, Cài Đặt), Chrome Extension v2.0 và vận hành thật trên Fanpage Laptop Vương Gia.')
+    add_dash(doc, 'Hiện trạng sản phẩm thật:', 'Hệ thống đã hoàn chỉnh 06 phân hệ trên WebApp (Tổng quan FinTech, Studio Đa Kênh, Kho Hàng, Hàng Đợi, Cài Đặt 4 tab & Quản Lý Tài Khoản RBAC 3 cấp), giao diện Minimalist FinTech Dual Theme (Sáng/Tối), Chrome Extension v2.0 và vận hành trên Fanpage Laptop Vương Gia.')
     add_dash(doc, 'Rào cản hành vi từ khảo sát (N = 10.920):', '82% người bán không đo được lãi thực và hoa hồng theo từng kênh; 79% người mua/CTV ngại link dài sợ mất hoa hồng; 94% thị trường đồng thuận sử dụng nền tảng tích hợp.')
-    add_dash(doc, 'Chu trình cải tiến từ thử nghiệm MVP:', 'Sau khi chạy thử trên Fanpage thật và lấy phản hồi thực tế, nhóm đã bổ sung 03 nâng cấp: tắt/bật kênh không dùng, tự động quét 6 ảnh sản phẩm và bảng đối soát Tiền thực thu Chủ shop.')
+    add_dash(doc, 'Chu trình cải tiến thực chiến (v1.1):', 'Từ phản hồi sử dụng thật, nhóm đã nâng cấp lên cơ sở dữ liệu đám mây Supabase Postgres (cô lập đa Shop), bổ sung Instagram Business, Tự bóc tách URL sản phẩm, Trang Link Bio /u/:username, Link Mời CTV /join/:shopCode, Chế độ Tài chính thực (click không mua = 0đ), Import báo cáo đơn .CSV/.XLSX, mã Cookie /ab-track.js và thanh toán VietQR chuẩn Napas.')
 
     add_figure(doc, 'fig2_survey_donut_bar.png', 'Hình 2: Tỷ lệ đồng thuận (94%) và các điểm nghẽn hành vi từ khảo sát N = 10.920.')
 
     add_p(doc, '2. Tính khả thi, tuân thủ pháp lý và kiểm soát rủi ro', bold=True, space_before=4, space_after=2)
-    add_dash(doc, 'Khả thi kỹ thuật:', 'Kiến trúc Node.js Serverless trên Vercel kết hợp Google Gemini API và Graph API v21.0; thử nghiệm tải 452 CTV (21.486 clicks, GMV hơn 3,01 tỷ đồng) chỉ mất 5 mili-giây tổng hợp báo cáo.')
-    add_dash(doc, 'Tuân thủ Nghị định 13/2023/NĐ-CP & an toàn học đường:', '')
-    add_plus(doc, 'Điều 3 (Tối thiểu hóa dữ liệu):', 'Chỉ lưu mã SubID định danh chiến dịch và thông số sản phẩm công khai; không thu thập CCCD, tài khoản ngân hàng hay dữ liệu nhạy cảm.')
-    add_plus(doc, 'Điều 9 & Điều 11 (Đồng thuận & rút lại):', 'Người dùng chủ động nhập khóa API/Token và có quyền xóa sản phẩm, tắt nền tảng bất cứ lúc nào.')
+    add_dash(doc, 'Khả thi kỹ thuật & kiểm thử 71/71 PASS:', 'Kiến trúc Node.js Serverless trên Vercel kết nối Supabase Postgres, Google Gemini API và Meta Graph API; vượt qua 71/71 bài kiểm thử tự động (38 case QA toàn diện + 17 E2E + 16 nghiệp vụ v1.1); thử nghiệm tải 452 CTV (21.486 clicks, GMV hơn 3,01 tỷ đồng) chỉ mất 5 mili-giây tổng hợp báo cáo.')
+    add_dash(doc, 'Tuân thủ Nghị định 13/2023/NĐ-CP & bảo mật:', '')
+    add_plus(doc, 'Điều 3 (Tối thiểu hóa dữ liệu):', 'Chỉ lưu mã SubID định danh chiến dịch và thông số sản phẩm công khai; mật khẩu mã hóa chuẩn scrypt, cô lập dữ liệu Multi-Tenant tuyệt đối giữa các Shop.')
+    add_plus(doc, 'Điều 9 & Điều 11 (Đồng thuận & bảo vệ API):', 'Người dùng tự cấu hình API/Token riêng từng tài khoản, áp dụng Rate Limiter chống dò mật khẩu (HTTP 429) và bắt buộc JWT xác thực (HTTP 401/403) trên mọi API quản trị.')
     add_plus(doc, 'Điều 20 (Bảo vệ trẻ em dưới 16 tuổi):', 'Nền tảng chỉ định hướng cho đối tượng đủ tuổi lao động/THPT trở lên dưới sự giám sát an toàn, không tiếp thị mặt hàng cấm.')
-    add_dash(doc, 'Lộ trình hạ tầng mở rộng (dự kiến):', 'Khi mở rộng thương mại trên 500 CTV, sẽ kích hoạt Supabase Postgres (đã viết sẵn module kết nối) và xin duyệt chính thức TikTok/Zalo OA API.')
+    add_dash(doc, 'Lộ trình mở rộng API sàn:', 'Đã vận hành chính thức Supabase Postgres và đối soát CSV/Webhook; giai đoạn thương mại hóa tiếp tục đăng ký phê duyệt đối tác chính thức Shopee Open API & TikTok Shop Partner API.')
 
     add_styled_table(
         doc,
@@ -386,7 +386,7 @@ def build_document():
         [
             ['Pháp nhân doanh thu B2B (học sinh < 18 tuổi)', 'Cao', '- Giai đoạn thi & thử nghiệm: miễn phí hoàn toàn.\n- Khi thương mại hóa: đăng ký Hộ kinh doanh đứng tên người giám hộ hợp pháp theo quy định.'],
             ['Biến động API (Gemini quá tải, Facebook đổi token)', 'Trung bình', '- Đã lập trình cơ chế fallback đa model Gemini & chế độ đóng gói bài sẵn để copy đăng tay.'],
-            ['Gian lận click ảo & mất dữ liệu Serverless', 'Trung bình', '- Đối soát tiền dựa trên “Đơn thực chốt” (+ Chốt đơn) và nâng cấp lên Supabase Postgres khi mở rộng.']
+            ['Gian lận click ảo & mất đồng bộ dữ liệu', 'Trung bình', '- Lọc bot preview + chống click đúp 60 giây theo thiết bị; bật Chế độ Tài chính thực (chỉ tính tiền đơn đã xác nhận qua Webhook/CSV chống trùng orderId) và lưu trữ bền vững trên Supabase Postgres.']
         ],
         [4.8, 2.2, 10.4],
         [WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT]
@@ -394,15 +394,15 @@ def build_document():
 
     add_p(doc, '3. Tính độc đáo, sáng tạo và lợi thế cạnh tranh', bold=True, space_before=6, space_after=3)
     add_dash(doc, 'Hợp nhất quy trình 3 trong 1:', 'Thay thế việc phải mua ghép ChatGPT (~500k), Sapo (~300k–1,5tr) và Tool auto post (~200k) bằng một luồng khép kín từ 199.000đ/tháng (tiết kiệm 80% chi phí).')
-    add_dash(doc, 'Độc đáo ở phân hệ FinTech thời gian thực:', 'Chủ shop phân biệt rõ Doanh thu GMV, Hoa hồng trả CTV và Tiền thực thu bỏ túi, tránh tình trạng bán nhiều nhưng lỗ vốn.')
+    add_dash(doc, 'Độc đáo ở phân hệ FinTech thời gian thực & VietQR:', 'Chủ shop phân biệt rõ Doanh thu GMV, Hoa hồng trả CTV và Tiền thực thu bỏ túi trên đơn thật, đồng thời quét mã VietQR đối soát trả hoa hồng cho CTV ngay trên cùng giao diện.')
 
     add_styled_table(
         doc,
         ['Tiêu chí So sánh', 'AutoBiz AI', 'ChatGPT / AI rời', 'Sapo / KiotViet'],
         [
-            ['Thu thập SP & ảnh 1 chạm', 'Có sẵn (Extension AB)', 'Không hỗ trợ', 'Nhập tay / đồng bộ phức tạp'],
-            ['AI viết 4 kênh + Bật/Tắt', 'Có (FB, TikTok, Zalo, Shopee)', 'Viết từng đoạn rời', 'Không chuyên AI Marketing'],
-            ['Đo Click, GMV & Thực thu CTV', 'Có (/r/:code, xử lý 5ms)', 'Không có', 'Chỉ quản lý kho tại quầy'],
+            ['Thu thập SP, ảnh & Bio 1 chạm', 'Extension AB + URL Extractor + Bio /u/', 'Không hỗ trợ', 'Nhập tay / đồng bộ phức tạp'],
+            ['AI viết 5 kênh + Bật/Tắt', 'Có (FB, IG, TikTok, Zalo, Shopee)', 'Viết từng đoạn rời', 'Không chuyên AI Marketing'],
+            ['Đo Click, Đơn thật & VietQR', 'Có (/r/:code, CSV/Webhook, VietQR)', 'Không có', 'Chỉ quản lý kho tại quầy'],
             ['Chi phí hằng tháng', 'Từ 199.000đ (tiết kiệm 80%)', '~500.000đ/tháng', '300.000đ – 1.500.000đ']
         ],
         [4.5, 4.7, 4.1, 4.1],
@@ -454,8 +454,8 @@ def build_document():
         doc,
         ['Công cụ AI Sử dụng', 'Phạm vi Hỗ trợ', 'Phần Học sinh Tự làm chủ & Kiểm chứng'],
         [
-            ['Google Gemini API\n(Tích hợp trong app)', '- Đóng vai trò công cụ gợi ý bản nháp nội dung 4 kênh & bóc tách thông số từ bảng giá.', '- Thiết kế prompt hệ thống, lập trình Node.js xử lý fallback và kiểm duyệt nội dung trước khi đăng (Human-in-the-loop).'],
-            ['Trợ lý AI Lập trình\n& Biên tập', '- Hỗ trợ rà soát lỗi cú pháp, tối ưu CSS tối giản và kiểm tra chính tả văn bản.', '- Tự thiết kế kiến trúc 5 phân hệ, chạy kiểm thử 452 CTV (5ms), vận hành thật trên Fanpage và không dùng AI bịa đặt số liệu.']
+            ['Google Gemini API\n(Tích hợp trong app)', '- Đóng vai trò công cụ gợi ý bản nháp nội dung 5 kênh & bóc tách thông số từ bảng giá.', '- Thiết kế prompt hệ thống, lập trình Node.js xử lý fallback và kiểm duyệt nội dung trước khi đăng (Human-in-the-loop).'],
+            ['Trợ lý AI Lập trình\n& Biên tập', '- Hỗ trợ rà soát lỗi cú pháp, tối ưu CSS Dual Theme tối giản và kiểm tra chính tả văn bản.', '- Tự thiết kế kiến trúc 6 phân hệ trên Supabase Postgres, tự lập vòng kiểm thử 71/71 PASS, thử tải 452 CTV (5ms) và vận hành thật trên Fanpage.']
         ],
         [4.2, 5.8, 7.4],
         [WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.LEFT]

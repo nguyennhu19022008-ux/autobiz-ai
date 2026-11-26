@@ -309,6 +309,255 @@
       text-align: center;
     }
 
+    /* ======================== SLIDE 0 / PAGE 0: MANDATORY VUONGGIA COPYRIGHT ======================== */
+    body.is-page-zero .deck-viewport {
+      height: 100vh;
+    }
+    body.is-page-zero .deck-dock {
+      display: none !important;
+    }
+
+    .slide-zero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      padding: 0 !important;
+      background-color: #000000 !important;
+      color: #FFFFFF;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vg-marquee-bg {
+      position: absolute;
+      inset: -45%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 26px;
+      transform: rotate(-32deg);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.16;
+      z-index: 1;
+    }
+
+    .vg-marquee-row {
+      display: flex;
+      white-space: nowrap;
+      font-size: clamp(54px, 6.2vw, 96px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: #FFFFFF;
+      line-height: 1;
+      animation: vgMarqueeLeft 64s linear infinite;
+    }
+    .vg-marquee-row.rev {
+      animation: vgMarqueeRight 68s linear infinite;
+    }
+
+    @keyframes vgMarqueeLeft {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes vgMarqueeRight {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0%); }
+    }
+
+    .vg-cert-card {
+      position: relative;
+      z-index: 10;
+      width: min(680px, 92vw);
+      background: rgba(0, 0, 0, 0.50);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 14px;
+      padding: 30px 32px 26px 32px;
+      color: #FFFFFF;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .vg-cert-card.hidden-panel {
+      display: none;
+    }
+
+    .vg-cert-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      padding-bottom: 16px;
+    }
+
+    .vg-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      background: rgba(0, 0, 0, 0.30);
+    }
+
+    .vg-title {
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .vg-title-box {
+      display: inline-block;
+      background: #FFFFFF;
+      color: #000000;
+      padding: 2px 12px;
+      transform: skewX(-6deg);
+      font-weight: 900;
+    }
+
+    .vg-close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.35);
+      color: #FFFFFF;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .vg-close-btn:hover {
+      background: #FFFFFF;
+      color: #000000;
+    }
+
+    .vg-clause {
+      background: rgba(0, 0, 0, 0.30);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      padding: 13px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .vg-contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .vg-contact-box {
+      background: rgba(0, 0, 0, 0.30);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 11px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .vg-contact-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 3px;
+    }
+
+    .vg-contact-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      word-break: break-all;
+    }
+
+    .vg-copy-btn {
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: transparent;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .vg-copy-btn:hover {
+      background: #FFFFFF;
+      color: #000000;
+    }
+
+    .vg-cta-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: #FFFFFF;
+      color: #000000;
+      border: 1px solid #FFFFFF;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .vg-cta-btn:hover {
+      background: #E5E7EB;
+    }
+
+    .vg-floating-bar {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 12;
+      display: none;
+      gap: 12px;
+    }
+    .vg-floating-bar.visible {
+      display: flex;
+    }
+    .vg-float-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .vg-float-btn.primary {
+      background: #FFFFFF;
+      color: #000000;
+      border-color: #FFFFFF;
+    }
+
     @media (max-width: 1024px) {
       *, *::before, *::after {
         animation: none !important;
@@ -326,12 +575,69 @@
     }
   </style>
 </head>
-<body>
+<body class="is-page-zero">
 
   <main class="deck-viewport">
 
+    <!-- ==================== SLIDE 00: BẢN QUYỀN SỞ HỮU TRÍ TUỆ (DESIGN BY VUONGGIA) ==================== -->
+    <section class="slide slide-zero active" data-index="0">
+      <div class="vg-marquee-bg" aria-hidden="true">
+        <div class="vg-marquee-row">DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp;</div>
+        <div class="vg-marquee-row rev">DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp;</div>
+        <div class="vg-marquee-row">DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp;</div>
+        <div class="vg-marquee-row rev">DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp;</div>
+        <div class="vg-marquee-row">DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp; DESIGN BY VUONGGIA &nbsp;•&nbsp;</div>
+      </div>
+
+      <div id="vgCertCard" class="vg-cert-card">
+        <div class="vg-cert-header">
+          <div>
+            <div class="vg-badge">THUỘC QUYỀN SỞ HỮU CỦA VUONGGIA</div>
+            <div class="vg-title">
+              <span>DESIGN BY</span>
+              <span class="vg-title-box">VUONGGIA</span>
+            </div>
+          </div>
+          <button type="button" id="btnVgCloseCard" class="vg-close-btn" aria-label="Ẩn bảng bản quyền" title="Ẩn bảng thông tin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="vg-clause">
+          TUYỆT ĐỐI KHÔNG THƯƠNG MẠI, MUA BÁN, SANG NHƯỢNG DƯỚI MỌI HÌNH THỨC SAU KHI ĐÃ SỞ HỮU
+        </div>
+
+        <div class="vg-contact-grid">
+          <div class="vg-contact-box">
+            <div>
+              <div class="vg-contact-label">Email chính thức</div>
+              <div class="vg-contact-val">nguyennhu19022008@gmail.com</div>
+            </div>
+            <button type="button" class="vg-copy-btn" data-copy="nguyennhu19022008@gmail.com">Sao chép</button>
+          </div>
+          <div class="vg-contact-box">
+            <div>
+              <div class="vg-contact-label">Hotline xác thực</div>
+              <div class="vg-contact-val">0876637806</div>
+            </div>
+            <button type="button" class="vg-copy-btn" data-copy="0876637806">Sao chép</button>
+          </div>
+        </div>
+
+        <button type="button" id="btnVgEnterDeck" class="vg-cta-btn">
+          <span>Bắt đầu Bài Thuyết Trình AutoBiz AI (12 Trang)</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <div id="vgFloatingBar" class="vg-floating-bar">
+        <button type="button" id="btnVgReopenCard" class="vg-float-btn">Mở lại chứng nhận bản quyền</button>
+        <button type="button" id="btnVgFloatNext" class="vg-float-btn primary">Vào nội dung chính →</button>
+      </div>
+    </section>
+
     <!-- ==================== SLIDE 01: TRANG BÌA DỰ ÁN ==================== -->
-    <section class="slide active" data-index="1">
+    <section class="slide" data-index="1">
       <div class="slide-top">
         <span class="slide-kicker">SỞ GIÁO DỤC VÀ ĐÀO TẠO TP. HỒ CHÍ MINH — KẾ HOẠCH SỐ 11677/KH-SGDĐT</span>
         <span class="slide-meta">LĨNH VỰC DỰ THI: LV03 (DỊCH VỤ, TÀI CHÍNH, NGÂN HÀNG)</span>
@@ -360,8 +666,8 @@
           </div>
           <div class="col-pane">
             <div class="big-stat">5 Ngành</div>
-            <div class="stat-caption">&amp; 4 Kênh Tự động hóa</div>
-            <div class="stat-desc">- Phụ kiện, Thời trang, Gia dụng, FMCG, Điện tử (FB/TikTok/Zalo/Shopee)</div>
+            <div class="stat-caption">&amp; 5 Kênh Tự động hóa</div>
+            <div class="stat-desc">- FB, Instagram, TikTok, Zalo, Shopee<br>- Supabase Postgres &amp; 71/71 QA PASS</div>
           </div>
           <div class="col-pane">
             <div class="big-stat-ink">Tháng 5</div>
@@ -551,8 +857,8 @@
           </div>
           <div class="col-pane" style="justify-content:center;">
             <ul class="dash-list">
-              <li><strong>Phía Cung (B2B Sellers — N = 5.240)</strong>: 71% (3.699) đánh giá <em>Cực kỳ cần thiết</em> + 23% (1.184) đánh giá <em>Hữu ích</em> $\rightarrow$ Tổng đồng thuận <strong>94% (4.883 người bán)</strong>.</li>
-              <li><strong>Phía Cầu &amp; CTV (Gen Z — N = 5.680)</strong>: 69% (3.891) <em>Chắc chắn tham gia ngay</em> + 25% (1.428) <em>Tham gia khi có hướng dẫn</em> $\rightarrow$ Tổng đồng thuận <strong>94% (5.319 học sinh – sinh viên)</strong>.</li>
+              <li><strong>Phía Cung (B2B Sellers — N = 5.240)</strong>: 71% (3.699) đánh giá <em>Cực kỳ cần thiết</em> + 23% (1.184) đánh giá <em>Hữu ích</em> → Tổng đồng thuận <strong>94% (4.883 người bán)</strong>.</li>
+              <li><strong>Phía Cầu &amp; CTV (Gen Z — N = 5.680)</strong>: 69% (3.891) <em>Chắc chắn tham gia ngay</em> + 25% (1.428) <em>Tham gia khi có hướng dẫn</em> → Tổng đồng thuận <strong>94% (5.319 học sinh – sinh viên)</strong>.</li>
               <li><strong>Ý nghĩa Kinh tế Học đường</strong>: Chủ shop có sẵn hàng hóa đa ngành nhưng thiếu thời gian đăng bài; học sinh – sinh viên có thời gian lướt mạng nhưng thiếu vốn nhập hàng. AutoBiz AI chính là cầu nối công nghệ giải quyết đồng thời cả hai phía.</li>
             </ul>
           </div>
@@ -585,22 +891,22 @@
             <tr>
               <td><strong>2. Sáng tạo Nội dung</strong></td>
               <td>- Viết tay từng bài, tốn 2–4 tiếng/ngày, bí ý tưởng khi đổi kênh</td>
-              <td>- <strong>Omni-Channel AI Studio</strong>: 1 lần nhập sinh song song 4 bản (FB Post, TikTok Script, Zalo OA, Shopee SEO)</td>
+              <td>- <strong>Omni-Channel AI Studio (5 Kênh)</strong>: 1 lần nhập sinh song song FB, Instagram Business, TikTok Script, Zalo OA, Shopee SEO</td>
             </tr>
             <tr>
               <td><strong>3. Động cơ Tài chính (LV03)</strong></td>
-              <td>- Phải bỏ vốn nhập kho, tự gắn link dài dễ lỗi và không đo được hiệu quả kênh</td>
-              <td>- <strong>Smart Shortlink Engine (<code>/r/:code</code>)</strong>: Tự động gắn UTM, chuyển hướng 302 và tính hoa hồng thời gian thực</td>
+              <td>- Phải bỏ vốn nhập kho, không đối soát được đơn thật và dễ gian lận click ảo</td>
+              <td>- <strong>Tài chính Thực (Click không mua = 0đ)</strong>: Shortlink <code>/r/:code</code> lọc bot 60s, chốt đơn qua Webhook/CSV/Cookie &amp; trả hoa hồng <strong>VietQR</strong></td>
             </tr>
             <tr>
-              <td><strong>4. Công cụ Thu thập</strong></td>
-              <td>- Tải ảnh và copy thông số thủ công từng trang</td>
-              <td>- <strong>AutoBiz Collector Extension v2.0</strong>: Lấy sản phẩm từ Tab hiện tại đẩy thẳng vào Kho hàng &amp; tạo link 1 chạm</td>
+              <td><strong>4. Thu thập &amp; Kênh Bio</strong></td>
+              <td>- Tải ảnh thủ công, không có trang tổng hợp sản phẩm cá nhân cho CTV</td>
+              <td>- <strong>URL Extractor + Extension AB + Link Bio <code>/u/:username</code></strong>: Dán link tự điền sản phẩm và tự sinh trang mua hàng gắn tracking</td>
             </tr>
             <tr class="highlight-row">
-              <td><strong>5. Ngôn ngữ Thiết kế</strong></td>
-              <td>- Nhiều chi tiết trang trí rườm rà, gây mỏi mắt khi vận hành lâu</td>
-              <td>- <strong>Utilitarian Minimalism</strong>: Tối giản thực dụng, bảng màu truyền thống, phản hồi tức thì trên mọi thiết bị</td>
+              <td><strong>5. Giao diện &amp; Hạ tầng</strong></td>
+              <td>- Giao diện cũ chói mắt, dữ liệu lưu rời rạc dễ mất khi mở rộng</td>
+              <td>- <strong>Minimalist FinTech Dual Theme (Sáng/Tối)</strong> chạy trên <strong>Supabase Postgres Multi-Tenant</strong>, đạt <strong>71/71 kiểm thử tự động</strong></td>
             </tr>
           </tbody>
         </table>
@@ -610,46 +916,46 @@
     <!-- ==================== SLIDE 08: KIẾN TRÚC 6 CẤU PHẦN KỸ THUẬT ==================== -->
     <section class="slide" data-index="8">
       <div class="slide-top">
-        <span class="slide-kicker">07. KIẾN TRÚC KỸ THUẬT &amp; MÃ NGUỒN THỰC TẾ</span>
-        <span class="slide-meta">5 PHÂN HỆ WEBAPP + CHROME EXTENSION V2.0</span>
+        <span class="slide-kicker">07. KIẾN TRÚC KỸ THUẬT &amp; MÃ NGUỒN THỰC TẾ (V1.1)</span>
+        <span class="slide-meta">6 PHÂN HỆ WEBAPP + SUPABASE POSTGRES + 71/71 QA PASS</span>
       </div>
       <div class="slide-body">
-        <h2 class="slide-title">Kiến Trúc 6 Cấu Phần Đã Hoàn Thiện 100% Trong Mã Nguồn</h2>
+        <h2 class="slide-title">Kiến Trúc 6 Cấu Phần Đã Hoàn Thiện &amp; Kiểm Định 71/71 PASS</h2>
         <div class="editorial-grid-3">
           <div class="col-pane">
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">01. Dashboard FinTech</div>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">01. Dashboard FinTech &amp; VietQR</div>
             <ul class="dash-list">
-              <li>Hiển thị 4 chỉ số lớn: Sản phẩm, Bài đăng, Lượt Click Affiliate, Hoa hồng dự kiến (VNĐ).</li>
-              <li>Biểu đồ đối chiếu hiệu quả chuyển đổi giữa 4 kênh theo thời gian thực.</li>
+              <li>8 chỉ số tài chính thật (GMV, Thực thu, Hoa hồng, AOV, EPC) với chế độ <strong>Click không mua = 0đ</strong>.</li>
+              <li>Đối soát rút hoa hồng CTV bằng mã <strong>VietQR chuẩn Napas</strong>.</li>
             </ul>
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">04. Shortlink Engine (/r/:code)</div>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">04. Shortlink, Cookie &amp; CSV/Webhook</div>
             <ul class="dash-list">
-              <li>Module <code>services/affiliate.js</code> sinh mã ngắn định danh độc nhất.</li>
-              <li>Tự động đếm click và quy đổi doanh thu hoa hồng theo tỷ lệ chuyển đổi.</li>
-            </ul>
-          </div>
-          <div class="col-pane">
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">02. Omni-Channel AI Studio</div>
-            <ul class="dash-list">
-              <li>Tích hợp Google Gemini AI với JSON Schema chặt chẽ.</li>
-              <li>Biến mô tả thô thành 4 văn phong chuyên biệt chỉ trong 30 giây.</li>
-            </ul>
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">05. Bộ Chuyển tiếp 5 Kênh</div>
-            <ul class="dash-list">
-              <li>Hệ thống <code>services/adapters/*</code> độc lập cho Facebook, TikTok, Zalo OA, Shopee, Telegram.</li>
-              <li>Hàng đợi <code>scheduler.js</code> chống nghẽn API.</li>
+              <li>Lọc bot preview &amp; chống click đúp 60s theo thiết bị (hỗ trợ Zalo In-App).</li>
+              <li>Chốt đơn thật qua Webhook POS, Import <code>.CSV/.XLSX</code> &amp; mã <code>/ab-track.js</code>.</li>
             </ul>
           </div>
           <div class="col-pane">
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">03. Kho Hàng 5 Ngành (Catalog)</div>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">02. Omni-Channel AI Studio (5 Kênh)</div>
             <ul class="dash-list">
-              <li>Quản lý CRUD sản phẩm linh hoạt kèm giá bán lẻ và % chiết khấu Affiliate.</li>
-              <li>Hỗ trợ nạp/xóa nhanh dữ liệu mẫu bằng 1 lệnh.</li>
+              <li>Gemini AI sinh đồng thời 5 văn phong: <strong>Facebook, Instagram, TikTok, Zalo OA, Shopee</strong>.</li>
+              <li>Công tắc Bật/Tắt từng kênh độc lập theo từng tài khoản.</li>
             </ul>
-            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">06. Collector Extension v2.0</div>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">05. Supabase Postgres &amp; Bảo mật RBAC</div>
             <ul class="dash-list">
-              <li>Tiện ích Chrome Manifest V3 lấy tên &amp; URL từ Tab đang mở.</li>
-              <li>Đồng bộ tức thì với WebApp qua cầu nối <code>web_bridge.js</code>.</li>
+              <li>Phân quyền 3 cấp (Admin Tổng, Chủ shop, CTV/KOC) cô lập Multi-Tenant 100%.</li>
+              <li>Mã hóa <code>scrypt</code>, khóa Brute-Force (429), chặn API không JWT (401/403).</li>
+            </ul>
+          </div>
+          <div class="col-pane">
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin-bottom:8px;">03. Kho Hàng, URL Extractor &amp; Bio</div>
+            <ul class="dash-list">
+              <li>Dán URL Shopee/TikTok tự bóc tách tên, ngành hàng &amp; ảnh sản phẩm.</li>
+              <li>Tự động xuất bản trang <strong>Link Bio <code>/u/:username</code></strong> &amp; Link mời <code>/join/:shop</code>.</li>
+            </ul>
+            <div style="font-size:20px; font-weight:700; color:var(--accent-burgundy); margin:18px 0 8px 0;">06. Dual Theme UI &amp; Extension v2.0</div>
+            <ul class="dash-list">
+              <li>Giao diện <strong>Minimalist FinTech Sáng/Tối</strong>, Skeleton Shimmer &amp; Calm Mobile.</li>
+              <li>Chrome Extension MV3 đồng bộ trực tiếp vào Kho hàng.</li>
             </ul>
           </div>
         </div>
@@ -659,46 +965,46 @@
     <!-- ==================== SLIDE 09: ĐỘNG CƠ FINTECH LV03 ==================== -->
     <section class="slide" data-index="9">
       <div class="slide-top">
-        <span class="slide-kicker">08. CƠ CHẾ VẬN HÀNH ĐỘNG CƠ TÀI CHÍNH (FINTECH ENGINE LV03)</span>
-        <span class="slide-meta">KIỂM ĐỊNH END-TO-END ĐẠT 100%</span>
+        <span class="slide-kicker">08. CƠ CHẾ ĐỐI SOÁT ĐƠN HÀNG THẬT &amp; THANH TOÁN VIETQR (LV03)</span>
+        <span class="slide-meta">KIỂM ĐỊNH TOÀN DIỆN 71/71 PASS (100%)</span>
       </div>
       <div class="slide-body">
-        <h2 class="slide-title">Luồng Dòng Tiền &amp; Theo Dõi Hoa Hồng Qua Smart Shortlink (/r/:code)</h2>
-        <p class="slide-subtitle">Giải quyết bài toán thất thoát hoa hồng và tâm lý ngại bấm link dài chứa mã theo dõi lạ của 12% người tiêu dùng trẻ:</p>
+        <h2 class="slide-title">Luồng Dòng Tiền Thực &amp; Chống Gian Lận Qua Shortlink (/r/:code)</h2>
+        <p class="slide-subtitle">Xóa bỏ hoàn toàn hoa hồng ảo: Click không mua = 0 đ, chỉ chốt tiền trên đơn giao thành công (chống trùng <code>orderId</code>):</p>
 
         <table class="data-table">
           <thead>
             <tr>
-              <th style="width:16%;">Bước Nghiệp vụ</th>
+              <th style="width:17%;">Bước Nghiệp vụ</th>
               <th style="width:28%;">Cơ chế Xử lý Kỹ thuật</th>
-              <th style="width:32%;">Ví dụ Dữ liệu Thực tế (Đã Kiểm định E2E)</th>
+              <th style="width:31%;">Minh chứng Dữ liệu Đã Kiểm định</th>
               <th style="width:24%;">Giá trị Tài chính (LV03)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Bước 1: Nhập Hàng</strong></td>
-              <td>- Lưu vào <code>POST /api/products</code> kèm Giá bán lẻ &amp; % Hoa hồng</td>
-              <td>- Tai nghe ANC Pro | Giá: <code>400.000đ</code> | Hoa hồng: <code>15%</code> (60.000đ/đơn)</td>
+              <td><strong>Bước 1: Nhập &amp; Bio</strong></td>
+              <td>- Dán URL bóc tách vào <code>/api/products</code> &amp; tự tạo Trang Bio <code>/u/:username</code></td>
+              <td>- Xiaomi 17T Pro | Giá: <code>15.000.000đ</code> | Hoa hồng: <code>10%</code> (1.500.000đ/đơn)</td>
               <td>- Chuẩn hóa biên lợi nhuận từng mặt hàng</td>
             </tr>
             <tr>
-              <td><strong>Bước 2: Tạo Link</strong></td>
-              <td>- <code>POST /api/affiliate/shorten</code> gắn tham số UTM &amp; SubID người bán</td>
-              <td>- Sinh link sạch: <code>http://.../r/TIE318</code> gắn vào bài đăng TikTok/FB</td>
-              <td>- Tăng tỷ lệ bấm link (CTR) nhờ đường dẫn ngắn uy tín</td>
+              <td><strong>Bước 2: Tracking</strong></td>
+              <td>- Sinh link <code>/r/:code</code> gắn UTM + <code>sub_id</code> &amp; Cookie <code>/ab-track.js</code> (7–30 ngày)</td>
+              <td>- Khách bấm → <code>HTTP 302</code>; lọc Bot Preview &amp; chống click đúp 60 giây</td>
+              <td>- Chống gian lận click ảo, đếm đúng đa thiết bị</td>
             </tr>
             <tr>
-              <td><strong>Bước 3: Chuyển hướng</strong></td>
-              <td>- Khách bấm <code>GET /r/TIE318</code> $\rightarrow$ Server trả về <code>HTTP 302 Redirect</code></td>
-              <td>- Chuyển tới: <code>shopee.vn/...?utm_source=tiktok&amp;sub_id=vuonggia</code></td>
-              <td>- Định danh chính xác CTV nào mang khách về</td>
+              <td><strong>Bước 3: Chốt Đơn Thật</strong></td>
+              <td>- Đối soát qua <strong>Webhook POS</strong>, <strong>Import .CSV/.XLSX</strong> hoặc Chốt đơn thủ công</td>
+              <td>- Đơn <code>completed</code> cộng đúng GMV &amp; HH; tự bỏ qua đơn <code>cancelled</code> &amp; trùng <code>orderId</code></td>
+              <td>- 100% doanh thu &amp; hoa hồng có căn cứ thực tế</td>
             </tr>
             <tr class="highlight-row">
-              <td><strong>Bước 4: Đối soát</strong></td>
-              <td>- Tự động ghi nhận Click &amp; tính Hoa hồng kỳ vọng theo thời gian thực</td>
-              <td>- <code>GET /api/analytics/summary</code> cập nhật tức thì trên Dashboard</td>
-              <td>- Minh bạch hóa dòng tiền cho cả Chủ shop &amp; CTV Gen Z</td>
+              <td><strong>Bước 4: Rút VietQR</strong></td>
+              <td>- CTV gửi yêu cầu rút số dư khả dụng → Tự sinh mã <strong>VietQR chuẩn Napas</strong></td>
+              <td>- Chủ shop quét QR chuyển khoản &amp; bấm Duyệt; chặn duyệt chéo Shop khác (403)</td>
+              <td>- Minh bạch hóa dòng tiền, không giữ tiền trung gian</td>
             </tr>
           </tbody>
         </table>
@@ -842,27 +1148,61 @@
     </div>
   </footer>
 
-  <script>
+      <script>
     (function () {
       const slides = Array.from(document.querySelectorAll('.slide'));
-      const total = slides.length;
+      const totalContent = slides.length - 1; // Slide 0 is Copyright Page 0
       const indicator = document.getElementById('slideIndicator');
       const btnPrev = document.getElementById('btnPrev');
       const btnNext = document.getElementById('btnNext');
       const btnFullscreen = document.getElementById('btnFullscreen');
+      const vgCertCard = document.getElementById('vgCertCard');
+      const vgFloatingBar = document.getElementById('vgFloatingBar');
+      const btnVgCloseCard = document.getElementById('btnVgCloseCard');
+      const btnVgReopenCard = document.getElementById('btnVgReopenCard');
+      const btnVgEnterDeck = document.getElementById('btnVgEnterDeck');
+      const btnVgFloatNext = document.getElementById('btnVgFloatNext');
       let current = 0;
 
       function showSlide(index) {
         if (index < 0) index = 0;
-        if (index >= total) index = total - 1;
+        if (index >= slides.length) index = slides.length - 1;
         current = index;
+        document.body.classList.toggle('is-page-zero', current === 0);
         slides.forEach((s, idx) => {
           s.classList.toggle('active', idx === current);
         });
-        const num = String(current + 1).padStart(2, '0');
-        const tot = String(total).padStart(2, '0');
-        indicator.textContent = `${num} / ${tot}`;
+        if (current > 0) {
+          const num = String(current).padStart(2, '0');
+          const tot = String(totalContent).padStart(2, '0');
+          indicator.textContent = `${num} / ${tot}`;
+        }
       }
+
+      if (btnVgCloseCard) {
+        btnVgCloseCard.addEventListener('click', () => {
+          if (vgCertCard) vgCertCard.classList.add('hidden-panel');
+          if (vgFloatingBar) vgFloatingBar.classList.add('visible');
+        });
+      }
+      if (btnVgReopenCard) {
+        btnVgReopenCard.addEventListener('click', () => {
+          if (vgCertCard) vgCertCard.classList.remove('hidden-panel');
+          if (vgFloatingBar) vgFloatingBar.classList.remove('visible');
+        });
+      }
+      if (btnVgEnterDeck) btnVgEnterDeck.addEventListener('click', () => showSlide(1));
+      if (btnVgFloatNext) btnVgFloatNext.addEventListener('click', () => showSlide(1));
+
+      document.querySelectorAll('.vg-copy-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const txt = btn.getAttribute('data-copy') || '';
+          if (navigator.clipboard && txt) navigator.clipboard.writeText(txt).catch(() => {});
+          const orig = btn.textContent;
+          btn.textContent = 'Đã chép';
+          setTimeout(() => { btn.textContent = orig; }, 1600);
+        });
+      });
 
       btnPrev.addEventListener('click', () => showSlide(current - 1));
       btnNext.addEventListener('click', () => showSlide(current + 1));
@@ -875,7 +1215,7 @@
       });
 
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || (e.key === 'Enter' && current === 0)) {
           e.preventDefault();
           showSlide(current + 1);
         } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
@@ -885,6 +1225,8 @@
           btnFullscreen.click();
         }
       });
+
+      showSlide(0);
     })();
   </script>
 </body>
