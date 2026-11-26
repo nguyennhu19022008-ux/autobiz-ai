@@ -381,10 +381,32 @@ function getAnalyticsSummary({ subId, owner, role, strictConfirmedOnly = true } 
   };
 }
 
+function updateShortLinkTarget(shortCode, { baseUrl, productName } = {}) {
+  const links = readLinks();
+  const idx = links.findIndex((l) => l.shortCode.toLowerCase() === String(shortCode || '').toLowerCase());
+  if (idx === -1) return null;
+
+  const item = { ...links[idx] };
+  if (productName !== undefined && String(productName).trim()) {
+    item.productName = String(productName).trim();
+  }
+  if (baseUrl && /^https?:\/\//i.test(String(baseUrl).trim())) {
+    const cleanBase = String(baseUrl).trim();
+    item.baseUrl = cleanBase;
+    item.targetUrl = buildAffiliateUrl(cleanBase, item.channel || 'facebook', item.campaign || 'autobiz_2026', item.subId || 'vuonggia');
+  }
+  item.updatedAt = new Date().toISOString();
+
+  links[idx] = item;
+  writeLinks(links);
+  return item;
+}
+
 module.exports = {
   createShortLink,
   recordClickAndResolve,
   recordOrderForLink,
+  updateShortLinkTarget,
   listAffiliateLinks,
   getAnalyticsSummary,
   processOrderWebhook,

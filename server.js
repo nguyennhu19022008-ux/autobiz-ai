@@ -1018,6 +1018,17 @@ app.post('/api/affiliate/shorten', (req, res) => {
   }
 });
 
+app.patch('/api/affiliate/links/:shortCode', authService.requireAdmin, (req, res) => {
+  if (req.authUser?.isDefaultWorkspace) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập tài khoản Quản trị / Chủ shop.' });
+  }
+  const updated = affiliateService.updateShortLinkTarget(req.params.shortCode, req.body || {});
+  if (!updated) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy mã shortlink.' });
+  }
+  res.json({ success: true, link: updated });
+});
+
 app.get('/api/analytics/summary', async (req, res) => {
   const user = req.authUser || {};
   const settings = await getEffectiveSettingsForUser(user);
