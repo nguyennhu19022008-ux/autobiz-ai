@@ -679,7 +679,8 @@ code {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 /* ======================== BUTTONS (TACTILE FEEDBACK) ======================== */
@@ -1703,11 +1704,22 @@ code {
   border-color: var(--border-hover);
 }
 
+.landing-bento-pane .landing-shot-box,
+.landing-reconcile-visual .landing-shot-box {
+  aspect-ratio: 16 / 10;
+  max-height: 360px;
+}
+
 .landing-shot-img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
+  object-position: top;
+}
+
+.landing-browser-frame .landing-shot-img {
+  aspect-ratio: 16 / 10;
 }
 
 /* Sections & Headings */
@@ -1971,6 +1983,15 @@ code {
   .studio-layout {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 960px) {
+  .landing-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
   .landing-hero-split,
   .landing-section-head,
   .landing-split-reconcile {
@@ -1998,12 +2019,6 @@ code {
   .landing-step-col:nth-child(1),
   .landing-step-col:nth-child(2) {
     border-bottom: 1px solid var(--border-color);
-  }
-}
-
-@media (max-width: 960px) {
-  .landing-nav {
-    display: none;
   }
 }
 

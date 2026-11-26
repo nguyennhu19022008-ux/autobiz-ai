@@ -171,60 +171,88 @@ app.get('/u/:username', async (req, res) => {
   }
   const { profile, items } = payload;
   const initials = (profile.displayName || profile.username).slice(0, 2).toUpperCase();
+  const isSingle = items.length === 1;
   const cardsHtml = items.length === 0
-    ? `<div style="text-align:center;padding:48px 16px;border:1px solid #E2E8F0;border-radius:10px;background:#FFFFFF;color:#64748B;">Chưa có sản phẩm nào được đăng lên trang Bio này.</div>`
+    ? `<div class="bio-empty">Chưa có sản phẩm nào được đăng lên trang Bio này.</div>`
     : items.map((it) => `
-      <article class="bio-item" data-name="${escapeHtmlStr(it.name.toLowerCase())}" data-cat="${escapeHtmlStr(it.category)}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;">
-        ${it.image ? `<div style="aspect-ratio:16/10;background:#F1F5F9;overflow:hidden;border-bottom:1px solid #E2E8F0;"><img src="${escapeHtmlStr(it.image)}" alt="${escapeHtmlStr(it.name)}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"/></div>` : ''}
-        <div style="padding:16px;display:flex;flex-direction:column;gap:8px;flex:1;">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-            <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#475569;letter-spacing:0.04em;">${escapeHtmlStr(it.sku)}</span>
-            <strong style="font-size:16px;color:#0F172A;">${it.price_retail > 0 ? it.price_retail.toLocaleString('vi-VN') + ' đ' : 'Liên hệ'}</strong>
+      <article class="bio-item" data-name="${escapeHtmlStr(it.name.toLowerCase())}" data-cat="${escapeHtmlStr(it.category)}">
+        ${it.image ? `<div class="bio-thumb"><img src="${escapeHtmlStr(it.image)}" alt="${escapeHtmlStr(it.name)}" loading="lazy"/></div>` : ''}
+        <div class="bio-body">
+          <div class="bio-meta-row">
+            <span class="bio-sku">${escapeHtmlStr(it.sku)}</span>
+            <strong class="bio-price">${it.price_retail > 0 ? it.price_retail.toLocaleString('vi-VN') + ' đ' : 'Liên hệ'}</strong>
           </div>
-          <h2 style="font-size:15px;font-weight:700;line-height:1.4;margin:0;color:#0F172A;">${escapeHtmlStr(it.name)}</h2>
-          ${it.specs.length ? `<p style="font-size:13px;color:#64748B;margin:0;line-height:1.45;">${escapeHtmlStr(it.specs.join(' • '))}</p>` : ''}
-          <div style="margin-top:auto;padding-top:10px;">
-            <a href="${escapeHtmlStr(it.buyUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:10px 14px;background:#111111;color:#FFFFFF;text-decoration:none;border-radius:7px;font-size:13px;font-weight:600;">Mua Ngay / Nhận Ưu Đãi →</a>
+          <h2 class="bio-title">${escapeHtmlStr(it.name)}</h2>
+          ${it.specs.length ? `<p class="bio-specs">${escapeHtmlStr(it.specs.join(' • '))}</p>` : ''}
+          <div class="bio-cta-wrap">
+            <a href="${escapeHtmlStr(it.buyUrl)}" target="_blank" rel="noopener noreferrer" class="bio-buy-btn">Mua Ngay / Nhận Ưu Đãi →</a>
           </div>
         </div>
       </article>`).join('');
 
   res.send(`<!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtmlStr(profile.displayName)} — Link Bio | AutoBiz AI</title>
+  <script>(function(){try{var t=localStorage.getItem('autobiz_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(_){}})();</script>
   <style>
+    :root,[data-theme="dark"]{--bg:#09090B;--surface:#141417;--subtle:#1B1B20;--border:#27272A;--border-h:#3F3F46;--text:#FAFAFA;--muted:#A1A1AA;--btn-bg:#FAFAFA;--btn-text:#09090B}
+    [data-theme="light"]{--bg:#F9FAFB;--surface:#FFFFFF;--subtle:#F4F4F5;--border:#E4E4E7;--border-h:#D4D4D8;--text:#09090B;--muted:#71717A;--btn-bg:#09090B;--btn-text:#FFFFFF}
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:#FAFAFA;color:#0F172A;-webkit-font-smoothing:antialiased}
-    .wrap{max-width:760px;margin:0 auto;padding:28px 18px 56px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-    .search{width:100%;padding:11px 14px;border:1px solid #CBD5E1;border-radius:8px;font-size:14px;background:#FFFFFF;color:#0F172A;outline:none}
-    .search:focus{border-color:#0F172A}
+    body{margin:0;font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;transition:background-color 200ms ease,color 200ms ease}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 18px 56px}
+    .bio-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:20px}
+    .bio-avatar{width:50px;height:50px;border-radius:10px;background:var(--btn-bg);color:var(--btn-text);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;letter-spacing:-0.02em;flex-shrink:0}
+    .bio-h1{margin:0;font-size:21px;font-weight:800;color:var(--text)}
+    .bio-sub{font-size:13px;color:var(--muted);margin-top:2px}
+    .bio-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .bio-btn-outline{padding:8px 12px;border:1px solid var(--border);border-radius:7px;color:var(--text);text-decoration:none;font-size:13px;font-weight:600;background:var(--surface);cursor:pointer}
+    .bio-btn-outline:hover{border-color:var(--border-h);background:var(--subtle)}
+    .bio-btn-solid{padding:8px 14px;background:var(--btn-bg);color:var(--btn-text);border-radius:7px;text-decoration:none;font-size:13px;font-weight:600}
+    .search{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none}
+    .search:focus{border-color:var(--text)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .grid.is-single{max-width:440px;margin:0 auto}
+    .bio-empty{text-align:center;padding:48px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--muted)}
+    .bio-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color 200ms ease}
+    .bio-item:hover{border-color:var(--border-h)}
+    .bio-thumb{aspect-ratio:16/10;background:var(--subtle);overflow:hidden;border-bottom:1px solid var(--border)}
+    .bio-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .bio-body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1}
+    .bio-meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .bio-sku{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em}
+    .bio-price{font-size:16px;color:var(--text);font-variant-numeric:tabular-nums}
+    .bio-title{font-size:15px;font-weight:700;line-height:1.4;margin:0;color:var(--text)}
+    .bio-specs{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
+    .bio-cta-wrap{margin-top:auto;padding-top:10px}
+    .bio-buy-btn{display:block;text-align:center;padding:10px 14px;background:var(--btn-bg);color:var(--btn-text);text-decoration:none;border-radius:7px;font-size:13px;font-weight:600}
+    .bio-footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <header style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-bottom:20px;border-bottom:1px solid #E2E8F0;margin-bottom:20px;">
+    <header class="bio-header">
       <div style="display:flex;align-items:center;gap:14px;">
-        <div style="width:52px;height:52px;border-radius:10px;background:#111111;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;letter-spacing:-0.02em;">${escapeHtmlStr(initials)}</div>
+        <div class="bio-avatar">${escapeHtmlStr(initials)}</div>
         <div>
-          <h1 style="margin:0;font-size:22px;font-weight:800;color:#0F172A;">${escapeHtmlStr(profile.displayName)}</h1>
-          <div style="font-size:13px;color:#64748B;margin-top:2px;">@${escapeHtmlStr(profile.username)} • ${items.length} sản phẩm đề xuất</div>
+          <h1 class="bio-h1">${escapeHtmlStr(profile.displayName)}</h1>
+          <div class="bio-sub">@${escapeHtmlStr(profile.username)} • ${items.length} sản phẩm đề xuất</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        ${profile.hotline ? `<a href="tel:${escapeHtmlStr(profile.hotline.replace(/[^0-9+]/g, ''))}" style="padding:8px 14px;border:1px solid #0F172A;border-radius:7px;color:#0F172A;text-decoration:none;font-size:13px;font-weight:600;background:#FFFFFF;">Hotline: ${escapeHtmlStr(profile.hotline)}</a>` : ''}
-        ${profile.defaultShopUrl ? `<a href="${escapeHtmlStr(profile.defaultShopUrl)}" target="_blank" rel="noopener noreferrer" style="padding:8px 14px;background:#111111;color:#FFFFFF;border-radius:7px;text-decoration:none;font-size:13px;font-weight:600;">Gian hàng chính</a>` : ''}
+      <div class="bio-actions">
+        <button type="button" id="bioThemeBtn" class="bio-btn-outline" title="Đổi giao diện Sáng / Tối">Sáng / Tối</button>
+        ${profile.hotline ? `<a href="tel:${escapeHtmlStr(profile.hotline.replace(/[^0-9+]/g, ''))}" class="bio-btn-outline">Hotline: ${escapeHtmlStr(profile.hotline)}</a>` : ''}
+        ${profile.defaultShopUrl ? `<a href="${escapeHtmlStr(profile.defaultShopUrl)}" target="_blank" rel="noopener noreferrer" class="bio-btn-solid">Gian hàng chính</a>` : ''}
       </div>
     </header>
     <div style="margin-bottom:18px;">
       <input id="bioSearch" class="search" type="search" placeholder="Tìm sản phẩm trên trang của ${escapeHtmlStr(profile.displayName)}..." />
     </div>
-    <section id="bioGrid" class="grid">${cardsHtml}</section>
-    <footer style="margin-top:36px;padding-top:16px;border-top:1px solid #E2E8F0;text-align:center;font-size:12px;color:#94A3B8;">
-      Powered by <a href="/" style="color:#0F172A;font-weight:600;text-decoration:none;">AutoBiz AI</a>
+    <section id="bioGrid" class="grid ${isSingle ? 'is-single' : ''}">${cardsHtml}</section>
+    <footer class="bio-footer">
+      Powered by <a href="/" style="color:var(--text);font-weight:600;text-decoration:none;">AutoBiz AI</a>
     </footer>
   </main>
   <script>
@@ -234,6 +262,13 @@ app.get('/u/:username', async (req, res) => {
       document.querySelectorAll('.bio-item').forEach((el) => {
         el.style.display = !q || (el.dataset.name || '').includes(q) ? 'flex' : 'none';
       });
+    });
+    const tBtn = document.getElementById('bioThemeBtn');
+    if (tBtn) tBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      const nxt = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nxt);
+      try { localStorage.setItem('autobiz_theme', nxt); } catch(_) {}
     });
   </script>
 </body>
