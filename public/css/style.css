@@ -356,6 +356,7 @@ code {
   letter-spacing: -0.25px;
   color: var(--text-main);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .brand-tag {
@@ -1539,7 +1540,7 @@ code {
 .landing-nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .landing-nav-link {
@@ -1547,6 +1548,7 @@ code {
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
+  white-space: nowrap;
   transition: color 160ms ease;
 }
 .landing-nav-link:hover {
@@ -1996,6 +1998,12 @@ code {
   .landing-step-col:nth-child(1),
   .landing-step-col:nth-child(2) {
     border-bottom: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 960px) {
+  .landing-nav {
+    display: none;
   }
 }
 
